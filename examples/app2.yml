@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: static-web2
+  labels:
+    role: myrole
+spec:
+  containers:
+    - name: web
+      image: tenzer/http-echo-test
+      ports:
+        - name: web
+          containerPort: 80
+          protocol: TCP

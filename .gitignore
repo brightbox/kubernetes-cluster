@@ -1,0 +1,6 @@
+terraform.tfvars
+override.tf
+*.swp
+.terraform
+generated
+terraform.tfstate*

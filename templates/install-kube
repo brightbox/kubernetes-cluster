@@ -1,0 +1,129 @@
+#!/bin/bash
+
+set -e
+
+mkdir -p ~/install
+cd ~/install
+umask 022
+
+echo "Downloading packages"
+curl -sSL --remote-name-all \
+	https://storage.googleapis.com/kubernetes-release/release/${k8s_release}/bin/linux/amd64/{kubelet,kubectl} \
+	https://github.com/kubernetes-incubator/cri-tools/releases/download/${critools_release}/crictl-${critools_release}-linux-amd64.tar.gz \
+        https://github.com/containernetworking/plugins/releases/download/${cni_plugins_release}/cni-plugins-amd64-${cni_plugins_release}.tgz \
+	https://github.com/opencontainers/runc/releases/download/${runc_release}/runc.amd64 \
+	https://storage.googleapis.com/cri-containerd-release/cri-containerd-${containerd_release}.linux-amd64.tar.gz \
+	https://github.com/brightbox/brightbox-cloud-controller-manager/releases/download/v${brightbox_cloud_controller_release}/brightbox-cloud-controller-manager_${brightbox_cloud_controller_release}_linux_x86_64.tar.gz
+
+echo "Checksumming"
+sha256sum -c ~/checksums.txt
+mv runc.amd64 runc
+chmod +x {kubelet,kubectl,runc}
+tar xzf brightbox-cloud-controller-manager_${brightbox_cloud_controller_release}_linux_x86_64.tar.gz brightbox-cloud-controller-manager
+tar xzf crictl-${critools_release}-linux-amd64.tar.gz crictl
+
+echo "Installing binaries"
+sudo mkdir -p \
+  /etc/cni/net.d \
+  /opt/cni/bin \
+  /var/lib/kubelet \
+  /var/lib/kubernetes \
+  /etc/kubernetes/manifests \
+  /var/run/kubernetes
+sudo tar -xf cni-plugins-amd64-${cni_plugins_release}.tgz -C /opt/cni/bin/
+sudo tar -xf cri-containerd-${containerd_release}.linux-amd64.tar.gz -C /
+sudo cp --preserve=mode kubectl kubelet runc crictl brightbox-cloud-controller-manager /usr/local/bin/
+
+echo "Adding dynamic config"
+declare -a ipv6_array=($(ip -6 -o addr show scope global))
+ipv6_prefix=$(ip -6 -o addr show scope global | egrep -o '\S*/64')
+cat <<EOF | sudo tee /etc/cni/net.d/10-ipvlan.conf
+{
+  "cniVersion": "0.3.0",
+  "name": "mynet",
+  "type": "ipvlan",
+  "master": "$${ipv6_array[1]}",
+  "ipam": {
+    "type": "host-local",
+    "ranges": [
+      [
+        {
+          "subnet": "$${ipv6_array[3]}"
+        }
+      ]
+    ]
+  }
+}
+EOF
+cat <<EOF | sudo tee /var/lib/kubelet/kubelet-config.yaml
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+runtimeRequestTimeout: "15m"
+staticPodPath: "/etc/kubernetes/manifests"
+syncFrequency: "30s"
+fileCheckFrequency: "30s"
+maxPods: 10
+authentication:
+ webhook:
+   enabled: false
+ anonymous:
+   enabled: true
+authorization:
+  mode: AlwaysAllow
+EOF
+cat <<EOF | sudo tee /etc/cni/net.d/99-loopback.conf
+{
+    "cniVersion": "0.3.1",
+    "type": "loopback"
+}
+EOF
+
+echo "Installing Units"
+cat <<EOF | sudo tee /etc/systemd/system/containerd.service
+[Unit]
+Description=containerd container runtime
+Documentation=https://containerd.io
+After=network.target
+
+[Service]
+ExecStartPre=/sbin/modprobe overlay
+ExecStart=/usr/local/bin/containerd
+Restart=always
+RestartSec=5
+Delegate=yes
+KillMode=process
+OOMScoreAdjust=-999
+LimitNOFILE=1048576
+# Having non-zero Limit*s causes performance problems due to accounting overhead
+# in the kernel. We recommend using cgroups to do container-local accounting.
+LimitNPROC=infinity
+LimitCORE=infinity
+
+[Install]
+WantedBy=multi-user.target
+EOF
+cat <<EOF | sudo tee /etc/systemd/system/kubelet.service
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/kubernetes/kubernetes
+After=containerd.service
+Requires=containerd.service
+
+[Service]
+ExecStart=/usr/local/bin/kubelet \
+  --config=/var/lib/kubelet/kubelet-config.yaml \
+  --container-runtime=remote \
+  --container-runtime-endpoint=unix:///var/run/containerd/containerd.sock \
+  --image-pull-progress-deadline=2m \
+  --network-plugin=cni \
+  --enable-server=false \
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo "Enabling systemd units"
+sudo systemctl enable --now kubelet
