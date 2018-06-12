@@ -16,6 +16,6 @@ bastion = "public.srv-testy.gb1.brightbox.com"
 cp app2.yml /etc/kubernetes/manifests
 ```
 6. kubelet will create the containers and they will appear in the process listing.
-7. Containers are viewed with `crictl`. `ctictl ps` shows the containers, `crictl pods` shows the pods.
-8. Run `crictl inspectp <pod id>| more` to find the IPv6 address of the pod.
+7. Containers are viewed with `crictl`. `sudo ctictl ps` shows the containers, `sudo crictl pods` shows the pods.
+8. Run `sudo crictl inspectp <pod id> | more` to find the IPv6 address of the pod.
 9. From another cloud server run `curl -g [ipv6 address]:8080`
