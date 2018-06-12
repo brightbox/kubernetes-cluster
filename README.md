@@ -13,7 +13,7 @@ bastion = "public.srv-testy.gb1.brightbox.com"
 4. Copy `examples/app2.yml` to the created server
 5. Log onto the server and put the file in the manifests directory to create an http reflector container on port 8080
 ```
-cp app2.yml /etc/kubernetes/manifests
+sudo cp app2.yml /etc/kubernetes/manifests
 ```
 6. kubelet will create the containers and they will appear in the process listing.
 7. Containers are viewed with `crictl`. `sudo ctictl ps` shows the containers, `sudo crictl pods` shows the pods.
