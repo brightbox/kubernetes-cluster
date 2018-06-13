@@ -21,7 +21,7 @@ resource "brightbox_firewall_rule" "k8s_ssh" {
 }
 
 resource "brightbox_firewall_rule" "k8s_http" {
-  destination_port = "80,8080" 
+  destination_port = "80,8080"
   protocol         = "tcp"
   source           = "any"
   description      = "HTTP access from anywhere"

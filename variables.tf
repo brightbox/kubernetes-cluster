@@ -21,11 +21,16 @@ variable "bastion" {
 
 variable "master_type" {
   description = "Type of server to use as k8s master node"
-  default     = "1gb.ssd"
+  default     = "2gb.ssd"
 }
 
 variable "worker_count" {
   description = "Number of worker servers in cluster"
+  default     = 1
+}
+
+variable "master_count" {
+  description = "Number of master servers in cluster"
   default     = 1
 }
 
@@ -36,12 +41,12 @@ variable "image_desc" {
 
 variable "worker_type" {
   description = "Type of server to use as k8s worker node"
-  default     = "1gb.ssd"
+  default     = "2gb.ssd"
 }
 
 variable "k8s_release" {
   description = "Version of kubernetes to use"
-  default     = "v1.10.4"
+  default     = "v1.11.0-beta.2"
 }
 
 variable "critools_release" {
