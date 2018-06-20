@@ -17,8 +17,28 @@ resource "brightbox_server" "k8s_master" {
   }
 
   provisioner "file" {
+    content     = "${element(tls_self_signed_cert.k8s_ca.*.cert_pem, 0)}"
+    destination = "ca.crt"
+  }
+
+  provisioner "file" {
+    content     = "${element(tls_self_signed_cert.k8s_ca.*.cert_pem, 1)}"
+    destination = "etcd_ca.crt"
+  }
+
+  provisioner "file" {
     source      = "${path.root}/checksums.txt"
     destination = "checksums.txt"
+  }
+
+  provisioner "file" {
+    source      = "${path.root}/templates/kubeadm.conf"
+    destination = "kubeadm.conf"
+  }
+
+  provisioner "file" {
+    content     = "${tls_private_key.k8s_ca.private_key_pem}"
+    destination = "ca.key"
   }
 
   provisioner "remote-exec" {

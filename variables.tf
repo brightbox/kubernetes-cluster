@@ -51,7 +51,7 @@ variable "k8s_release" {
 
 variable "critools_release" {
   description = "Version of critools to use"
-  default     = "v1.0.0-beta.1"
+  default     = "v1.11.0"
 }
 
 variable "cni_plugins_release" {
@@ -61,7 +61,7 @@ variable "cni_plugins_release" {
 
 variable "containerd_release" {
   description = "Version of containerd to use"
-  default     = "1.1.0"
+  default     = "1.1.1-rc.1"
 }
 
 variable "brightbox_cloud_controller_release" {

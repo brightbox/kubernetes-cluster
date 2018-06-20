@@ -2,6 +2,13 @@
 
 set -e
 
+echo "Installing keys"
+sudo mkdir -p /etc/kubernetes/pki/etcd
+sudo cp ca.crt ca.key /etc/kubernetes/pki
+sudo cp etcd_ca.crt /etc/kubernetes/pki/etcd/ca.crt
+sudo cp ca.key /etc/kubernetes/pki/etcd/ca.key
+sudo chmod 0600 /etc/kubernetes/pki/ca.key /etc/kubernetes/pki/etcd/ca.key
+
 mkdir -p ~/install
 cd ~/install
 umask 022
@@ -12,7 +19,7 @@ curl -sSL --remote-name-all \
 	https://github.com/kubernetes-incubator/cri-tools/releases/download/${critools_release}/crictl-${critools_release}-linux-amd64.tar.gz \
         https://github.com/containernetworking/plugins/releases/download/${cni_plugins_release}/cni-plugins-amd64-${cni_plugins_release}.tgz \
 	https://github.com/opencontainers/runc/releases/download/${runc_release}/runc.amd64 \
-	https://storage.googleapis.com/cri-containerd-release/cri-containerd-${containerd_release}.linux-amd64.tar.gz \
+	https://github.com/containerd/containerd/releases/download/v${containerd_release}/containerd-${containerd_release}.linux-amd64.tar.gz \
 	https://github.com/brightbox/brightbox-cloud-controller-manager/releases/download/v${brightbox_cloud_controller_release}/brightbox-cloud-controller-manager_${brightbox_cloud_controller_release}_linux_x86_64.tar.gz
 
 echo "Checksumming"
@@ -21,6 +28,7 @@ mv runc.amd64 runc
 chmod +x {kubelet,kubectl,kubeadm,runc}
 tar xzf brightbox-cloud-controller-manager_${brightbox_cloud_controller_release}_linux_x86_64.tar.gz brightbox-cloud-controller-manager
 tar xzf crictl-${critools_release}-linux-amd64.tar.gz crictl
+tar xzf containerd-${containerd_release}.linux-amd64.tar.gz
 
 echo "Installing binaries"
 sudo mkdir -p \
@@ -31,9 +39,8 @@ sudo mkdir -p \
   /etc/kubernetes/manifests \
   /var/run/kubernetes
 
-sudo tar -xf cni-plugins-amd64-${cni_plugins_release}.tgz -C /opt/cni/bin/
-sudo tar -xf cri-containerd-${containerd_release}.linux-amd64.tar.gz -C /
-sudo cp --preserve=mode kubectl kubeadm kubelet runc crictl brightbox-cloud-controller-manager /usr/local/bin/
+sudo tar -xzf cni-plugins-amd64-${cni_plugins_release}.tgz -C /opt/cni/bin/
+sudo cp --preserve=mode bin/c* kubectl kubeadm kubelet runc crictl brightbox-cloud-controller-manager /usr/local/bin/
 
 echo "Adding dynamic config"
 declare -a ipv6_array=($(ip -6 -o addr show scope global))
@@ -67,6 +74,9 @@ net.ipv4.ip_forward=1
 net.ipv6.conf.all.forwarding=1
 net.ipv6.conf.$${ipv6_array[1]}.accept_ra=2
 EOF
+cat <<EOF | sudo tee /etc/crictl.yaml
+runtime-endpoint: unix:///run/containerd/containerd.sock
+EOF
 
 echo "Installing Units"
 cat <<EOF | sudo tee /etc/systemd/system/containerd.service
@@ -96,11 +106,12 @@ cat <<EOF | sudo tee /etc/systemd/system/kubelet.service
 [Unit]
 Description=Kubernetes Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
-After=containerd.service cloud-init.target
+After=containerd.service
 Requires=containerd.service
 
 [Service]
-ExecStartPre=/sbin/modprobe br_netfilter
+ExecStartPre=-/sbin/modprobe br_netfilter
+ExecStartPre=/usr/bin/cloud-init status -w -l
 ExecStart=/usr/local/bin/kubelet 
 Restart=always
 StartLimitInterval=0
@@ -108,6 +119,7 @@ RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
+Also=containerd.service
 EOF
 sudo mkdir -p /etc/systemd/system/kubelet.service.d
 cat <<'EOF' | sudo tee /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
