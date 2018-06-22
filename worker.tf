@@ -18,6 +18,11 @@ resource "brightbox_server" "k8s-worker" {
   }
 
   provisioner "file" {
+    content     = "${tls_self_signed_cert.k8s_ca.cert_pem}"
+    destination = "ca.crt"
+  }
+
+  provisioner "file" {
     source      = "${path.root}/checksums.txt"
     destination = "checksums.txt"
   }
@@ -28,17 +33,16 @@ resource "brightbox_server" "k8s-worker" {
   }
 
   provisioner "file" {
-    content     = "${tls_self_signed_cert.k8s_ca.cert_pem}"
-    destination = "ca.crt"
-  }
-
-  provisioner "file" {
     content     = "${tls_private_key.k8s_ca.private_key_pem}"
     destination = "ca.key"
   }
 
   provisioner "remote-exec" {
     inline = "${data.template_file.install-provisioner-script.rendered}"
+  }
+
+  provisioner "remote-exec" {
+    inline = "${data.template_file.worker-provisioner-script.rendered}"
   }
 }
 
@@ -51,4 +55,8 @@ data "brightbox_image" "k8s_worker" {
 
 data "template_file" "worker-cloud-config" {
   template = "${file("${path.root}/templates/worker-cloud-config.yml")}"
+}
+
+data "template_file" "worker-provisioner-script" {
+  template = "${file("${path.root}/templates/install-worker")}"
 }

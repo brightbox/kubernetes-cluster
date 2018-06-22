@@ -2,13 +2,6 @@
 
 set -e
 
-echo "Installing keys"
-sudo mkdir -p /etc/kubernetes/pki/etcd
-sudo cp ca.crt ca.key /etc/kubernetes/pki
-sudo cp etcd_ca.crt /etc/kubernetes/pki/etcd/ca.crt
-sudo cp ca.key /etc/kubernetes/pki/etcd/ca.key
-sudo chmod 0600 /etc/kubernetes/pki/ca.key /etc/kubernetes/pki/etcd/ca.key
-
 mkdir -p ~/install
 cd ~/install
 umask 022

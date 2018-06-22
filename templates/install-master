@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -e
+
+install_cert() {
+	local source_prefix=$$1
+	local dest_prefix=$${2:-$$1}
+	local target_suffix=$${3:-crt}
+        local pki_dir=/etc/kubernetes/pki
+
+	for word in $${target_suffix} key
+	do
+		sudo cp $${source_prefix}.$${word} $${pki_dir}/$${dest_prefix}.$${word}
+	done
+	sudo chmod 0600 $${pki_dir}/$${dest_prefix}.key
+	rm $${source_prefix}.key
+}
+
+echo "Installing CAs"
+sudo mkdir -p /etc/kubernetes/pki/etcd
+install_cert ca
+install_cert etcd_ca etcd/ca
+
+echo "Installing Certs"
+install_cert etcd_peer etcd/peer
+install_cert etcd_server etcd/server
+install_cert etcd_healthcheck-client etcd/healthcheck-client
+install_cert apiserver-etcd-client
+install_cert apiserver-kubelet-client
+install_cert apiserver
+install_cert sa sa pub
+rm sa.pub

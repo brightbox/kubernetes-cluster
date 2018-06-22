@@ -44,6 +44,16 @@ variable "worker_type" {
   default     = "2gb.ssd"
 }
 
+variable "validity_period" {
+  description = "Number of hours a certificate is valid for"
+  default     = 8760
+}
+
+variable "cluster_domainname" {
+  description = "internal domain name of the Kubernetes Cluster"
+  default = "cluster.local"
+}
+
 variable "k8s_release" {
   description = "Version of kubernetes to use"
   default     = "v1.11.0-beta.2"

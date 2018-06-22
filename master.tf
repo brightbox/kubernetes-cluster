@@ -11,19 +11,97 @@ resource "brightbox_server" "k8s_master" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+resource "null_resource" "k8s_master" {
+  triggers {
+    master_id = "${brightbox_server.k8s_master.id}"
+  }
 
   connection {
+    user         = "${brightbox_server.k8s_master.username}"
+    host         = "${brightbox_server.k8s_master.ipv6_hostname}"
     bastion_host = "${var.bastion}"
   }
 
   provisioner "file" {
-    content     = "${element(tls_self_signed_cert.k8s_ca.*.cert_pem, 0)}"
+    content     = "${tls_self_signed_cert.k8s_ca.cert_pem}"
     destination = "ca.crt"
   }
 
   provisioner "file" {
-    content     = "${element(tls_self_signed_cert.k8s_ca.*.cert_pem, 1)}"
+    content     = "${tls_self_signed_cert.k8s_etcd_ca.cert_pem}"
     destination = "etcd_ca.crt"
+  }
+
+  provisioner "file" {
+    content     = "${tls_locally_signed_cert.etcd-peer.cert_pem}"
+    destination = "etcd_peer.crt"
+  }
+
+  provisioner "file" {
+    content     = "${tls_private_key.etcd-peer.private_key_pem}"
+    destination = "etcd_peer.key"
+  }
+
+  provisioner "file" {
+    content     = "${tls_locally_signed_cert.etcd-server.cert_pem}"
+    destination = "etcd_server.crt"
+  }
+
+  provisioner "file" {
+    content     = "${tls_private_key.etcd-server.private_key_pem}"
+    destination = "etcd_server.key"
+  }
+
+  provisioner "file" {
+    content     = "${tls_locally_signed_cert.etcd-healthcheck-client.cert_pem}"
+    destination = "etcd_healthcheck-client.crt"
+  }
+
+  provisioner "file" {
+    content     = "${tls_private_key.etcd-healthcheck-client.private_key_pem}"
+    destination = "etcd_healthcheck-client.key"
+  }
+
+  provisioner "file" {
+    content     = "${tls_locally_signed_cert.apiserver-etcd-client.cert_pem}"
+    destination = "apiserver-etcd-client.crt"
+  }
+
+  provisioner "file" {
+    content     = "${tls_private_key.apiserver-etcd-client.private_key_pem}"
+    destination = "apiserver-etcd-client.key"
+  }
+
+  provisioner "file" {
+    content     = "${tls_locally_signed_cert.apiserver-kubelet-client.cert_pem}"
+    destination = "apiserver-kubelet-client.crt"
+  }
+
+  provisioner "file" {
+    content     = "${tls_private_key.apiserver-kubelet-client.private_key_pem}"
+    destination = "apiserver-kubelet-client.key"
+  }
+
+  provisioner "file" {
+    content     = "${tls_locally_signed_cert.apiserver.cert_pem}"
+    destination = "apiserver.crt"
+  }
+
+  provisioner "file" {
+    content     = "${tls_private_key.apiserver.private_key_pem}"
+    destination = "apiserver.key"
+  }
+
+  provisioner "file" {
+    content     = "${tls_private_key.k8s_sa.public_key_pem}"
+    destination = "sa.pub"
+  }
+
+  provisioner "file" {
+    content     = "${tls_private_key.k8s_sa.private_key_pem}"
+    destination = "sa.key"
   }
 
   provisioner "file" {
@@ -41,8 +119,17 @@ resource "brightbox_server" "k8s_master" {
     destination = "ca.key"
   }
 
+  provisioner "file" {
+    content     = "${tls_private_key.k8s_etcd_ca.private_key_pem}"
+    destination = "etcd_ca.key"
+  }
+
   provisioner "remote-exec" {
     inline = "${data.template_file.install-provisioner-script.rendered}"
+  }
+
+  provisioner "remote-exec" {
+    inline = "${data.template_file.master-provisioner-script.rendered}"
   }
 }
 
@@ -59,6 +146,10 @@ data "template_file" "master-cloud-config" {
   vars {
     discovery_url = "${file("${path.root}/generated/discovery${null_resource.etcd_discovery_url.id}")}"
   }
+}
+
+data "template_file" "master-provisioner-script" {
+  template = "${file("${path.root}/templates/install-master")}"
 }
 
 resource "null_resource" "etcd_discovery_url" {

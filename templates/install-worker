@@ -2,45 +2,19 @@
 
 set -e
 
-cat <<EOF | sudo tee /var/lib/kubelet/kubelet-config.yaml
-kind: KubeletConfiguration
-apiVersion: kubelet.config.k8s.io/v1beta1
-runtimeRequestTimeout: "15m"
-staticPodPath: "/etc/kubernetes/manifests"
-syncFrequency: "30s"
-fileCheckFrequency: "30s"
-maxPods: 10
-authentication:
- webhook:
-   enabled: false
- anonymous:
-   enabled: true
-authorization:
-  mode: AlwaysAllow
-EOF
-cat <<EOF | sudo tee /etc/systemd/system/kubelet.service
-[Unit]
-Description=Kubernetes Kubelet
-Documentation=https://github.com/kubernetes/kubernetes
-After=containerd.service
-Requires=containerd.service
+install_cert() {
+	local source_prefix=$$1
+	local dest_prefix=$${2:-$$1}
+        local pki_dir=/etc/kubernetes/pki
 
-[Service]
-ExecStart=/usr/local/bin/kubelet \
-  --config=/var/lib/kubelet/kubelet-config.yaml \
-  --container-runtime=remote \
-  --container-runtime-endpoint=unix:///var/run/containerd/containerd.sock \
-  --image-pull-progress-deadline=2m \
-  --network-plugin=cni \
-  --enable-server=false \
-  --v=2
-Restart=on-failure
-RestartSec=5
+	for word in crt key
+	do
+		sudo cp $${source_prefix}.$${word} $${pki_dir}/$${dest_prefix}.$${word}
+	done
+	sudo chmod 0600 $${pki_dir}/$${dest_prefix}.key
+	rm $${source_prefix}.key
+}
 
-[Install]
-WantedBy=multi-user.target
-EOF
-
-echo "Enabling systemd units"
-sudo systemctl daemon-reload 
-sudo systemctl restart kubelet
+echo "Installing CA"
+sudo mkdir -p /etc/kubernetes/pki/etcd
+install_cert ca
