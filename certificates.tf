@@ -11,7 +11,7 @@ resource "tls_self_signed_cert" "k8s_ca" {
   private_key_pem = "${tls_private_key.k8s_ca.private_key_pem}"
 
   subject {
-    common_name = "${brightbox_server_group.k8s.name}"
+    common_name         = "${brightbox_server_group.k8s.name}"
     organizational_unit = "apiserver"
   }
 
@@ -31,7 +31,7 @@ resource "tls_self_signed_cert" "k8s_etcd_ca" {
   private_key_pem = "${tls_private_key.k8s_etcd_ca.private_key_pem}"
 
   subject {
-    common_name = "${brightbox_server_group.k8s.name}"
+    common_name         = "${brightbox_server_group.k8s.name}"
     organizational_unit = "etd"
   }
 
@@ -229,7 +229,7 @@ resource "tls_cert_request" "apiserver" {
     "kubernetes",
     "kubernetes.default",
     "kubernetes.default.svc",
-    "kubernetes.default.svc.${var.cluster_domainname}"
+    "kubernetes.default.svc.${var.cluster_domainname}",
   ]
 
   ip_addresses = [
@@ -256,5 +256,3 @@ resource "tls_locally_signed_cert" "apiserver" {
 resource "tls_private_key" "k8s_sa" {
   algorithm = "RSA"
 }
-
-

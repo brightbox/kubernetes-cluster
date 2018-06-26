@@ -150,6 +150,10 @@ data "template_file" "master-cloud-config" {
 
 data "template_file" "master-provisioner-script" {
   template = "${file("${path.root}/templates/install-master")}"
+
+  vars {
+    cluster_domainname = "${var.cluster_domainname}"
+  }
 }
 
 resource "null_resource" "etcd_discovery_url" {

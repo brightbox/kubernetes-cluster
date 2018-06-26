@@ -51,12 +51,12 @@ variable "validity_period" {
 
 variable "cluster_domainname" {
   description = "internal domain name of the Kubernetes Cluster"
-  default = "cluster.local"
+  default     = "cluster.local"
 }
 
 variable "k8s_release" {
   description = "Version of kubernetes to use"
-  default     = "v1.11.0-beta.2"
+  default     = "v1.11.0-rc.1"
 }
 
 variable "critools_release" {

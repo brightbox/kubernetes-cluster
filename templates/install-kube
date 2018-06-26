@@ -131,5 +131,4 @@ EOF
 
 echo "Enabling systemd units"
 sudo systemctl try-restart systemd-sysctl
-sudo systemctl enable --now --no-block kubelet
-
+sudo systemctl restart containerd
