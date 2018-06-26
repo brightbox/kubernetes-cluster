@@ -152,7 +152,10 @@ data "template_file" "master-provisioner-script" {
   template = "${file("${path.root}/templates/install-master")}"
 
   vars {
-    cluster_domainname = "${var.cluster_domainname}"
+    cluster_domainname       = "${var.cluster_domainname}"
+    hostname                 = "${brightbox_server.k8s_master.hostname}"
+    external_ip              = "${brightbox_server.k8s_master.ipv6_address}"
+    service_cluster_ip_range = "fd00:1234::/112"
   }
 }
 
