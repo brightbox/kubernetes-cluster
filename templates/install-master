@@ -23,7 +23,7 @@ cat <<'EOF' | sudo tee /var/lib/kubelet/kubeadm-flags.env
 KUBELET_KUBEADM_ARGS=--cloud-provider=external --container-runtime=remote --container-runtime-endpoint=/var/run/containerd/containerd.sock
 EOF
 cat <<EOF | sudo tee /var/lib/kubelet/config.yaml
-address: 0.0.0.0
+address: '::'
 apiVersion: kubelet.config.k8s.io/v1beta1
 authentication:
   anonymous:
