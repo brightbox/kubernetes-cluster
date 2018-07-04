@@ -13,13 +13,11 @@ curl -sSL --remote-name-all \
         https://github.com/containernetworking/plugins/releases/download/${cni_plugins_release}/cni-plugins-amd64-${cni_plugins_release}.tgz \
 	https://github.com/opencontainers/runc/releases/download/${runc_release}/runc.amd64 \
 	https://github.com/containerd/containerd/releases/download/v${containerd_release}/containerd-${containerd_release}.linux-amd64.tar.gz \
-	https://github.com/brightbox/brightbox-cloud-controller-manager/releases/download/v${brightbox_cloud_controller_release}/brightbox-cloud-controller-manager_${brightbox_cloud_controller_release}_linux_x86_64.tar.gz
 
 echo "Checksumming"
 sha256sum -c ~/checksums.txt
 mv runc.amd64 runc
 chmod +x {kubelet,kubectl,kubeadm,runc}
-tar xzf brightbox-cloud-controller-manager_${brightbox_cloud_controller_release}_linux_x86_64.tar.gz brightbox-cloud-controller-manager
 tar xzf crictl-${critools_release}-linux-amd64.tar.gz crictl
 tar xzf containerd-${containerd_release}.linux-amd64.tar.gz
 
@@ -33,7 +31,7 @@ sudo mkdir -p \
   /var/run/kubernetes
 
 sudo tar -xzf cni-plugins-amd64-${cni_plugins_release}.tgz -C /opt/cni/bin/
-sudo cp --preserve=mode bin/c* kubectl kubeadm kubelet runc crictl brightbox-cloud-controller-manager /usr/local/bin/
+sudo cp --preserve=mode bin/c* kubectl kubeadm kubelet runc crictl /usr/local/bin/
 
 echo "Adding dynamic config"
 declare -a ipv6_array=($(ip -6 -o addr show scope global))

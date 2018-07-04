@@ -17,6 +17,15 @@ variable "account" {
 
 variable "bastion" {
   description = "Bastion host name to use"
+  default     = ""
+}
+
+variable "controller_client" {
+  description = "Brightbox API Client ID for the Brightbox cloud controller app"
+}
+
+variable "controller_client_secret" {
+  description = "Secret for the Controller API Client ID"
 }
 
 variable "master_type" {
@@ -76,7 +85,7 @@ variable "containerd_release" {
 
 variable "brightbox_cloud_controller_release" {
   description = "Version of Brightbox cloud controller to use"
-  default     = "0.0.1"
+  default     = "0.0.3"
 }
 
 variable "runc_release" {

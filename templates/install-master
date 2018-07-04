@@ -16,6 +16,29 @@ install_cert() {
 	rm $${source_prefix}.key
 }
 
+# Retries a command on failure.
+# $1 - the max number of attempts
+# $2... - the command to run
+retry() {
+    local max_attempts="$${1}"; shift
+    local attempt_num=1
+ 
+    until "$${@}"
+    do
+        if [ "$${attempt_num}" -eq "$${max_attempts}" ]
+        then
+            echo "Attempt $${attempt_num} failed and there are no more attempts l
+eft!"
+            return 1
+        else
+            echo "Attempt $${attempt_num} failed! Trying again in $${attempt_num} 
+seconds..."
+            sleep $(( attempt_num=attempt_num + 1 ))
+        fi
+    done
+}
+
+
 echo "Bootstrapping Kubelet"
 sudo kubeadm config images pull --config kubeadm.conf
 sudo mkdir -p /var/lib/kubelet/pki /etc/kubernetes/manifests
@@ -427,4 +450,182 @@ spec:
       type: DirectoryOrCreate
     name: usr-share-ca-certificates
 status: {}
+EOF
+
+echo "Waiting for cluster to come up"
+echo "30 seconds to start with"
+sleep 10
+echo "20"
+sleep 10
+echo "10"
+sleep 10
+retry 10 kubectl cluster-info
+
+controller_key_name=brightbox-cloud-controller
+echo "Installing Secrets"
+kubectl -n kube-system create secret generic $${controller_key_name} '--from-literal=controller-client=${controller_client}' '--from-literal=controller-client-secret=${controller_client_secret}' '--from-literal=apiurl=${apiurl}' 
+
+echo "Mark Master"
+kubeadm alpha phase mark-master --kubeconfig ~/.kube/config
+
+echo "Requesting Brightbox cloud controller activation"
+cat <<EOF | kubectl apply -f -
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: brightbox-cloud-controller-manager
+  namespace: kube-system
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  template:
+    metadata:
+      labels:
+        app: brightbox-cloud-controller-manager
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ''
+    spec:
+      dnsPolicy: Default
+      serviceAccountName: cloud-controller-manager
+      tolerations:
+        # this taint is set by all kubelets running '--cloud-provider=external'
+        # so we should tolerate it to schedule the brightbox ccm
+        - key: "node.cloudprovider.kubernetes.io/uninitialized"
+          value: "true"
+          effect: "NoSchedule"
+        - key: "CriticalAddonsOnly"
+          operator: "Exists"
+        # cloud controller manages should be able to run on masters
+        - key: "node-role.kubernetes.io/master"
+          effect: NoSchedule
+      containers:
+      - image: brightbox/brightbox-cloud-controller-manager:${cloud_controller_release}
+        name: brightbox-cloud-controller-manager
+        command:
+          - "/bin/brightbox-cloud-controller-manager"
+          - "--cloud-provider=brightbox"
+          - "--kubeconfig=/etc/kubernetes/admin.conf"
+          - "--leader-elect=false"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 50Mi
+        env:
+          - name: BRIGHTBOX_CLIENT
+            valueFrom:
+              secretKeyRef:
+                name: $${controller_key_name}
+                key: controller-client
+          - name: BRIGHTBOX_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: $${controller_key_name}
+                key: controller-client-secret
+          - name: BRIGHTBOX_API_URL
+            valueFrom:
+              secretKeyRef:
+                name: $${controller_key_name}
+                key: apiurl
+        volumeMounts:
+        - mountPath: /etc/kubernetes/admin.conf
+          name: kubeconfig
+          readOnly: true
+      hostNetwork: true
+      volumes:
+      - hostPath:
+          path: /etc/kubernetes/admin.conf
+          type: FileOrCreate
+        name: kubeconfig
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cloud-controller-manager
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "true"
+  name: system:cloud-controller-manager
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - nodes/status
+  verbs:
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services/status
+  verbs:
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - create
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes
+  verbs:
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: system:cloud-controller-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:cloud-controller-manager
+subjects:
+- kind: ServiceAccount
+  name: cloud-controller-manager
+  namespace: kube-system
 EOF

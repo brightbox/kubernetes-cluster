@@ -110,7 +110,7 @@ resource "null_resource" "k8s_master" {
   }
 
   provisioner "file" {
-    source      = "${path.root}/templates/kubeadm.conf"
+    source      = "${local.template_path}/kubeadm.conf"
     destination = "kubeadm.conf"
   }
 
@@ -141,31 +141,35 @@ data "brightbox_image" "k8s_master" {
 }
 
 data "template_file" "master-cloud-config" {
-  template = "${file("${path.root}/templates/master-cloud-config.yml")}"
+  template = "${file("${local.template_path}/master-cloud-config.yml")}"
 
   vars {
-    discovery_url = "${file("${path.root}/generated/discovery${null_resource.etcd_discovery_url.id}")}"
+    discovery_url = "${file("${local.generated_path}/discovery${null_resource.etcd_discovery_url.id}")}"
   }
 }
 
 data "template_file" "master-provisioner-script" {
-  template = "${file("${path.root}/templates/install-master")}"
+  template = "${file("${local.template_path}/install-master")}"
 
   vars {
     cluster_domainname       = "${var.cluster_domainname}"
     hostname                 = "${brightbox_server.k8s_master.hostname}"
     external_ip              = "${brightbox_server.k8s_master.ipv6_address}"
+    cloud_controller_release = "${var.brightbox_cloud_controller_release}"
     service_cluster_ip_range = "fd00:1234::/112"
+    controller_client        = "${var.controller_client}"
+    controller_client_secret = "${var.controller_client_secret}"
+    apiurl                   = "${local.default_apiurl}"
   }
 }
 
 resource "null_resource" "etcd_discovery_url" {
   provisioner "local-exec" {
-    command = "[ -d ${path.root}/generated ] || mkdir -p ${path.root}/generated && curl -sSL --retry 3 https://discovery.etcd.io/new?size=${var.worker_count} > ${path.root}/generated/discovery${self.id}"
+    command = "[ -d ${local.generated_path} ] || mkdir -p ${local.generated_path} && curl -sSL --retry 3 https://discovery.etcd.io/new?size=${var.worker_count} > ${local.generated_path}/discovery${self.id}"
   }
 
   provisioner "local-exec" {
     when    = "destroy"
-    command = "rm -f ${path.root}/generated/discovery${self.id}"
+    command = "rm -f ${local.generated_path}/discovery${self.id}"
   }
 }

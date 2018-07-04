@@ -28,7 +28,7 @@ resource "brightbox_server" "k8s-worker" {
   }
 
   provisioner "file" {
-    source      = "${path.root}/templates/kubeadm.conf"
+    source      = "${local.template_path}/kubeadm.conf"
     destination = "kubeadm.conf"
   }
 
@@ -54,9 +54,9 @@ data "brightbox_image" "k8s_worker" {
 }
 
 data "template_file" "worker-cloud-config" {
-  template = "${file("${path.root}/templates/worker-cloud-config.yml")}"
+  template = "${file("${local.template_path}/worker-cloud-config.yml")}"
 }
 
 data "template_file" "worker-provisioner-script" {
-  template = "${file("${path.root}/templates/install-worker")}"
+  template = "${file("${local.template_path}/install-worker")}"
 }
