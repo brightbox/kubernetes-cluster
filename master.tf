@@ -95,6 +95,16 @@ resource "null_resource" "k8s_master" {
   }
 
   provisioner "file" {
+    content     = "${tls_locally_signed_cert.cloud-controller.cert_pem}"
+    destination = "cloud-controller.crt"
+  }
+
+  provisioner "file" {
+    content     = "${tls_private_key.cloud-controller.private_key_pem}"
+    destination = "cloud-controller.key"
+  }
+
+  provisioner "file" {
     content     = "${tls_private_key.k8s_sa.public_key_pem}"
     destination = "sa.pub"
   }

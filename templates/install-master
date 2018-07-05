@@ -3,17 +3,17 @@
 set -e
 
 install_cert() {
-	local source_prefix=$$1
-	local dest_prefix=$${2:-$$1}
-	local target_suffix=$${3:-crt}
+        local source_prefix=$$1
+        local dest_prefix=$${2:-$$1}
+        local target_suffix=$${3:-crt}
         local pki_dir=/etc/kubernetes/pki
 
-	for word in $${target_suffix} key
-	do
-		sudo cp $${source_prefix}.$${word} $${pki_dir}/$${dest_prefix}.$${word}
-	done
-	sudo chmod 0600 $${pki_dir}/$${dest_prefix}.key
-	rm $${source_prefix}.key
+        for word in $${target_suffix} key
+        do
+                sudo cp $${source_prefix}.$${word} $${pki_dir}/$${dest_prefix}.$${word}
+        done
+        sudo chmod 0600 $${pki_dir}/$${dest_prefix}.key
+        rm $${source_prefix}.key
 }
 
 # Retries a command on failure.
@@ -131,6 +131,7 @@ install_cert etcd_healthcheck-client etcd/healthcheck-client
 install_cert apiserver-etcd-client
 install_cert apiserver-kubelet-client
 install_cert apiserver
+install_cert cloud-controller
 install_cert sa sa pub
 rm sa.pub
 
@@ -505,8 +506,14 @@ spec:
         command:
           - "/bin/brightbox-cloud-controller-manager"
           - "--cloud-provider=brightbox"
+          - "--bind-address=::1"
+          - "--port=0"
+          - "--secure-port=10253"
+          - "--configure-cloud-routes=false"
           - "--kubeconfig=/etc/kubernetes/admin.conf"
           - "--leader-elect=false"
+          - --tls-cert-file=/etc/kubernetes/pki/cloud-controller.crt
+          - --tls-private-key-file=/etc/kubernetes/pki/cloud-controller.key
         resources:
           requests:
             cpu: 100m
@@ -531,12 +538,19 @@ spec:
         - mountPath: /etc/kubernetes/admin.conf
           name: kubeconfig
           readOnly: true
+        - mountPath: /etc/kubernetes/pki
+          name: k8s-certs
+          readOnly: true
       hostNetwork: true
       volumes:
       - hostPath:
           path: /etc/kubernetes/admin.conf
           type: FileOrCreate
         name: kubeconfig
+      - hostPath:
+          path: /etc/kubernetes/pki
+          type: DirectoryOrCreate
+        name: k8s-certs
 
 ---
 apiVersion: v1

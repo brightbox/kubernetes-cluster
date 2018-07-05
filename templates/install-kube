@@ -130,3 +130,6 @@ EOF
 echo "Enabling systemd units"
 sudo systemctl try-restart systemd-sysctl
 sudo systemctl restart containerd
+
+echo "Installing bash completion"
+kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl

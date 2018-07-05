@@ -65,7 +65,7 @@ variable "cluster_domainname" {
 
 variable "k8s_release" {
   description = "Version of kubernetes to use"
-  default     = "v1.11.0-rc.1"
+  default     = "v1.11.0"
 }
 
 variable "critools_release" {
