@@ -18,23 +18,8 @@ resource "brightbox_server" "k8s-worker" {
   }
 
   provisioner "file" {
-    content     = "${tls_self_signed_cert.k8s_ca.cert_pem}"
-    destination = "ca.crt"
-  }
-
-  provisioner "file" {
     source      = "${path.root}/checksums.txt"
     destination = "checksums.txt"
-  }
-
-  provisioner "file" {
-    source      = "${local.template_path}/kubeadm.conf"
-    destination = "kubeadm.conf"
-  }
-
-  provisioner "file" {
-    content     = "${tls_private_key.k8s_ca.private_key_pem}"
-    destination = "ca.key"
   }
 
   provisioner "remote-exec" {

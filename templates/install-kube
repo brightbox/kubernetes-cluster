@@ -33,27 +33,27 @@ sudo mkdir -p \
 sudo tar -xzf cni-plugins-amd64-${cni_plugins_release}.tgz -C /opt/cni/bin/
 sudo cp --preserve=mode bin/c* kubectl kubeadm kubelet runc crictl /usr/local/bin/
 
-echo "Adding dynamic config"
-declare -a ipv6_array=($(ip -6 -o addr show scope global))
-ipv6_prefix=$(python3 -c "import ipaddress; print(ipaddress.ip_interface('$${ipv6_array[3]}').network)")
-cat <<EOF | sudo tee /etc/cni/net.d/10-ipvlan.conf
-{
-  "cniVersion": "0.3.1",
-  "name": "mynet",
-  "type": "ipvlan",
-  "master": "$${ipv6_array[1]}",
-  "ipam": {
-    "type": "host-local",
-    "ranges": [
-      [
-        {
-          "subnet": "$${ipv6_prefix}"
-        }
-      ]
-    ]
-  }
-}
-EOF
+#echo "Adding dynamic config"
+#declare -a ipv6_array=($(ip -6 -o addr show scope global))
+#ipv6_prefix=$(python3 -c "import ipaddress; print(ipaddress.ip_interface('$${ipv6_array[3]}').network)")
+#cat <<EOF | sudo tee /etc/cni/net.d/10-ipvlan.conf
+#{
+#  "cniVersion": "0.3.1",
+#  "name": "mynet",
+#  "type": "ipvlan",
+#  "master": "$${ipv6_array[1]}",
+#  "ipam": {
+#    "type": "host-local",
+#    "ranges": [
+#      [
+#        {
+#          "subnet": "$${ipv6_prefix}"
+#        }
+#      ]
+#    ]
+#  }
+#}
+#EOF
 cat <<EOF | sudo tee /etc/cni/net.d/99-loopback.conf
 {
     "cniVersion": "0.3.1",
@@ -63,7 +63,6 @@ EOF
 cat <<EOF | sudo tee /etc/sysctl.d/40-kubernetes.conf
 net.ipv4.ip_forward=1
 net.ipv6.conf.all.forwarding=1
-net.ipv6.conf.$${ipv6_array[1]}.accept_ra=2
 EOF
 cat <<EOF | sudo tee /etc/crictl.yaml
 runtime-endpoint: unix:///run/containerd/containerd.sock
@@ -130,6 +129,24 @@ EOF
 echo "Enabling systemd units"
 sudo systemctl try-restart systemd-sysctl
 sudo systemctl restart containerd
+sudo systemctl enable --now kubelet
 
 echo "Installing bash completion"
-kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl
+kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl >/dev/null 2>&1
+
+echo "Installing kubeadm.conf"
+cat <<EOF >kubeadm.conf
+apiVersion: kubeadm.k8s.io/v1alpha1
+cloudProvider: external
+kind: MasterConfiguration
+clusterName: ${cluster_name}
+api:
+  advertiseAddress: ${external_ip}
+networking:
+  dnsDomain: ${cluster_domainname}
+  podSubnet: ${cluster_cidr}
+  serviceSubnet: ${service_cidr}
+kubernetesVersion: ${k8s_release}
+criSocket: /var/run/containerd/containerd.sock
+EOF
+

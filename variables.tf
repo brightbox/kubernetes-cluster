@@ -63,6 +63,18 @@ variable "cluster_domainname" {
   default     = "cluster.local"
 }
 
+variable "cluster_name" {
+  description = "name of this Kubernetes Cluster - used to mark server descriptions"
+  default     = "kubernetes"
+}
+
+variable "cluster_number" {
+  description = "16 bit number for this cluster. Used in pod addresses"
+  default     = 1
+}
+
+# Releases
+
 variable "k8s_release" {
   description = "Version of kubernetes to use"
   default     = "v1.11.0"
@@ -70,7 +82,7 @@ variable "k8s_release" {
 
 variable "critools_release" {
   description = "Version of critools to use"
-  default     = "v1.11.0"
+  default     = "v1.11.1"
 }
 
 variable "cni_plugins_release" {
@@ -80,7 +92,7 @@ variable "cni_plugins_release" {
 
 variable "containerd_release" {
   description = "Version of containerd to use"
-  default     = "1.1.1-rc.1"
+  default     = "1.1.2"
 }
 
 variable "brightbox_cloud_controller_release" {

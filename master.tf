@@ -25,73 +25,18 @@ resource "null_resource" "k8s_master" {
   }
 
   provisioner "file" {
+    source      = "${path.root}/checksums.txt"
+    destination = "checksums.txt"
+  }
+
+  provisioner "file" {
     content     = "${tls_self_signed_cert.k8s_ca.cert_pem}"
     destination = "ca.crt"
   }
 
   provisioner "file" {
-    content     = "${tls_self_signed_cert.k8s_etcd_ca.cert_pem}"
-    destination = "etcd_ca.crt"
-  }
-
-  provisioner "file" {
-    content     = "${tls_locally_signed_cert.etcd-peer.cert_pem}"
-    destination = "etcd_peer.crt"
-  }
-
-  provisioner "file" {
-    content     = "${tls_private_key.etcd-peer.private_key_pem}"
-    destination = "etcd_peer.key"
-  }
-
-  provisioner "file" {
-    content     = "${tls_locally_signed_cert.etcd-server.cert_pem}"
-    destination = "etcd_server.crt"
-  }
-
-  provisioner "file" {
-    content     = "${tls_private_key.etcd-server.private_key_pem}"
-    destination = "etcd_server.key"
-  }
-
-  provisioner "file" {
-    content     = "${tls_locally_signed_cert.etcd-healthcheck-client.cert_pem}"
-    destination = "etcd_healthcheck-client.crt"
-  }
-
-  provisioner "file" {
-    content     = "${tls_private_key.etcd-healthcheck-client.private_key_pem}"
-    destination = "etcd_healthcheck-client.key"
-  }
-
-  provisioner "file" {
-    content     = "${tls_locally_signed_cert.apiserver-etcd-client.cert_pem}"
-    destination = "apiserver-etcd-client.crt"
-  }
-
-  provisioner "file" {
-    content     = "${tls_private_key.apiserver-etcd-client.private_key_pem}"
-    destination = "apiserver-etcd-client.key"
-  }
-
-  provisioner "file" {
-    content     = "${tls_locally_signed_cert.apiserver-kubelet-client.cert_pem}"
-    destination = "apiserver-kubelet-client.crt"
-  }
-
-  provisioner "file" {
-    content     = "${tls_private_key.apiserver-kubelet-client.private_key_pem}"
-    destination = "apiserver-kubelet-client.key"
-  }
-
-  provisioner "file" {
-    content     = "${tls_locally_signed_cert.apiserver.cert_pem}"
-    destination = "apiserver.crt"
-  }
-
-  provisioner "file" {
-    content     = "${tls_private_key.apiserver.private_key_pem}"
-    destination = "apiserver.key"
+    content     = "${tls_private_key.k8s_ca.private_key_pem}"
+    destination = "ca.key"
   }
 
   provisioner "file" {
@@ -102,36 +47,6 @@ resource "null_resource" "k8s_master" {
   provisioner "file" {
     content     = "${tls_private_key.cloud-controller.private_key_pem}"
     destination = "cloud-controller.key"
-  }
-
-  provisioner "file" {
-    content     = "${tls_private_key.k8s_sa.public_key_pem}"
-    destination = "sa.pub"
-  }
-
-  provisioner "file" {
-    content     = "${tls_private_key.k8s_sa.private_key_pem}"
-    destination = "sa.key"
-  }
-
-  provisioner "file" {
-    source      = "${path.root}/checksums.txt"
-    destination = "checksums.txt"
-  }
-
-  provisioner "file" {
-    source      = "${local.template_path}/kubeadm.conf"
-    destination = "kubeadm.conf"
-  }
-
-  provisioner "file" {
-    content     = "${tls_private_key.k8s_ca.private_key_pem}"
-    destination = "ca.key"
-  }
-
-  provisioner "file" {
-    content     = "${tls_private_key.k8s_etcd_ca.private_key_pem}"
-    destination = "etcd_ca.key"
   }
 
   provisioner "remote-exec" {
@@ -163,10 +78,11 @@ data "template_file" "master-provisioner-script" {
 
   vars {
     cluster_domainname       = "${var.cluster_domainname}"
+    cluster_name             = "${var.cluster_name}"
     hostname                 = "${brightbox_server.k8s_master.hostname}"
     external_ip              = "${brightbox_server.k8s_master.ipv6_address}"
     cloud_controller_release = "${var.brightbox_cloud_controller_release}"
-    service_cluster_ip_range = "fd00:1234::/112"
+    service_cluster_ip_range = "${local.service_cidr}"
     controller_client        = "${var.controller_client}"
     controller_client_secret = "${var.controller_client_secret}"
     apiurl                   = "${local.default_apiurl}"
