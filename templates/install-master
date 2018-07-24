@@ -151,7 +151,6 @@ spec:
           - "--kubeconfig=/etc/kubernetes/cloud-controller.conf"
           - "--leader-elect=true"
           - --use-service-account-credentials=false
-          - -v=4
           - --tls-cert-file=/etc/kubernetes/pki/cloud-controller.crt
           - --tls-private-key-file=/etc/kubernetes/pki/cloud-controller.key
         resources:

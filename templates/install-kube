@@ -6,54 +6,7 @@ mkdir -p ~/install
 cd ~/install
 umask 022
 
-echo "Downloading packages"
-curl -sSL --remote-name-all \
-	https://storage.googleapis.com/kubernetes-release/release/${k8s_release}/bin/linux/amd64/{kubelet,kubectl,kubeadm} \
-	https://github.com/kubernetes-incubator/cri-tools/releases/download/${critools_release}/crictl-${critools_release}-linux-amd64.tar.gz \
-        https://github.com/containernetworking/plugins/releases/download/${cni_plugins_release}/cni-plugins-amd64-${cni_plugins_release}.tgz \
-	https://github.com/opencontainers/runc/releases/download/${runc_release}/runc.amd64 \
-	https://github.com/containerd/containerd/releases/download/v${containerd_release}/containerd-${containerd_release}.linux-amd64.tar.gz \
-
-echo "Checksumming"
-sha256sum -c ~/checksums.txt
-mv runc.amd64 runc
-chmod +x {kubelet,kubectl,kubeadm,runc}
-tar xzf crictl-${critools_release}-linux-amd64.tar.gz crictl
-tar xzf containerd-${containerd_release}.linux-amd64.tar.gz
-
-echo "Installing binaries"
-sudo mkdir -p \
-  /etc/cni/net.d \
-  /opt/cni/bin \
-  /var/lib/kubelet \
-  /var/lib/kubernetes \
-  /etc/kubernetes/manifests \
-  /var/run/kubernetes
-
-sudo tar -xzf cni-plugins-amd64-${cni_plugins_release}.tgz -C /opt/cni/bin/
-sudo cp --preserve=mode bin/c* kubectl kubeadm kubelet runc crictl /usr/local/bin/
-
-#echo "Adding dynamic config"
-#declare -a ipv6_array=($(ip -6 -o addr show scope global))
-#ipv6_prefix=$(python3 -c "import ipaddress; print(ipaddress.ip_interface('$${ipv6_array[3]}').network)")
-#cat <<EOF | sudo tee /etc/cni/net.d/10-ipvlan.conf
-#{
-#  "cniVersion": "0.3.1",
-#  "name": "mynet",
-#  "type": "ipvlan",
-#  "master": "$${ipv6_array[1]}",
-#  "ipam": {
-#    "type": "host-local",
-#    "ranges": [
-#      [
-#        {
-#          "subnet": "$${ipv6_prefix}"
-#        }
-#      ]
-#    ]
-#  }
-#}
-#EOF
+sudo mkdir -p /etc/cni/net.d
 cat <<EOF | sudo tee /etc/cni/net.d/99-loopback.conf
 {
     "cniVersion": "0.3.1",
@@ -64,75 +17,9 @@ cat <<EOF | sudo tee /etc/sysctl.d/40-kubernetes.conf
 net.ipv4.ip_forward=1
 net.ipv6.conf.all.forwarding=1
 EOF
-cat <<EOF | sudo tee /etc/crictl.yaml
-runtime-endpoint: unix:///run/containerd/containerd.sock
-EOF
 
-echo "Installing Units"
-cat <<EOF | sudo tee /etc/systemd/system/containerd.service
-[Unit]
-Description=containerd container runtime
-Documentation=https://containerd.io
-After=network.target
-
-[Service]
-ExecStartPre=/sbin/modprobe overlay
-ExecStart=/usr/local/bin/containerd
-Restart=always
-RestartSec=5
-Delegate=yes
-KillMode=process
-OOMScoreAdjust=-999
-LimitNOFILE=1048576
-# Having non-zero Limit*s causes performance problems due to accounting overhead
-# in the kernel. We recommend using cgroups to do container-local accounting.
-LimitNPROC=infinity
-LimitCORE=infinity
-
-[Install]
-WantedBy=multi-user.target
-EOF
-cat <<EOF | sudo tee /etc/systemd/system/kubelet.service
-[Unit]
-Description=Kubernetes Kubelet
-Documentation=https://github.com/kubernetes/kubernetes
-After=containerd.service
-Requires=containerd.service
-
-[Service]
-ExecStartPre=-/sbin/modprobe br_netfilter
-ExecStartPre=/usr/bin/cloud-init status -w -l
-ExecStart=/usr/local/bin/kubelet 
-Restart=always
-StartLimitInterval=0
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-Also=containerd.service
-EOF
-sudo mkdir -p /etc/systemd/system/kubelet.service.d
-cat <<'EOF' | sudo tee /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-# Note: This dropin only works with kubeadm and kubelet v1.11+
-[Service]
-Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf"
-Environment="KUBELET_CONFIG_ARGS=--config=/var/lib/kubelet/config.yaml"
-# This is a file that "kubeadm init" and "kubeadm join" generates at runtime, populating the KUBELET_KUBEADM_ARGS variable dynamically
-EnvironmentFile=-/var/lib/kubelet/kubeadm-flags.env
-# This is a file that the user can use for overrides of the kubelet args as a last resort. Preferably, the user should use
-# the .NodeRegistration.KubeletExtraArgs object in the configuration files instead. KUBELET_EXTRA_ARGS should be sourced from this file.
-EnvironmentFile=-/etc/default/kubelet
-ExecStart=
-ExecStart=/usr/local/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_KUBEADM_ARGS $KUBELET_EXTRA_ARGS
-EOF
-
-echo "Enabling systemd units"
+echo "Resetting sysctl"
 sudo systemctl try-restart systemd-sysctl
-sudo systemctl restart containerd
-sudo systemctl enable --now kubelet
-
-echo "Installing bash completion"
-kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl >/dev/null 2>&1
 
 echo "Installing kubeadm.conf"
 cat <<EOF >kubeadm.conf
@@ -147,6 +34,14 @@ networking:
   podSubnet: ${cluster_cidr}
   serviceSubnet: ${service_cidr}
 kubernetesVersion: ${k8s_release}
-criSocket: /var/run/containerd/containerd.sock
 EOF
+
+echo "Waiting for base package installation to complete"
+cloud-init status --wait >/dev/null
+
+echo "Installing bash completion"
+kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl >/dev/null 2>&1
+
+echo "Activating k8s bootstrap services"
+sudo systemctl enable docker.service kubelet.service
 
