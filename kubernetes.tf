@@ -6,6 +6,7 @@ locals {
   service_ula_prefix = "${cidrsubnet("fdbf:726f::/32", 16, var.cluster_number)}"
   cluster_cidr       = "${cidrsubnet("fdc0:726f::/32", 16, var.cluster_number)}"
   service_cidr       = "${replace(local.service_ula_prefix, "/48", "/112")}"
+  boot_token         = "${random_string.token_prefix.result}.${random_string.token_suffix.result}"
 }
 
 provider "brightbox" {
@@ -16,21 +17,22 @@ provider "brightbox" {
   account  = "${var.account}"
 }
 
-resource "random_integer" "service_cidr" {
-  min = 0
-  max = 4294967295
+resource "random_string" "token_suffix" {
+  length  = 16
+  special = false
+  upper   = false
 }
 
-resource "random_integer" "cluster_cidr" {
-  min = 1
-  max = 65535
+resource "random_string" "token_prefix" {
+  length  = 6
+  special = false
+  upper   = false
 }
 
 data "template_file" "install-provisioner-script" {
   template = "${file("${local.template_path}/install-kube")}"
 
   vars {
-    k8s_release         = "${var.k8s_release}"
     critools_release    = "${var.critools_release}"
     cni_plugins_release = "${var.cni_plugins_release}"
     containerd_release  = "${var.containerd_release}"
@@ -40,5 +42,7 @@ data "template_file" "install-provisioner-script" {
     service_cidr        = "${local.service_cidr}"
     cluster_cidr        = "${local.cluster_cidr}"
     external_ip         = "${brightbox_server.k8s_master.ipv6_address}"
+    fqdn                = "${brightbox_server.k8s_master.ipv6_hostname}"
+    boot_token          = "${local.boot_token}"
   }
 }

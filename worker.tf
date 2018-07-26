@@ -1,4 +1,4 @@
-resource "brightbox_server" "k8s-worker" {
+resource "brightbox_server" "k8s_worker" {
   count      = "${var.worker_count}"
   depends_on = ["brightbox_firewall_policy.k8s"]
 
@@ -20,6 +20,12 @@ resource "brightbox_server" "k8s-worker" {
   provisioner "file" {
     source      = "${path.root}/checksums.txt"
     destination = "checksums.txt"
+  }
+
+  # Just the public key, so it can be hashed on the server
+  provisioner "file" {
+    content     = "${tls_self_signed_cert.k8s_ca.cert_pem}"
+    destination = "ca.crt"
   }
 
   provisioner "remote-exec" {
@@ -44,4 +50,9 @@ data "template_file" "worker-cloud-config" {
 
 data "template_file" "worker-provisioner-script" {
   template = "${file("${local.template_path}/install-worker")}"
+
+  vars {
+    boot_token  = "${local.boot_token}"
+    v6_hostname = "${brightbox_server.k8s_master.ipv6_hostname}"
+  }
 }

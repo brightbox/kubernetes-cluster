@@ -15,4 +15,7 @@ install_cert() {
 	rm $${source_prefix}.key
 }
 
-echo "Installing worker"
+echo "Joining cluster"
+discovery_ca_cert_hash=$(openssl x509 -in $HOME/ca.crt -noout -pubkey |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)
+
+sudo kubeadm join ${v6_hostname}:6443 --token ${boot_token} --discovery-token-ca-cert-hash sha256:$${discovery_ca_cert_hash}

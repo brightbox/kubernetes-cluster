@@ -75,10 +75,10 @@ variable "cluster_number" {
 
 # Releases
 
-variable "k8s_release" {
-  description = "Version of kubernetes to use"
-  default     = "v1.11.0"
-}
+#variable "k8s_release" {
+#  description = "Version of kubernetes to use"
+#  default     = "v1.11.0"
+#}
 
 variable "critools_release" {
   description = "Version of critools to use"

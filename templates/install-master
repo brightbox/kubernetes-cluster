@@ -22,7 +22,7 @@ install_cert() {
 retry() {
     local max_attempts="$${1}"; shift
     local attempt_num=1
- 
+
     until "$${@}"
     do
         if [ "$${attempt_num}" -eq "$${max_attempts}" ]
@@ -31,7 +31,7 @@ retry() {
 eft!"
             return 1
         else
-            echo "Attempt $${attempt_num} failed! Trying again in $${attempt_num} 
+            echo "Attempt $${attempt_num} failed! Trying again in $${attempt_num}
 seconds..."
             sleep $(( attempt_num=attempt_num + 1 ))
         fi
@@ -42,9 +42,6 @@ echo "Installing CA"
 sudo mkdir -p /etc/kubernetes/pki/etcd
 install_cert ca
 
-echo "Installing Cloud Controller Cert"
-install_cert cloud-controller
-
 echo "Running kubeadm init"
 sudo kubeadm init --config $HOME/install/kubeadm.conf
 
@@ -54,11 +51,15 @@ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 controller_key_name=brightbox-cloud-controller
+controller_cert_name=cloud-controller-certs
 echo "Installing Secrets of Cloud Controller"
-kubectl -n kube-system create secret generic $${controller_key_name} '--from-literal=controller-client=${controller_client}' '--from-literal=controller-client-secret=${controller_client_secret}' '--from-literal=apiurl=${apiurl}' 
+kubectl -n kube-system create secret generic $${controller_key_name} '--from-literal=controller-client=${controller_client}' '--from-literal=controller-client-secret=${controller_client_secret}' '--from-literal=apiurl=${apiurl}'
+kubectl -n kube-system create secret generic $${controller_cert_name} '--from-file=cloud-controller.crt' '--from-file=cloud-controller.key'
+rm cloud-controller.key cloud-controller.crt
 
 echo "Requesting Brightbox cloud controller activation"
-cat <<EOF | kubectl apply -f -
+#cat <<EOF | kubectl apply -f -
+cat <<EOF > $HOME/install/cloud-controller.yml
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -175,11 +176,11 @@ spec:
                 key: apiurl
         volumeMounts:
         - mountPath: /etc/kubernetes/cloud-controller.conf
-          name: kubeconfig
+          name: cloud-controller-conf
           readOnly: true
           subPath: cloud-controller.conf
         - mountPath: /etc/kubernetes/pki
-          name: k8s-certs
+          name: cloud-controller-certs
           readOnly: true
       hostNetwork: true
       nodeSelector:
@@ -188,9 +189,10 @@ spec:
       - configMap:
           defaultMode: 420
           name: cloud-controller-manager
-        name: kubeconfig
-      - hostPath:
-          path: /etc/kubernetes/pki
-          type: DirectoryOrCreate
-        name: k8s-certs
+        name: cloud-controller-conf
+      - secret:
+          defaultMode: 420
+          secretName: $${controller_cert_name}
+        name: cloud-controller-certs
 EOF
+kubectl apply -f $HOME/install/cloud-controller.yml

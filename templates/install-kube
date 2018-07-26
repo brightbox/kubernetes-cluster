@@ -17,14 +17,42 @@ cat <<EOF | sudo tee /etc/sysctl.d/40-kubernetes.conf
 net.ipv4.ip_forward=1
 net.ipv6.conf.all.forwarding=1
 EOF
+# Required because kubeadm doesn't propagate the nodeRegistration flags properly
+# https://github.com/kubernetes/kubeadm/issues/1021
+cat <<EOF | sudo tee /etc/default/kubelet
+KUBELET_EXTRA_ARGS=--cloud-provider=external
+EOF
 
 echo "Resetting sysctl"
 sudo systemctl try-restart systemd-sysctl
 
+#echo "Installing kubeadm.conf"
+#cat <<EOF >kubeadm.conf
+#apiVersion: kubeadm.k8s.io/v1alpha1
+#cloudProvider: external
+#kind: MasterConfiguration
+#clusterName: ${cluster_name}
+#api:
+#  advertiseAddress: ${external_ip}
+#networking:
+#  dnsDomain: ${cluster_domainname}
+#  podSubnet: ${cluster_cidr}
+#  serviceSubnet: ${service_cidr}
+#token: ${boot_token}
+#apiServerCertSANs:
+#- ${fqdn}
+#EOF
+
 echo "Installing kubeadm.conf"
 cat <<EOF >kubeadm.conf
-apiVersion: kubeadm.k8s.io/v1alpha1
-cloudProvider: external
+apiVersion: kubeadm.k8s.io/v1alpha2
+apiServerExtraArgs:
+  cloud-provider: external
+controllerManagerExtraArgs:
+  cloud-provider: external
+nodeRegistration:
+  kubeletExtraArgs:
+    cloud-provider: external
 kind: MasterConfiguration
 clusterName: ${cluster_name}
 api:
@@ -33,7 +61,10 @@ networking:
   dnsDomain: ${cluster_domainname}
   podSubnet: ${cluster_cidr}
   serviceSubnet: ${service_cidr}
-kubernetesVersion: ${k8s_release}
+bootstrapTokens:
+  - token: ${boot_token}
+apiServerCertSANs:
+- ${fqdn}
 EOF
 
 echo "Waiting for base package installation to complete"
