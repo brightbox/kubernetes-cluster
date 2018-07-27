@@ -52,7 +52,7 @@ data "template_file" "worker-provisioner-script" {
   template = "${file("${local.template_path}/install-worker")}"
 
   vars {
-    boot_token  = "${local.boot_token}"
-    fqdn = "${local.fqdn}"
+    boot_token = "${local.boot_token}"
+    fqdn       = "${local.fqdn}"
   }
 }

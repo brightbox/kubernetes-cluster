@@ -1,6 +1,6 @@
 locals {
   external_ip = "${brightbox_server.k8s_master.ipv4_address_private}"
-  fqdn = "${brightbox_server.k8s_master.fqdn}"
+  fqdn        = "${brightbox_server.k8s_master.fqdn}"
 }
 
 resource "brightbox_server" "k8s_master" {
@@ -104,6 +104,7 @@ resource "null_resource" "etcd_discovery_url" {
     command = "rm -f ${local.generated_path}/discovery${self.id}"
   }
 }
+
 data "template_file" "install-provisioner-script" {
   template = "${file("${local.template_path}/install-kube")}"
 
@@ -121,4 +122,3 @@ data "template_file" "install-provisioner-script" {
     boot_token          = "${local.boot_token}"
   }
 }
-
