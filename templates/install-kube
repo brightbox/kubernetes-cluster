@@ -26,6 +26,12 @@ EOF
 echo "Resetting sysctl"
 sudo systemctl try-restart systemd-sysctl
 
+echo "Loading IPVS modules"
+for word in ip_vs_wrr ip_vs_sh ip_vs ip_vs_rr
+do
+	sudo modprobe -- $${word}
+done
+
 #echo "Installing kubeadm.conf"
 #cat <<EOF >kubeadm.conf
 #apiVersion: kubeadm.k8s.io/v1alpha1
@@ -65,6 +71,11 @@ bootstrapTokens:
   - token: ${boot_token}
 apiServerCertSANs:
 - ${fqdn}
+kubeProxy:
+  config:
+    mode: ipvs
+    ipvs:
+      scheduler: lc
 EOF
 
 echo "Waiting for base package installation to complete"

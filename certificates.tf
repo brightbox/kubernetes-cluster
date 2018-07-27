@@ -11,7 +11,7 @@ resource "tls_self_signed_cert" "k8s_ca" {
     organizational_unit = "apiserver"
   }
 
-  validity_period_hours = "${var.validity_period}"
+  validity_period_hours = "${local.validity_period}"
 
   allowed_uses = [
     "key_encipherment",
@@ -56,7 +56,7 @@ resource "tls_locally_signed_cert" "cloud-controller" {
   ca_private_key_pem = "${tls_private_key.k8s_ca.private_key_pem}"
   ca_cert_pem        = "${tls_self_signed_cert.k8s_ca.cert_pem}"
 
-  validity_period_hours = "${var.validity_period}"
+  validity_period_hours = "${local.validity_period}"
 
   allowed_uses = [
     "key_encipherment",

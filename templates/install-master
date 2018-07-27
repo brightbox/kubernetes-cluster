@@ -196,3 +196,10 @@ spec:
         name: cloud-controller-certs
 EOF
 kubectl apply -f $HOME/install/cloud-controller.yml
+
+echo "Installing Calico network controllers"
+kubectl apply -f \
+https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
+kubectl apply -f \
+https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
+

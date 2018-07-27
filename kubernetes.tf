@@ -1,11 +1,11 @@
 # Computed variables
 locals {
+  validity_period    = 8760
   default_apiurl     = "https://api.${var.region}.brightbox.com"
   generated_path     = "${path.root}/generated"
   template_path      = "${path.root}/templates"
-  service_ula_prefix = "${cidrsubnet("fdbf:726f::/32", 16, var.cluster_number)}"
-  cluster_cidr       = "${cidrsubnet("fdc0:726f::/32", 16, var.cluster_number)}"
-  service_cidr       = "${replace(local.service_ula_prefix, "/48", "/112")}"
+  service_cidr = "172.30.0.0/16"
+  cluster_cidr = "192.168.0.0/16"
   boot_token         = "${random_string.token_prefix.result}.${random_string.token_suffix.result}"
 }
 
@@ -29,20 +29,3 @@ resource "random_string" "token_prefix" {
   upper   = false
 }
 
-data "template_file" "install-provisioner-script" {
-  template = "${file("${local.template_path}/install-kube")}"
-
-  vars {
-    critools_release    = "${var.critools_release}"
-    cni_plugins_release = "${var.cni_plugins_release}"
-    containerd_release  = "${var.containerd_release}"
-    runc_release        = "${var.runc_release}"
-    cluster_name        = "${var.cluster_name}"
-    cluster_domainname  = "${var.cluster_domainname}"
-    service_cidr        = "${local.service_cidr}"
-    cluster_cidr        = "${local.cluster_cidr}"
-    external_ip         = "${brightbox_server.k8s_master.ipv6_address}"
-    fqdn                = "${brightbox_server.k8s_master.ipv6_hostname}"
-    boot_token          = "${local.boot_token}"
-  }
-}

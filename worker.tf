@@ -53,6 +53,6 @@ data "template_file" "worker-provisioner-script" {
 
   vars {
     boot_token  = "${local.boot_token}"
-    v6_hostname = "${brightbox_server.k8s_master.ipv6_hostname}"
+    fqdn = "${local.fqdn}"
   }
 }

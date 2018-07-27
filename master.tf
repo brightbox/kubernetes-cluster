@@ -1,3 +1,8 @@
+locals {
+  external_ip = "${brightbox_server.k8s_master.ipv4_address_private}"
+  fqdn = "${brightbox_server.k8s_master.fqdn}"
+}
+
 resource "brightbox_server" "k8s_master" {
   count      = "${var.master_count}"
   depends_on = ["brightbox_firewall_policy.k8s"]
@@ -80,7 +85,7 @@ data "template_file" "master-provisioner-script" {
     cluster_domainname       = "${var.cluster_domainname}"
     cluster_name             = "${var.cluster_name}"
     hostname                 = "${brightbox_server.k8s_master.hostname}"
-    external_ip              = "${brightbox_server.k8s_master.ipv6_address}"
+    external_ip              = "${local.external_ip}"
     cloud_controller_release = "${var.brightbox_cloud_controller_release}"
     service_cluster_ip_range = "${local.service_cidr}"
     controller_client        = "${var.controller_client}"
@@ -99,3 +104,21 @@ resource "null_resource" "etcd_discovery_url" {
     command = "rm -f ${local.generated_path}/discovery${self.id}"
   }
 }
+data "template_file" "install-provisioner-script" {
+  template = "${file("${local.template_path}/install-kube")}"
+
+  vars {
+    critools_release    = "${var.critools_release}"
+    cni_plugins_release = "${var.cni_plugins_release}"
+    containerd_release  = "${var.containerd_release}"
+    runc_release        = "${var.runc_release}"
+    cluster_name        = "${var.cluster_name}"
+    cluster_domainname  = "${var.cluster_domainname}"
+    service_cidr        = "${local.service_cidr}"
+    cluster_cidr        = "${local.cluster_cidr}"
+    external_ip         = "${local.external_ip}"
+    fqdn                = "${local.fqdn}"
+    boot_token          = "${local.boot_token}"
+  }
+}
+

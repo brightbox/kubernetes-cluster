@@ -53,11 +53,6 @@ variable "worker_type" {
   default     = "2gb.ssd"
 }
 
-variable "validity_period" {
-  description = "Number of hours a certificate is valid for"
-  default     = 8760
-}
-
 variable "cluster_domainname" {
   description = "internal domain name of the Kubernetes Cluster"
   default     = "cluster.local"
@@ -66,11 +61,6 @@ variable "cluster_domainname" {
 variable "cluster_name" {
   description = "name of this Kubernetes Cluster - used to mark server descriptions"
   default     = "kubernetes"
-}
-
-variable "cluster_number" {
-  description = "16 bit number for this cluster. Used in pod addresses"
-  default     = 1
 }
 
 # Releases
