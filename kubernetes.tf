@@ -1,7 +1,8 @@
 # Computed variables
 locals {
   validity_period = 8760
-  default_apiurl  = "https://api.${var.region}.brightbox.com"
+  region_suffix = "${var.region}.brightbox.com"
+  default_apiurl  = "https://api.${local.region_suffix}"
   generated_path  = "${path.root}/generated"
   template_path   = "${path.root}/templates"
   service_cidr    = "172.30.0.0/16"
