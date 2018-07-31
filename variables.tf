@@ -15,11 +15,6 @@ variable "account" {
   description = "Brightbox account name"
 }
 
-variable "bastion" {
-  description = "Bastion host name to use"
-  default     = ""
-}
-
 variable "controller_client" {
   description = "Brightbox API Client ID for the Brightbox cloud controller app"
 }

@@ -14,7 +14,7 @@ resource "brightbox_server" "k8s_worker" {
   }
 
   connection {
-    bastion_host = "${var.bastion}"
+    bastion_host = "${brightbox_cloudip.k8s_master.fqdn}"
   }
 
   provisioner "file" {
