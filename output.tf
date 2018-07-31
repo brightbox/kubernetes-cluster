@@ -1,5 +1,5 @@
 output "master" {
-  value = "${brightbox_server.k8s_master.*.fqdn}"
+  value = "${brightbox_cloudip.k8s_master.fqdn}"
 }
 
 output "group_fqdn" {

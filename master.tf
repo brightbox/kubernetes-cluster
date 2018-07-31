@@ -3,6 +3,11 @@ locals {
   fqdn        = "${brightbox_server.k8s_master.fqdn}"
 }
 
+resource "brightbox_cloudip" "k8s_master" {
+  target = "${brightbox_server.k8s_master.interface}"
+  name = "k8s-master"
+}
+
 resource "brightbox_server" "k8s_master" {
   count      = "${var.master_count}"
   depends_on = ["brightbox_firewall_policy.k8s"]
@@ -25,8 +30,7 @@ resource "null_resource" "k8s_master" {
 
   connection {
     user         = "${brightbox_server.k8s_master.username}"
-    host         = "${brightbox_server.k8s_master.ipv6_hostname}"
-    bastion_host = "${var.bastion}"
+    host         = "${brightbox_cloudip.k8s_master.fqdn}"
   }
 
   provisioner "file" {
