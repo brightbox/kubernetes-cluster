@@ -126,6 +126,8 @@ spec:
     spec:
       dnsPolicy: Default
       serviceAccountName: cloud-controller-manager
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
       tolerations:
         # this taint is set by all kubelets running '--cloud-provider=external'
         # so we should tolerate it to schedule the brightbox ccm
@@ -183,8 +185,6 @@ spec:
           name: cloud-controller-certs
           readOnly: true
       hostNetwork: true
-      nodeSelector:
-        beta.kubernetes.io/arch: amd64
       volumes:
       - configMap:
           defaultMode: 420
