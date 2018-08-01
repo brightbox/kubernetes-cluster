@@ -50,6 +50,9 @@ mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
+echo "Patching kube-proxy scheduling tolerations"
+kubectl -n kube-system patch ds kube-proxy -p='{ "spec": { "template": { "spec": { "tolerations": [ { "key": "CriticalAddonsOnly", "operator": "Exists" }, { "effect": "NoSchedule", "key": "node-role.kubernetes.io/master" } ] } } } }'
+
 controller_key_name=brightbox-cloud-controller
 controller_cert_name=cloud-controller-certs
 echo "Installing Secrets of Cloud Controller"
