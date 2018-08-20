@@ -1,9 +1,9 @@
 resource "brightbox_server_group" "k8s" {
-  name = "kubernetes-cluster"
+  name = "${local.cluster_fqdn}"
 }
 
 resource "brightbox_firewall_policy" "k8s" {
-  name         = "kubernetes-cluster"
+  name         = "${brightbox_server_group.k8s.name}"
   server_group = "${brightbox_server_group.k8s.id}"
 }
 

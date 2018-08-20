@@ -155,6 +155,7 @@ spec:
           - "--secure-port=10253"
           - "--configure-cloud-routes=false"
           - "--kubeconfig=/etc/kubernetes/cloud-controller.conf"
+          - "--cluster-name=${cluster_name}"
           - "--leader-elect=true"
           - --use-service-account-credentials=false
           - --tls-cert-file=/etc/kubernetes/pki/cloud-controller.crt

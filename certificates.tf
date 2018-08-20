@@ -7,8 +7,8 @@ resource "tls_self_signed_cert" "k8s_ca" {
   private_key_pem = "${tls_private_key.k8s_ca.private_key_pem}"
 
   subject {
-    common_name         = "${brightbox_server_group.k8s.name}"
-    organizational_unit = "apiserver"
+    common_name         = "apiserver"
+    organizational_unit = "${brightbox_server_group.k8s.name}"
   }
 
   validity_period_hours = "${local.validity_period}"
@@ -31,7 +31,8 @@ resource "tls_cert_request" "cloud-controller" {
   private_key_pem = "${tls_private_key.cloud-controller.private_key_pem}"
 
   subject {
-    common_name = "brightbox-cloud-controller"
+    common_name         = "brightbox-cloud-controller"
+    organizational_unit = "${brightbox_server_group.k8s.name}"
   }
 
   dns_names = [

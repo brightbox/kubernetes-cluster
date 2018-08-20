@@ -5,7 +5,17 @@ locals {
 
 resource "brightbox_cloudip" "k8s_master" {
   target = "${brightbox_server.k8s_master.interface}"
-  name = "k8s-master"
+  name   = "k8s-master"
+
+  provisioner "local-exec" {
+    when    = "destroy"
+    command = "ssh-keygen -R ${brightbox_cloudip.k8s_master.fqdn}"
+  }
+
+  provisioner "local-exec" {
+    when    = "destroy"
+    command = "ssh-keygen -R ${brightbox_cloudip.k8s_master.public_ip}"
+  }
 }
 
 resource "brightbox_server" "k8s_master" {
@@ -29,8 +39,8 @@ resource "null_resource" "k8s_master" {
   }
 
   connection {
-    user         = "${brightbox_server.k8s_master.username}"
-    host         = "${brightbox_cloudip.k8s_master.fqdn}"
+    user = "${brightbox_server.k8s_master.username}"
+    host = "${brightbox_cloudip.k8s_master.fqdn}"
   }
 
   provisioner "file" {

@@ -32,23 +32,6 @@ do
 	sudo modprobe -- $${word}
 done
 
-#echo "Installing kubeadm.conf"
-#cat <<EOF >kubeadm.conf
-#apiVersion: kubeadm.k8s.io/v1alpha1
-#cloudProvider: external
-#kind: MasterConfiguration
-#clusterName: ${cluster_name}
-#api:
-#  advertiseAddress: ${external_ip}
-#networking:
-#  dnsDomain: ${cluster_domainname}
-#  podSubnet: ${cluster_cidr}
-#  serviceSubnet: ${service_cidr}
-#token: ${boot_token}
-#apiServerCertSANs:
-#- ${fqdn}
-#EOF
-
 echo "Installing kubeadm.conf"
 cat <<EOF >kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1alpha2
@@ -86,4 +69,3 @@ kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl >/dev/null 2>&
 
 echo "Activating k8s bootstrap services"
 sudo systemctl enable docker.service kubelet.service
-
