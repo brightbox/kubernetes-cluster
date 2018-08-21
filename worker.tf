@@ -1,6 +1,6 @@
 resource "brightbox_server" "k8s_worker" {
   count      = "${var.worker_count}"
-  depends_on = ["brightbox_firewall_policy.k8s"]
+  depends_on = ["brightbox_firewall_policy.k8s", "brightbox_cloudip.k8s_master", "brightbox_firewall_rule.k8s_ssh", "brightbox_firewall_rule.k8s_icmp", "brightbox_firewall_rule.k8s_outbound", "brightbox_firewall_rule.k8s_intra_group"]
 
   name      = "k8s-worker-${count.index}"
   image     = "${data.brightbox_image.k8s_worker.id}"
@@ -76,5 +76,5 @@ data "template_file" "worker-provisioner-script" {
 # close down existing services. k8s will sort it out internally at the next
 # sync
 data "brightbox_server_group" "service_groups" {
-  name = "${var.cluster_name}$"
+  name = "${var.cluster_name}$|default"
 }
