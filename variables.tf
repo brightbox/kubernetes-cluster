@@ -23,19 +23,14 @@ variable "controller_client_secret" {
   description = "Secret for the Controller API Client ID"
 }
 
-variable "master_type" {
-  description = "Type of server to use as k8s master node"
-  default     = "2gb.ssd"
-}
-
-variable "worker_count" {
-  description = "Number of worker servers in cluster"
-  default     = 1
-}
-
 variable "master_count" {
   description = "Number of master servers in cluster"
   default     = 1
+}
+
+variable "master_type" {
+  description = "Type of server to use as k8s master node"
+  default     = "2gb.ssd"
 }
 
 variable "image_desc" {
@@ -43,9 +38,19 @@ variable "image_desc" {
   default     = "^ubuntu-bionic.*server$"
 }
 
+variable "worker_count" {
+  description = "Number of worker servers in cluster"
+  default     = 1
+}
+
 variable "worker_type" {
   description = "Type of server to use as k8s worker node"
   default     = "2gb.ssd"
+}
+
+variable "worker_drain_timeout" {
+  description = "How long to wait for pods to move off a node before it is deleted"
+  default     = "60s"
 }
 
 variable "cluster_domainname" {
