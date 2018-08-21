@@ -8,7 +8,7 @@ resource "brightbox_server" "k8s_worker" {
   user_data = "${data.template_file.worker-cloud-config.rendered}"
   zone      = "${var.region}-${count.index % 2 == 0 ? "a" : "b"}"
 
-  server_groups = ["${concat(brightbox_server_group.k8s.*.id, data.brightbox_server_group.service_groups.*.id)}"]
+  server_groups = ["${brightbox_server_group.k8s.id}"]
 
   lifecycle {
     create_before_destroy = true
@@ -69,12 +69,4 @@ data "template_file" "worker-provisioner-script" {
     boot_token = "${local.boot_token}"
     fqdn       = "${local.fqdn}"
   }
-}
-
-# Pick up any server groups created internally by k8s for this cluster
-# Terraform may over apply the groups, but will never underapply them and
-# close down existing services. k8s will sort it out internally at the next
-# sync
-data "brightbox_server_group" "service_groups" {
-  name = "${var.cluster_name}$|default"
 }
