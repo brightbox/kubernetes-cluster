@@ -1,2 +1,0 @@
-kubectl run hello-world --replicas=2 --labels="run=load-balancer-example" --image=gcr.io/google-samples/node-hello:1.0  --port=8080
-kubectl expose deployment hello-world --type=LoadBalancer --name=example-service --port=80 --target-port=8080
