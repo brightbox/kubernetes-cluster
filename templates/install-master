@@ -54,11 +54,8 @@ echo "Patching kube-proxy scheduling tolerations"
 kubectl -n kube-system patch ds kube-proxy -p='{ "spec": { "template": { "spec": { "tolerations": [ { "key": "CriticalAddonsOnly", "operator": "Exists" }, { "effect": "NoSchedule", "key": "node-role.kubernetes.io/master" } ] } } } }'
 
 controller_key_name=brightbox-cloud-controller
-controller_cert_name=cloud-controller-certs
-echo "Installing Secrets of Cloud Controller"
+echo "Installing Secrets for Cloud Controller"
 kubectl -n kube-system create secret generic $${controller_key_name} '--from-literal=controller-client=${controller_client}' '--from-literal=controller-client-secret=${controller_client_secret}' '--from-literal=apiurl=${apiurl}'
-kubectl -n kube-system create secret generic $${controller_cert_name} '--from-file=cloud-controller.crt' '--from-file=cloud-controller.key'
-rm cloud-controller.key cloud-controller.crt
 
 echo "Requesting Brightbox cloud controller activation"
 #cat <<EOF | kubectl apply -f -
@@ -158,8 +155,6 @@ spec:
           - "--cluster-name=${cluster_name}"
           - "--leader-elect=true"
           - --use-service-account-credentials=false
-          - --tls-cert-file=/etc/kubernetes/pki/cloud-controller.crt
-          - --tls-private-key-file=/etc/kubernetes/pki/cloud-controller.key
         resources:
           requests:
             cpu: 100m
@@ -185,19 +180,12 @@ spec:
           name: cloud-controller-conf
           readOnly: true
           subPath: cloud-controller.conf
-        - mountPath: /etc/kubernetes/pki
-          name: cloud-controller-certs
-          readOnly: true
       hostNetwork: true
       volumes:
       - configMap:
           defaultMode: 420
           name: cloud-controller-manager
         name: cloud-controller-conf
-      - secret:
-          defaultMode: 420
-          secretName: $${controller_cert_name}
-        name: cloud-controller-certs
 EOF
 kubectl apply -f $HOME/install/cloud-controller.yml
 
