@@ -20,10 +20,10 @@ resource "brightbox_firewall_rule" "k8s_ssh" {
   firewall_policy  = "${brightbox_firewall_policy.k8s.id}"
 }
 
-resource "brightbox_firewall_rule" "k8s_http" {
-  destination_port = "80,8080"
+resource "brightbox_firewall_rule" "k8s_cluster" {
+  destination_port = "6443"
   protocol         = "tcp"
-  source           = "any"
+  source           = "${var.management_source}"
   description      = "HTTP access from anywhere"
   firewall_policy  = "${brightbox_firewall_policy.k8s.id}"
 }

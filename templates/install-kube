@@ -54,6 +54,10 @@ bootstrapTokens:
   - token: ${boot_token}
 apiServerCertSANs:
 - ${fqdn}
+- ipv6.${fqdn}
+- ${public_fqdn}
+- ${public_rdns}
+- ${public_ip}
 kubeProxy:
   config:
     mode: ipvs

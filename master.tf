@@ -1,6 +1,9 @@
 locals {
   external_ip = "${brightbox_server.k8s_master.ipv4_address_private}"
   fqdn        = "${brightbox_server.k8s_master.fqdn}"
+  public_ip   = "${brightbox_cloudip.k8s_master.public_ip}"
+  public_rdns = "${brightbox_cloudip.k8s_master.reverse_dns}"
+  public_fqdn = "${brightbox_cloudip.k8s_master.fqdn}"
 }
 
 resource "brightbox_cloudip" "k8s_master" {
@@ -133,6 +136,9 @@ data "template_file" "install-provisioner-script" {
     service_cidr        = "${local.service_cidr}"
     cluster_cidr        = "${local.cluster_cidr}"
     external_ip         = "${local.external_ip}"
+    public_ip           = "${local.public_ip}"
+    public_rdns         = "${local.public_rdns}"
+    public_fqdn         = "${local.public_fqdn}"
     fqdn                = "${local.fqdn}"
     boot_token          = "${local.boot_token}"
   }

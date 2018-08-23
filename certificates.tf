@@ -21,4 +21,3 @@ resource "tls_self_signed_cert" "k8s_ca" {
 
   is_ca_certificate = true
 }
-

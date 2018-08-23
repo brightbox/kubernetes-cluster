@@ -33,6 +33,11 @@ variable "master_type" {
   default     = "2gb.ssd"
 }
 
+variable "management_source" {
+  description = "CIDR of any external management workstations"
+  default     = "0.0.0.0/32"
+}
+
 variable "image_desc" {
   description = "Image pattern to use to select boot image"
   default     = "^ubuntu-bionic.*server$"
