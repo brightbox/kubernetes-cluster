@@ -6,7 +6,7 @@ Build a Kubernetes Cluster on Brightbox Cloud the easy way. [Read our step-by-st
 ## Installing kubectl on your workstation.
 The master node has kubectl set up and ready for operation, but you may want to operate your cluster directly from your workstation
 
-- set the `management_source` variable to the appropriate CIDR that includes you workstation, and apply to the cluster with `terraform apply`
+- set the `management_source` variable to the appropriate CIDR that includes your workstation, and apply to the cluster with `terraform apply`
 - [install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) using a method suitable for your workstation.
 - Copy the cluster config from the master node
 ```
@@ -100,11 +100,13 @@ This runs up a simple service via a Brightbox Loadbalancer and cloud IP.
 
 - apply the service
 ```
-kubectl apply -f examples/loadbalancer-example.yaml
+$ kubectl apply -f examples/loadbalancer-example.yaml
+deployment.apps/hello-world created
+service/example-service created
 ```
 - wait until the load balancer service obtains a Cloud IP
 ```
-$$ kubectl get services
+$ kubectl get services
 NAME              TYPE           CLUSTER-IP     EXTERNAL-IP     PORT(S)        AGE
 example-service   LoadBalancer   172.30.38.64   109.107.39.75   80:31404/TCP   5m
 kubernetes        ClusterIP      172.30.0.1     <none>          443/TCP        19m
