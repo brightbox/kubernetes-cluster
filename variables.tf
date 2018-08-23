@@ -17,12 +17,12 @@ variable "account" {
 
 variable "apiclient" {
   description = "Brightbox API Client ID for building nodes"
-  default     = ""
+  default     = "app-dkmch"
 }
 
 variable "apisecret" {
   description = "Secret for the node building API Client ID"
-  default     = ""
+  default     = "uogoelzgt0nwawb"
 }
 
 variable "controller_client" {
