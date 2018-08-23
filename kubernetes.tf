@@ -12,11 +12,13 @@ locals {
 }
 
 provider "brightbox" {
-  version  = "~> 1.0"
-  apiurl   = "${local.default_apiurl}"
-  username = "${var.username}"
-  password = "${var.password}"
-  account  = "${var.account}"
+  version   = "~> 1.0"
+  apiurl    = "${local.default_apiurl}"
+  username  = "${var.username}"
+  password  = "${var.password}"
+  account   = "${var.account}"
+  apiclient = "${var.apiclient}"
+  apisecret = "${var.apisecret}"
 }
 
 resource "random_string" "token_suffix" {

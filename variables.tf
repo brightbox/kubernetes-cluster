@@ -15,6 +15,16 @@ variable "account" {
   description = "Brightbox account name"
 }
 
+variable "apiclient" {
+  description = "Brightbox API Client ID for building nodes"
+  default     = ""
+}
+
+variable "apisecret" {
+  description = "Secret for the node building API Client ID"
+  default     = ""
+}
+
 variable "controller_client" {
   description = "Brightbox API Client ID for the Brightbox cloud controller app"
 }
