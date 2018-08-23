@@ -1,6 +1,9 @@
 locals {
   external_ip = "${brightbox_server.k8s_master.ipv4_address_private}"
   fqdn        = "${brightbox_server.k8s_master.fqdn}"
+  public_ip   = "${brightbox_cloudip.k8s_master.public_ip}"
+  public_rdns = "${brightbox_cloudip.k8s_master.reverse_dns}"
+  public_fqdn = "${brightbox_cloudip.k8s_master.fqdn}"
 }
 
 resource "brightbox_cloudip" "k8s_master" {
@@ -58,22 +61,23 @@ resource "null_resource" "k8s_master" {
     destination = "ca.key"
   }
 
-  provisioner "file" {
-    content     = "${tls_locally_signed_cert.cloud-controller.cert_pem}"
-    destination = "cloud-controller.crt"
-  }
-
-  provisioner "file" {
-    content     = "${tls_private_key.cloud-controller.private_key_pem}"
-    destination = "cloud-controller.key"
-  }
-
   provisioner "remote-exec" {
     inline = "${data.template_file.install-provisioner-script.rendered}"
   }
 
   provisioner "remote-exec" {
     inline = "${data.template_file.master-provisioner-script.rendered}"
+  }
+
+  provisioner "remote-exec" {
+    when = "destroy"
+
+    # The sleep 10 is a hack to workaround the lack of wait on the delete
+    # command
+    inline = [
+      "kubectl get services -o=jsonpath='{range .items[?(.spec.type==\"LoadBalancer\")]}{\"service/\"}{.metadata.name}{\" \"}{end}' | xargs -r kubectl delete",
+      "sleep 10",
+    ]
   }
 }
 
@@ -132,6 +136,9 @@ data "template_file" "install-provisioner-script" {
     service_cidr        = "${local.service_cidr}"
     cluster_cidr        = "${local.cluster_cidr}"
     external_ip         = "${local.external_ip}"
+    public_ip           = "${local.public_ip}"
+    public_rdns         = "${local.public_rdns}"
+    public_fqdn         = "${local.public_fqdn}"
     fqdn                = "${local.fqdn}"
     boot_token          = "${local.boot_token}"
   }

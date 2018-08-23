@@ -1,6 +1,6 @@
 resource "brightbox_server" "k8s_worker" {
   count      = "${var.worker_count}"
-  depends_on = ["brightbox_firewall_policy.k8s"]
+  depends_on = ["brightbox_firewall_policy.k8s", "brightbox_cloudip.k8s_master", "brightbox_firewall_rule.k8s_ssh", "brightbox_firewall_rule.k8s_icmp", "brightbox_firewall_rule.k8s_outbound", "brightbox_firewall_rule.k8s_intra_group"]
 
   name      = "k8s-worker-${count.index}"
   image     = "${data.brightbox_image.k8s_worker.id}"
@@ -35,6 +35,19 @@ resource "brightbox_server" "k8s_worker" {
 
   provisioner "remote-exec" {
     inline = "${data.template_file.worker-provisioner-script.rendered}"
+  }
+
+  provisioner "remote-exec" {
+    when = "destroy"
+
+    connection {
+      host = "${brightbox_cloudip.k8s_master.fqdn}"
+    }
+
+    inline = [
+      "kubectl drain --ignore-daemonsets --timeout=${var.worker_drain_timeout} ${self.id}",
+      "kubectl delete node ${self.id}",
+    ]
   }
 }
 
