@@ -54,7 +54,7 @@ bootstrapTokens:
   - token: ${boot_token}
 apiServerCertSANs:
 - ${fqdn}
-- ipv6.${fqdn}
+- ${ipv6_fqdn}
 - ${public_fqdn}
 - ${public_rdns}
 - ${public_ip}

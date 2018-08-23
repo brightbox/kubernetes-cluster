@@ -1,6 +1,7 @@
 locals {
   external_ip = "${brightbox_server.k8s_master.ipv4_address_private}"
   fqdn        = "${brightbox_server.k8s_master.fqdn}"
+  ipv6_fqdn   = "${brightbox_server.k8s_master.ipv6_hostname}"
   public_ip   = "${brightbox_cloudip.k8s_master.public_ip}"
   public_rdns = "${brightbox_cloudip.k8s_master.reverse_dns}"
   public_fqdn = "${brightbox_cloudip.k8s_master.fqdn}"
@@ -140,6 +141,7 @@ data "template_file" "install-provisioner-script" {
     public_rdns         = "${local.public_rdns}"
     public_fqdn         = "${local.public_fqdn}"
     fqdn                = "${local.fqdn}"
+    ipv6_fqdn           = "${local.ipv6_fqdn}"
     boot_token          = "${local.boot_token}"
   }
 }
