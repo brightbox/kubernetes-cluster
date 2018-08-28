@@ -95,8 +95,8 @@ kubectl delete -f examples/pod-example.yaml
 pod "busybox" deleted
 ```
 
-### loadbalanacer-example.yaml
-This runs up a simple service via a Brightbox Loadbalancer and cloud IP.
+### loadbalancer-example.yaml
+This runs up a simple http service via a Brightbox Loadbalancer and cloud IP.
 
 - apply the service
 ```
@@ -142,3 +142,9 @@ Hello Kubernetes!
 ```
 kubectl delete -f examples/loadbalancer-example.yml
 ```
+### loadbalancer-annotation-example.yaml
+This creates a TCP load balancer on Brightbox Cloud with a bespoke
+http healthcheck and 'round-robin' balancing policy by adding special
+annotations to the configuration.
+
+Create, test and delete the example in the same way as the previous example.
