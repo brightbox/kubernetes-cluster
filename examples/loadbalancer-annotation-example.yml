@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: load-balancer-annotated
+  name: hello-world-annotated
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      run: load-balancer-annotated
+  template:
+    metadata:
+      labels:
+        run: load-balancer-annotated
+    spec:
+      containers:
+      - image: gcr.io/google-samples/node-hello:1.0
+        name: hello-world-annotated
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: load-balancer-annotated
+  name: annotated-lb-service
+  annotations:
+    service.beta.kubernetes.io/brightbox-load-balancer-buffer-size: "16384"
+    service.beta.kubernetes.io/brightbox-load-balancer-policy: "round-robin"
+    service.beta.kubernetes.io/brightbox-load-balancer-listener-protocol: "tcp"
+    service.beta.kubernetes.io/brightbox-load-balancer-healthcheck-protocol: "http"
+    service.beta.kubernetes.io/brightbox-load-balancer-healthcheck-interval: "4000"
+    service.beta.kubernetes.io/brightbox-load-balancer-healthcheck-timeout: "6000"
+    service.beta.kubernetes.io/brightbox-load-balancer-healthcheck-healthy-threshold: "4"
+    service.beta.kubernetes.io/brightbox-load-balancer-healthcheck-unhealthy-threshold: "5"
+    service.beta.kubernetes.io/brightbox-load-balancer-idle-timeout: "6000"
+spec:
+  selector:
+    run: load-balancer-annotated
+  type: LoadBalancer
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 8080
