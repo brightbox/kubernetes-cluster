@@ -151,8 +151,11 @@ Create, test and delete the example in the same way as the previous example.
 
 ## Loadbalancer Source IP support
 Brightbox Cloud load balancers work in either `Cluster` mode or `Local` mode.
+
 In `Local` mode the source address will always be the address of the
 Brightbox Cloud Load Balancer, with the source address of the client
 contained in the `X-Forwarded-For` header.
-In `Cluster` mode the source address may be another node in the cluster. The `X-Forwarded-For` header is still set however.
+
+In `Cluster` mode the source address may be another node in the cluster. The `X-Forwarded-For` header is still set to the source address of the end client.
+
 You can see the different responses by following the [Source IP test instructions](https://kubernetes.io/docs/tutorials/services/source-ip/#source-ip-for-services-with-type-loadbalancer) on the main k8s documentation site. 
