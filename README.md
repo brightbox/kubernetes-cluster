@@ -16,6 +16,8 @@ $ sed -i "s/https:.*$/https:\/\/$(terraform output master):6443/" ~/.kube/config
 ```
 - Check you can connect by running `kubectl cluster-info`
 
+The `download-config.sh` script in the `scripts` directory will copy the cluster config into place for you.
+
 ## Running the examples
 If you are using kubectl on the master node, copy the examples directory to the master node first
 ```
@@ -159,3 +161,11 @@ contained in the `X-Forwarded-For` header.
 In `Cluster` mode the source address may be another node in the cluster. The `X-Forwarded-For` header is still set to the source address of the end client.
 
 You can see the different responses by following the [Source IP test instructions](https://kubernetes.io/docs/tutorials/services/source-ip/#source-ip-for-services-with-type-loadbalancer) on the main k8s documentation site. 
+
+TCP loadbalancers obviously don't have the `X-Forwarded-For` header
+set. The source address is set as with HTTP load balancers. See how that
+works by creating the TCP protocol annoation on the loadbalancer.
+
+```
+kubectl annotate service loadbalancer service.beta.kubernetes.io/brightbox-load-balancer-listener-protocol=tcp
+```
