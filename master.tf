@@ -9,7 +9,7 @@ locals {
 
 resource "brightbox_cloudip" "k8s_master" {
   target = "${brightbox_server.k8s_master.interface}"
-  name   = "k8s-master"
+  name   = "k8s-master.${var.cluster_name}"
 
   provisioner "local-exec" {
     when    = "destroy"
@@ -26,7 +26,7 @@ resource "brightbox_server" "k8s_master" {
   count      = "${var.master_count}"
   depends_on = ["brightbox_firewall_policy.k8s"]
 
-  name          = "k8s-master-${count.index}"
+  name          = "k8s-master-${count.index}.${local.cluster_fqdn}"
   image         = "${data.brightbox_image.k8s_master.id}"
   type          = "${var.master_type}"
   user_data     = "${data.template_file.master-cloud-config.rendered}"

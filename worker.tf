@@ -2,7 +2,7 @@ resource "brightbox_server" "k8s_worker" {
   count      = "${var.worker_count}"
   depends_on = ["brightbox_firewall_policy.k8s", "brightbox_cloudip.k8s_master", "brightbox_firewall_rule.k8s_ssh", "brightbox_firewall_rule.k8s_icmp", "brightbox_firewall_rule.k8s_outbound", "brightbox_firewall_rule.k8s_intra_group"]
 
-  name      = "k8s-worker-${count.index}"
+  name      = "k8s-worker-${count.index}.${local.cluster_fqdn}"
   image     = "${data.brightbox_image.k8s_worker.id}"
   type      = "${var.worker_type}"
   user_data = "${data.template_file.worker-cloud-config.rendered}"
