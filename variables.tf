@@ -102,7 +102,7 @@ variable "containerd_release" {
 
 variable "brightbox_cloud_controller_release" {
   description = "Version of Brightbox cloud controller to use"
-  default     = "0.0.8"
+  default     = "0.0.9"
 }
 
 variable "runc_release" {
