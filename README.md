@@ -169,3 +169,29 @@ works by creating the TCP protocol annoation on the loadbalancer.
 ```
 kubectl annotate service loadbalancer service.beta.kubernetes.io/brightbox-load-balancer-listener-protocol=tcp
 ```
+## Automatic SSL certificate management
+Brightbox Cloud load balancers support [automatic generation of SSL certificates](https://www.brightbox.com/docs/reference/load-balancers/#certificates) via Let's Encrypt. 
+
+First create a normal HTTP loadbalancer and test that the loadbalancer works as expected. Obtain the address details via kubectl.
+```
+$ kubectl expose deployment source-ip-app --name=loadbalancer --port=80 --target-port=8080 --type=LoadBalancer
+service/loadbalancer exposed
+$ kubectl get service/loadbalancer
+NAME           TYPE           CLUSTER-IP      EXTERNAL-IP                                                                                                      PORT(S)        AGE
+loadbalancer   LoadBalancer   172.30.73.139   109.107.39.75,2a02:1348:ffff:ffff::6d6b:274b,cip-109-107-39-75.gb1s.brightbox.com,cip-f7uv8.gb1s.brightbox.com   80:31129/TCP   1m
+```
+
+Now map a domain name to the allocated cloudIP via your preferred DNS service - either directly to the addresses of the CloudIP or via a CNAME record to the cip DNS name.
+Once the domain names resolve correctly, annotate your load balancer with the domain, and change the exposed port to 443.
+```
+$ kubectl patch service/loadbalancer --type='json' -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":443}]'
+service/loadbalancer patched
+$ kubectl annotate service loadbalancer service.beta.kubernetes.io/brightbox-load-balancer-listener-protocol=https
+service/loadbalancer annotated
+$ kubectl annotate service loadbalancer service.beta.kubernetes.io/brightbox-load-balancer-listener-ssl-domains=my-domain.co
+service/loadbalancer annotated
+```
+The load balancer will automatically obtain the appropriate SSL certificates and install them. Once they are in place you can access via an https url
+```
+$ curl https://my-domain.co/
+```
