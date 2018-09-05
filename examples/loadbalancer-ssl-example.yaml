@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: load-balancer-annotated
+  name: hello-world-annotated
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      run: load-balancer-annotated
+  template:
+    metadata:
+      labels:
+        run: load-balancer-annotated
+    spec:
+      containers:
+      - image: gcr.io/google-samples/node-hello:1.0
+        name: hello-world-annotated
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: load-balancer-annotated
+  name: annotated-lb-service
+  annotations:
+    service.beta.kubernetes.io/brightbox-load-balancer-listener-protocol: "https"
+    service.beta.kubernetes.io/brightbox-load-balancer-ssl-domains: "EDITME"
+spec:
+  selector:
+    run: load-balancer-annotated
+  type: LoadBalancer
+  LoadBalancerIP: EDITME
+  ports:
+  - name: https
+    protocol: TCP
+    port: 443
+    targetPort: 8080

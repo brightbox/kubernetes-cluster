@@ -191,7 +191,21 @@ service/loadbalancer annotated
 $ kubectl annotate service loadbalancer service.beta.kubernetes.io/brightbox-load-balancer-ssl-domains=my-domain.co
 service/loadbalancer annotated
 ```
-The load balancer will automatically obtain the appropriate SSL certificates and install them. Once they are in place you can access via an https url
+The load balancer will automatically obtain the appropriate SSL certificates and install them. Once they are in place you can access via an https URL
 ```
 $ curl https://my-domain.co/
 ```
+### Manual Cloud IP allocation example
+If you allocate a cloud IP manually via the [Brightbox Cloud
+Manager](https://www.brightbox.com/docs/guides/manager/getting-started/)
+you can create an SSL enabled load balancer in one go.
+
+- Select or create a new CloudIP in the Brightbox Manager and map your
+chosen domain to it either via a CNAME record or directly to the addresses
+shown in the Manager. You may want to set the reverse DNS on the CloudIP too.
+- Make a copy of the `load-balancer-ssl-example.yml` manifest and edit it.
+- Enter the name of your domain against the `brightbox-load-balancer-ssl-domains` annotation
+- Alter the value of `LoadBalancerIP` to match the address of the chosen CloudIP
+- Apply the manifest with `kubectl apply -f`
+
+The load balancer will automatically obtain the appropriate SSL certificates and install them. Once they are in place you can access via an https URL
