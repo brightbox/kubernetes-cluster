@@ -188,7 +188,7 @@ $ kubectl patch service/loadbalancer --type='json' -p='[{"op": "replace", "path"
 service/loadbalancer patched
 $ kubectl annotate service loadbalancer service.beta.kubernetes.io/brightbox-load-balancer-listener-protocol=https
 service/loadbalancer annotated
-$ kubectl annotate service loadbalancer service.beta.kubernetes.io/brightbox-load-balancer-listener-ssl-domains=my-domain.co
+$ kubectl annotate service loadbalancer service.beta.kubernetes.io/brightbox-load-balancer-ssl-domains=my-domain.co
 service/loadbalancer annotated
 ```
 The load balancer will automatically obtain the appropriate SSL certificates and install them. Once they are in place you can access via an https url
