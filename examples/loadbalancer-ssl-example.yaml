@@ -41,3 +41,7 @@ spec:
     protocol: TCP
     port: 443
     targetPort: hello-world
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: hello-world
