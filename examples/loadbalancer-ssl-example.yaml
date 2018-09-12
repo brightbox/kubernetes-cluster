@@ -18,8 +18,9 @@ spec:
       - image: gcr.io/google-samples/node-hello:1.0
         name: hello-world-annotated
         ports:
-        - containerPort: 8080
-          protocol: TCP
+          - name: hello-world
+            containerPort: 8080
+            protocol: TCP
 ---
 apiVersion: v1
 kind: Service
@@ -39,4 +40,4 @@ spec:
   - name: https
     protocol: TCP
     port: 443
-    targetPort: 8080
+    targetPort: hello-world
