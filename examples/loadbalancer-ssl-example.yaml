@@ -34,7 +34,7 @@ spec:
   selector:
     run: load-balancer-annotated
   type: LoadBalancer
-  LoadBalancerIP: EDITME
+  loadBalancerIP: EDITME
   ports:
   - name: https
     protocol: TCP
