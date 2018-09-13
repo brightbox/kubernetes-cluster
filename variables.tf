@@ -68,6 +68,11 @@ variable "worker_drain_timeout" {
   default     = "60s"
 }
 
+variable "worker_vol_count" {
+  description = "The number of Permanent Volumes to create on each node"
+  default     = 1
+}
+
 variable "cluster_domainname" {
   description = "internal domain name of the Kubernetes Cluster"
   default     = "cluster.local"
@@ -80,32 +85,12 @@ variable "cluster_name" {
 
 # Releases
 
-#variable "k8s_release" {
-#  description = "Version of kubernetes to use"
-#  default     = "v1.11.0"
-#}
-
-variable "critools_release" {
-  description = "Version of critools to use"
-  default     = "v1.11.1"
-}
-
 variable "cni_plugins_release" {
   description = "Version of cniplugins to use"
   default     = "v0.7.1"
 }
 
-variable "containerd_release" {
-  description = "Version of containerd to use"
-  default     = "1.1.2"
-}
-
 variable "brightbox_cloud_controller_release" {
   description = "Version of Brightbox cloud controller to use"
   default     = "0.0.10"
-}
-
-variable "runc_release" {
-  description = "Version of runc to use"
-  default     = "v1.0.0-rc5"
 }

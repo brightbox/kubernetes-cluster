@@ -15,6 +15,14 @@ install_cert() {
 	rm $${source_prefix}.key
 }
 
+echo "Creating local-storage mount point"
+for ((i=1; i<=${worker_vol_count}; i++))
+do
+	sudo mkdir -p /srv/export/vol$${i}
+	sudo mkdir -p /mnt/disks/vol$${i}
+	sudo mount --bind /srv/export/vol$${i} /mnt/disks/vol$${i}
+done
+
 echo "Joining cluster"
 discovery_ca_cert_hash=$(openssl x509 -in $HOME/ca.crt -noout -pubkey |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)
 

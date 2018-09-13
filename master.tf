@@ -128,10 +128,7 @@ data "template_file" "install-provisioner-script" {
   template = "${file("${local.template_path}/install-kube")}"
 
   vars {
-    critools_release    = "${var.critools_release}"
     cni_plugins_release = "${var.cni_plugins_release}"
-    containerd_release  = "${var.containerd_release}"
-    runc_release        = "${var.runc_release}"
     cluster_name        = "${var.cluster_name}"
     cluster_domainname  = "${var.cluster_domainname}"
     service_cidr        = "${local.service_cidr}"

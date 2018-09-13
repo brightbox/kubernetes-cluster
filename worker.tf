@@ -66,6 +66,7 @@ data "template_file" "worker-provisioner-script" {
   template = "${file("${local.template_path}/install-worker")}"
 
   vars {
+    worker_vol_count = "${var.worker_vol_count}"
     boot_token = "${local.boot_token}"
     fqdn       = "${local.fqdn}"
   }
