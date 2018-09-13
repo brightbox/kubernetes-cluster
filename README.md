@@ -129,6 +129,7 @@ local-pv-cd2ebe56   38Gi       RWO            Delete           Bound       defau
 local-pv-da420fe3   38Gi       RWO            Delete           Available                                    local-storage             1m
 ```
 - check that the pods are writing to the persistent volume
+```
 $ kubectl logs local-test-reader-56d45cb67f-d66l8
 Thu Sep 13 16:29:28 UTC 2018
 This is local-test-0, count=1
@@ -165,7 +166,6 @@ local-pv-da420fe3   38Gi       RWO            Delete           Available        
 $ kubectl get pv
 NAME                CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM     STORAGECLASS    REASON    AGE
 local-pv-da420fe3   38Gi       RWO            Delete           Available             local-storage             6m
-
 $ kubectl get pv
 NAME                CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM     STORAGECLASS    REASON    AGE
 local-pv-14b3c6ec   38Gi       RWO            Delete           Available             local-storage             47s
