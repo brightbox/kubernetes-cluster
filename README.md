@@ -97,6 +97,83 @@ kubectl delete -f examples/pod-example.yaml
 pod "busybox" deleted
 ```
 
+### local-statefulset.yaml
+This example creates a set of pods that write to the local-storage Persistent Volumes (PV) on each node.
+To run the example ensure you have at least 3 PVs available on your cluster. You can alter the
+`worker-vol-count` variable to get more PVs on each node when the cluster is built.
+
+- apply the set
+```
+$ kubectl apply -f examples/local-statefulset.yaml
+statefulset.apps/local-test created
+deployment.extensions/local-test-reader created
+```
+- check the bindings have all worked as expected
+```
+$ kubectl get pods
+NAME                                 READY     STATUS    RESTARTS   AGE
+local-test-0                         1/1       Running   0          34s
+local-test-1                         1/1       Running   0          31s
+local-test-2                         1/1       Running   0          29s
+local-test-reader-56d45cb67f-d66l8   1/1       Running   1          33s
+$ kubectl get pvc
+NAME                     STATUS    VOLUME              CAPACITY   ACCESS MODES   STORAGECLASS    AGE
+local-vol-local-test-0   Bound     local-pv-cd2ebe56   38Gi       RWO            local-storage   38s
+local-vol-local-test-1   Bound     local-pv-50394804   38Gi       RWO            local-storage   36s
+local-vol-local-test-2   Bound     local-pv-14b3c6ec   38Gi       RWO            local-storage   33s
+$ kubectl get pv
+NAME                CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM                            STORAGECLASS    REASON    AGE
+local-pv-14b3c6ec   38Gi       RWO            Delete           Bound       default/local-vol-local-test-2   local-storage             11m
+local-pv-50394804   38Gi       RWO            Delete           Bound       default/local-vol-local-test-1   local-storage             1m
+local-pv-cd2ebe56   38Gi       RWO            Delete           Bound       default/local-vol-local-test-0   local-storage             1m
+local-pv-da420fe3   38Gi       RWO            Delete           Available                                    local-storage             1m
+```
+- check that the pods are writing to the persistent volume
+$ kubectl logs local-test-reader-56d45cb67f-d66l8
+Thu Sep 13 16:29:28 UTC 2018
+This is local-test-0, count=1
+Thu Sep 13 16:29:38 UTC 2018
+This is local-test-0, count=1
+Thu Sep 13 16:29:48 UTC 2018
+This is local-test-0, count=1
+Thu Sep 13 16:29:58 UTC 2018
+This is local-test-0, count=1
+Thu Sep 13 16:30:08 UTC 2018
+This is local-test-0, count=1
+```
+- once you've finished remove the pods
+```
+$ kubectl delete -f examples/local-statefulset.yaml
+statefulset.apps "local-test" deleted
+deployment.extensions "local-test-reader" deleted
+```
+- and strip out the volume claims
+```
+$ kubectl delete pvc --all
+persistentvolumeclaim "local-vol-local-test-0" deleted
+persistentvolumeclaim "local-vol-local-test-1" deleted
+persistentvolumeclaim "local-vol-local-test-2" deleted
+```
+- then watch as the volumes are released, reclaimed and regenerated
+```
+$ kubectl get pv
+NAME                CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM                            STORAGECLASS    REASON    AGE
+local-pv-14b3c6ec   38Gi       RWO            Delete           Released    default/local-vol-local-test-2   local-storage             16m
+local-pv-50394804   38Gi       RWO            Delete           Released    default/local-vol-local-test-1   local-storage             5m
+local-pv-cd2ebe56   38Gi       RWO            Delete           Released    default/local-vol-local-test-0   local-storage             5m
+local-pv-da420fe3   38Gi       RWO            Delete           Available                                    local-storage             5m
+$ kubectl get pv
+NAME                CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM     STORAGECLASS    REASON    AGE
+local-pv-da420fe3   38Gi       RWO            Delete           Available             local-storage             6m
+
+$ kubectl get pv
+NAME                CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM     STORAGECLASS    REASON    AGE
+local-pv-14b3c6ec   38Gi       RWO            Delete           Available             local-storage             47s
+local-pv-50394804   38Gi       RWO            Delete           Available             local-storage             44s
+local-pv-cd2ebe56   38Gi       RWO            Delete           Available             local-storage             47s
+local-pv-da420fe3   38Gi       RWO            Delete           Available             local-storage             6m
+```
+
 ### loadbalancer-example.yaml
 This runs up a simple http service via a Brightbox Loadbalancer and cloud IP.
 
@@ -160,7 +237,7 @@ contained in the `X-Forwarded-For` header.
 
 In `Cluster` mode the source address may be another node in the cluster. The `X-Forwarded-For` header is still set to the source address of the end client.
 
-You can see the different responses by following the [Source IP test instructions](https://kubernetes.io/docs/tutorials/services/source-ip/#source-ip-for-services-with-type-loadbalancer) on the main k8s documentation site. 
+You can see the different responses by following the [Source IP test instructions](https://kubernetes.io/docs/tutorials/services/source-ip/#source-ip-for-services-with-type-loadbalancer) on the main k8s documentation site.
 
 TCP loadbalancers obviously don't have the `X-Forwarded-For` header
 set. The source address is set as with HTTP load balancers. See how that
@@ -170,7 +247,7 @@ works by creating the TCP protocol annoation on the loadbalancer.
 kubectl annotate service loadbalancer service.beta.kubernetes.io/brightbox-load-balancer-listener-protocol=tcp
 ```
 ## Automatic SSL certificate management
-Brightbox Cloud load balancers support [automatic generation of SSL certificates](https://www.brightbox.com/docs/reference/load-balancers/#certificates) via Let's Encrypt. 
+Brightbox Cloud load balancers support [automatic generation of SSL certificates](https://www.brightbox.com/docs/reference/load-balancers/#certificates) via Let's Encrypt.
 
 First create a normal HTTP loadbalancer and test that the loadbalancer works as expected. Obtain the address details via kubectl.
 ```
