@@ -29,7 +29,7 @@ metadata:
     run: load-balancer-annotated
   name: annotated-lb-service
   annotations:
-    service.beta.kubernetes.io/brightbox-load-balancer-listener-protocol: "https"
+    service.beta.kubernetes.io/brightbox-load-balancer-listener-protocol: "http"
     service.beta.kubernetes.io/brightbox-load-balancer-ssl-domains: "EDITME"
 spec:
   selector:
