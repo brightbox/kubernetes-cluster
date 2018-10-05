@@ -342,7 +342,7 @@ upgrade() {
 	echo "Kubeadm installed master detected - checking for upgrade"
 	if sudo kubeadm upgrade plan --config $HOME/install/kubeadm.conf | egrep '^\s*kubeadm upgrade apply'
 	then
-		sudo apt-get update -y
+		sudo apt-get -qq update -y
 		sudo apt-get -qq install kubeadm=${kubernetes_release}-00 
 		retry 5 sudo kubeadm upgrade apply -y --config $HOME/install/kubeadm.conf
 		sudo apt-get -qq install \

@@ -66,7 +66,7 @@ EOF
 
 upgrade() {
 	echo "Kubeadm installed worker node detected - checking for upgrade"
-	sudo apt-get update -y
+	sudo apt-get -qq update -y
 	if sudo apt-get -qq install kubeadm=${kubernetes_release}-00
 	then
 		retry 5 sudo kubeadm upgrade node config --kubelet-version=${kubernetes_release}
