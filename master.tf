@@ -112,7 +112,8 @@ resource "null_resource" "k8s_token_manager" {
 
   provisioner "remote-exec" {
     inline = [
-      "kubeadm token delete ${local.boot_token} && kubeadm token create ${local.boot_token}",
+      "kubeadm token delete ${local.boot_token}",
+      "kubeadm token create ${local.boot_token}",
     ]
   }
 }
