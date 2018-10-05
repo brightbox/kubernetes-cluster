@@ -18,11 +18,6 @@ resource "brightbox_server" "k8s_worker" {
     bastion_host = "${brightbox_cloudip.k8s_master.fqdn}"
   }
 
-  provisioner "file" {
-    source      = "${path.root}/checksums.txt"
-    destination = "checksums.txt"
-  }
-
   # Just the public key, so it can be hashed on the server
   provisioner "file" {
     content     = "${tls_self_signed_cert.k8s_ca.cert_pem}"
@@ -31,10 +26,6 @@ resource "brightbox_server" "k8s_worker" {
 
   provisioner "remote-exec" {
     inline = "${data.template_file.install-provisioner-script.rendered}"
-  }
-
-  provisioner "remote-exec" {
-    inline = "${data.template_file.worker-provisioner-script.rendered}"
   }
 
   provisioner "remote-exec" {
@@ -48,6 +39,33 @@ resource "brightbox_server" "k8s_worker" {
       "kubectl drain --ignore-daemonsets --timeout=${var.worker_drain_timeout} ${self.id}",
       "kubectl delete node ${self.id}",
     ]
+  }
+}
+
+resource "null_resource" "k8s_worker_configure" {
+  depends_on = [
+    "null_resource.k8s_master_configure",
+    "null_resource.k8s_token_manager",
+  ]
+  count      = "${var.worker_count}"
+
+  triggers {
+    worker_id   = "${element(brightbox_server.k8s_worker.*.id, count.index)}"
+    k8s_release = "${var.kubernetes_release}"
+  }
+
+  connection {
+    user         = "${element(brightbox_server.k8s_worker.*.username, count.index)}"
+    host         = "${element(brightbox_server.k8s_worker.*.hostname, count.index)}"
+    bastion_host = "${brightbox_cloudip.k8s_master.fqdn}"
+  }
+
+  provisioner "remote-exec" {
+    inline = "${data.template_file.kubeadm-config-script.rendered}"
+  }
+
+  provisioner "remote-exec" {
+    inline = "${data.template_file.worker-provisioner-script.rendered}"
   }
 }
 
@@ -66,8 +84,9 @@ data "template_file" "worker-provisioner-script" {
   template = "${file("${local.template_path}/install-worker")}"
 
   vars {
-    worker_vol_count = "${var.worker_vol_count}"
-    boot_token = "${local.boot_token}"
-    fqdn       = "${local.fqdn}"
+    kubernetes_release = "${var.kubernetes_release}"
+    worker_vol_count   = "${var.worker_vol_count}"
+    boot_token         = "${local.boot_token}"
+    fqdn               = "${local.fqdn}"
   }
 }

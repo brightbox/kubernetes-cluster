@@ -85,12 +85,17 @@ variable "cluster_name" {
 
 # Releases
 
-variable "cni_plugins_release" {
-  description = "Version of cniplugins to use"
-  default     = "v0.7.1"
-}
-
 variable "brightbox_cloud_controller_release" {
   description = "Version of Brightbox cloud controller to use"
   default     = "0.0.11"
+}
+
+variable "kubernetes_release" {
+  description = "Version of Kubernetes to install"
+  default     = "1.11.3"
+}
+
+variable "calico_release" {
+  description = "Version of Calico plugin to install"
+  default     = "3.2"
 }

@@ -15,11 +15,34 @@ install_cert() {
 	rm $${source_prefix}.key
 }
 
-echo "Creating local-storage mount point"
-for ((i=1; i<=${worker_vol_count}; i++))
-do
-	sudo mkdir -p /srv/export/vol$${i}
-	cat <<EOF | sudo tee /etc/systemd/system/mnt-disks-vol$${i}.mount
+# Retries a command on failure.
+# $1 - the max number of attempts
+# $2... - the command to run
+retry() {
+    local max_attempts="$${1}"; shift
+    local attempt_num=1
+
+    until "$${@}"
+    do
+        if [ "$${attempt_num}" -eq "$${max_attempts}" ]
+        then
+            echo "Attempt $${attempt_num} failed and there are no more attempts l
+eft!"
+            return 1
+        else
+            echo "Attempt $${attempt_num} failed! Trying again in $${attempt_num}
+seconds..."
+            sleep $(( attempt_num=attempt_num + 1 ))
+        fi
+    done
+}
+
+install() {
+	echo "Creating local-storage mount point"
+	for ((i=1; i<=${worker_vol_count}; i++))
+	do
+		sudo mkdir -p /srv/export/vol$${i}
+		cat <<EOF | sudo tee /etc/systemd/system/mnt-disks-vol$${i}.mount
 [Unit]
 Before=local-fs.target
 
@@ -32,10 +55,33 @@ Options=bind
 [Install]
 WantedBy=local-fs.target
 EOF
-	sudo systemctl enable --now mnt-disks-vol$${i}.mount
-done
+		sudo systemctl enable --now mnt-disks-vol$${i}.mount
+	done
 
-echo "Joining cluster"
-discovery_ca_cert_hash=$(openssl x509 -in $HOME/ca.crt -noout -pubkey |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)
+	echo "Joining cluster"
+	discovery_ca_cert_hash=$(openssl x509 -in $HOME/ca.crt -noout -pubkey |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)
 
-sudo kubeadm join ${fqdn}:6443 --token ${boot_token} --discovery-token-ca-cert-hash sha256:$${discovery_ca_cert_hash}
+	sudo kubeadm join ${fqdn}:6443 --token ${boot_token} --discovery-token-ca-cert-hash sha256:$${discovery_ca_cert_hash}
+}
+
+upgrade() {
+	echo "Kubeadm installed worker node detected - checking for upgrade"
+	sudo apt-get update -y
+	if sudo apt-get -qq install kubeadm=${kubernetes_release}-00
+	then
+		retry 5 sudo kubeadm upgrade node config --kubelet-version=${kubernetes_release}
+		sudo apt-get -qq install \
+			kubectl=${kubernetes_release}-00 \
+			kubelet=${kubernetes_release}-00
+	else
+		echo "Failed to install kubeadm at version ${kubernetes_release}-00"
+		echo "Version installed is at $(dpkg-query --showformat='$${Version}' --show kubeadm)"
+	fi
+}
+
+if [ -f /etc/kubernetes/kubelet.conf ]
+then
+	upgrade
+else
+	install
+fi

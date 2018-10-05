@@ -48,11 +48,6 @@ resource "null_resource" "k8s_master" {
   }
 
   provisioner "file" {
-    source      = "${path.root}/checksums.txt"
-    destination = "checksums.txt"
-  }
-
-  provisioner "file" {
     content     = "${tls_self_signed_cert.k8s_ca.cert_pem}"
     destination = "ca.crt"
   }
@@ -62,12 +57,9 @@ resource "null_resource" "k8s_master" {
     destination = "ca.key"
   }
 
+  # Generic provisioners
   provisioner "remote-exec" {
     inline = "${data.template_file.install-provisioner-script.rendered}"
-  }
-
-  provisioner "remote-exec" {
-    inline = "${data.template_file.master-provisioner-script.rendered}"
   }
 
   provisioner "remote-exec" {
@@ -78,6 +70,49 @@ resource "null_resource" "k8s_master" {
     inline = [
       "kubectl get services -o=jsonpath='{range .items[?(.spec.type==\"LoadBalancer\")]}{\"service/\"}{.metadata.name}{\" \"}{end}' | xargs -r kubectl delete",
       "sleep 10",
+    ]
+  }
+}
+
+resource "null_resource" "k8s_master_configure" {
+  depends_on = ["null_resource.k8s_master"]
+
+  triggers {
+    master_id                = "${brightbox_server.k8s_master.id}"
+    k8s_release              = "${var.kubernetes_release}"
+    cloud_controller_release = "${var.brightbox_cloud_controller_release}"
+  }
+
+  connection {
+    user = "${brightbox_server.k8s_master.username}"
+    host = "${brightbox_cloudip.k8s_master.fqdn}"
+  }
+
+  provisioner "remote-exec" {
+    inline = "${data.template_file.kubeadm-config-script.rendered}"
+  }
+
+  provisioner "remote-exec" {
+    inline = "${data.template_file.master-provisioner-script.rendered}"
+  }
+}
+
+resource "null_resource" "k8s_token_manager" {
+  depends_on = ["null_resource.k8s_master_configure"]
+
+  triggers {
+    boot_token   = "${local.boot_token}"
+    worker_count = "${var.worker_count}"
+  }
+
+  connection {
+    user = "${brightbox_server.k8s_master.username}"
+    host = "${brightbox_cloudip.k8s_master.fqdn}"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "kubeadm token delete ${local.boot_token} && kubeadm token create ${local.boot_token}",
     ]
   }
 }
@@ -101,9 +136,9 @@ data "template_file" "master-provisioner-script" {
   template = "${file("${local.template_path}/install-master")}"
 
   vars {
-    cluster_domainname       = "${var.cluster_domainname}"
+    kubernetes_release       = "${var.kubernetes_release}"
+    calico_release           = "${var.calico_release}"
     cluster_name             = "${var.cluster_name}"
-    hostname                 = "${brightbox_server.k8s_master.hostname}"
     external_ip              = "${local.external_ip}"
     cloud_controller_release = "${var.brightbox_cloud_controller_release}"
     service_cluster_ip_range = "${local.service_cidr}"
@@ -128,17 +163,27 @@ data "template_file" "install-provisioner-script" {
   template = "${file("${local.template_path}/install-kube")}"
 
   vars {
-    cni_plugins_release = "${var.cni_plugins_release}"
-    cluster_name        = "${var.cluster_name}"
-    cluster_domainname  = "${var.cluster_domainname}"
-    service_cidr        = "${local.service_cidr}"
-    cluster_cidr        = "${local.cluster_cidr}"
-    external_ip         = "${local.external_ip}"
-    public_ip           = "${local.public_ip}"
-    public_rdns         = "${local.public_rdns}"
-    public_fqdn         = "${local.public_fqdn}"
-    fqdn                = "${local.fqdn}"
-    ipv6_fqdn           = "${local.ipv6_fqdn}"
-    boot_token          = "${local.boot_token}"
+    kubernetes_release = "${var.kubernetes_release}"
+  }
+}
+
+data "template_file" "kubeadm-config-script" {
+  template = "${file("${local.template_path}/kubeadm-config")}"
+
+  vars {
+    kubernetes_release = "${var.kubernetes_release}"
+    cluster_name       = "${var.cluster_name}"
+    cluster_domainname = "${var.cluster_domainname}"
+    service_cidr       = "${local.service_cidr}"
+    cluster_cidr       = "${local.cluster_cidr}"
+    external_ip        = "${local.external_ip}"
+    public_ip          = "${local.public_ip}"
+    public_rdns        = "${local.public_rdns}"
+    public_fqdn        = "${local.public_fqdn}"
+    fqdn               = "${local.fqdn}"
+    ipv6_fqdn          = "${local.ipv6_fqdn}"
+    boot_token         = "${local.boot_token}"
+    cluster_domainname = "${var.cluster_domainname}"
+    hostname           = "${brightbox_server.k8s_master.hostname}"
   }
 }

@@ -6,9 +6,6 @@ packages:
   - socat
   - conntrack
   - ipset
-  - kubelet
-  - kubeadm
-  - kubectl
   - docker.io
 apt_sources:
   - source: deb http://apt.kubernetes.io/ kubernetes-xenial main
