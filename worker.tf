@@ -11,7 +11,7 @@ resource "brightbox_server" "k8s_worker" {
   server_groups = ["${brightbox_server_group.k8s.id}"]
 
   lifecycle {
-    create_before_destroy = true
+    ignore_changes = ["image"]
   }
 
   connection {
@@ -47,7 +47,8 @@ resource "null_resource" "k8s_worker_configure" {
     "null_resource.k8s_master_configure",
     "null_resource.k8s_token_manager",
   ]
-  count      = "${var.worker_count}"
+
+  count = "${var.worker_count}"
 
   triggers {
     worker_id   = "${element(brightbox_server.k8s_worker.*.id, count.index)}"

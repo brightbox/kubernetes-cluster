@@ -33,7 +33,8 @@ resource "brightbox_server" "k8s_master" {
   server_groups = ["${brightbox_server_group.k8s.id}"]
 
   lifecycle {
-    create_before_destroy = true
+    prevent_destroy = true
+    ignore_changes  = ["image"]
   }
 }
 
