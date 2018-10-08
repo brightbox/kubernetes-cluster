@@ -11,7 +11,7 @@ resource "brightbox_server" "k8s_worker" {
   server_groups = ["${brightbox_server_group.k8s.id}"]
 
   lifecycle {
-    ignore_changes = ["image"]
+    ignore_changes = ["image", "type"]
   }
 
   connection {
