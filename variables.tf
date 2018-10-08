@@ -65,7 +65,7 @@ variable "worker_type" {
 
 variable "worker_drain_timeout" {
   description = "How long to wait for pods to move off a node before it is deleted"
-  default     = "60s"
+  default     = "120s"
 }
 
 variable "worker_vol_count" {
