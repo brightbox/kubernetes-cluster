@@ -37,7 +37,7 @@ seconds..."
     done
 }
 
-install() {
+install_mount_points() {
 	echo "Creating local-storage mount point"
 	for ((i=1; i<=${worker_vol_count}; i++))
 	do
@@ -57,7 +57,10 @@ WantedBy=local-fs.target
 EOF
 		sudo systemctl enable --now mnt-disks-vol$${i}.mount
 	done
+}
 
+install() {
+	install_mount_points
 	echo "Joining cluster"
 	discovery_ca_cert_hash=$(openssl x509 -in $HOME/ca.crt -noout -pubkey |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)
 
@@ -66,6 +69,7 @@ EOF
 
 upgrade() {
 	echo "Kubeadm installed worker node detected - checking for upgrade"
+	install_mount_points
 	sudo apt-get -qq update -y
 	if sudo apt-get -qq install kubeadm=${kubernetes_release}-00
 	then
