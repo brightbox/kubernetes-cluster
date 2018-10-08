@@ -92,7 +92,7 @@ variable "brightbox_cloud_controller_release" {
 
 variable "kubernetes_release" {
   description = "Version of Kubernetes to install"
-  default     = "1.11.3"
+  default     = "1.12.1"
 }
 
 variable "calico_release" {
