@@ -64,7 +64,10 @@ ensure_admin_config() {
 
 ensure_ancillary_items() {
 	echo "Patching kube-proxy scheduling tolerations"
-	kubectl -n kube-system patch ds kube-proxy -p='{ "spec": { "template": { "spec": { "tolerations": [ { "key": "CriticalAddonsOnly", "operator": "Exists" }, { "effect": "NoSchedule", "key": "node-role.kubernetes.io/master" } ] } } } }'
+	if ! kubectl -n kube-system patch ds kube-proxy -p='{ "spec": { "template": { "spec": { "tolerations": [ { "key": "CriticalAddonsOnly", "operator": "Exists" }, { "effect": "NoSchedule", "key": "node-role.kubernetes.io/master" } ] } } } }'
+	then
+		echo "Patch already applied - skipping"
+	fi
 
 	echo "Requesting Brightbox cloud controller activation"
 	#cat <<EOF | kubectl apply -f -
