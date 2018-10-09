@@ -37,6 +37,7 @@ seconds..."
         fi
     done
 }
+controller_key_name=brightbox-cloud-controller
 
 install() {
 	echo "Installing CA"
@@ -46,17 +47,20 @@ install() {
 	echo "Running kubeadm init"
 	sudo kubeadm init --config $HOME/install/kubeadm.conf
 
+	echo "Installing Secrets for Cloud Controller"
+	kubectl -n kube-system create secret generic $${controller_key_name} '--from-literal=controller-client=${controller_client}' '--from-literal=controller-client-secret=${controller_client_secret}' '--from-literal=apiurl=${apiurl}'
+
+	ensure_ancillary_items
+}
+
+ensure_ancillary_items() {
 	echo "Installing admin config"
 	mkdir -p $HOME/.kube
-	sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+	sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
 	sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 	echo "Patching kube-proxy scheduling tolerations"
 	kubectl -n kube-system patch ds kube-proxy -p='{ "spec": { "template": { "spec": { "tolerations": [ { "key": "CriticalAddonsOnly", "operator": "Exists" }, { "effect": "NoSchedule", "key": "node-role.kubernetes.io/master" } ] } } } }'
-
-	controller_key_name=brightbox-cloud-controller
-	echo "Installing Secrets for Cloud Controller"
-	kubectl -n kube-system create secret generic $${controller_key_name} '--from-literal=controller-client=${controller_client}' '--from-literal=controller-client-secret=${controller_client_secret}' '--from-literal=apiurl=${apiurl}'
 
 	echo "Requesting Brightbox cloud controller activation"
 	#cat <<EOF | kubectl apply -f -
@@ -351,6 +355,7 @@ upgrade() {
 	else
 		echo "Already at version ${kubernetes_release} or greater - skipping"
 	fi
+	ensure_ancillary_items
 }
 
 if sudo kubeadm config view  >/dev/null 2>&1
