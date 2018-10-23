@@ -50,7 +50,7 @@ install() {
 	ensure_admin_config
 
 	echo "Installing Secrets for Cloud Controller"
-	kubectl -n kube-system create secret generic $${controller_key_name} '--from-literal=controller-client=${controller_client}' '--from-literal=controller-client-secret=${controller_client_secret}' '--from-literal=apiurl=${apiurl}'
+	retry 5 kubectl -n kube-system create secret generic $${controller_key_name} '--from-literal=controller-client=${controller_client}' '--from-literal=controller-client-secret=${controller_client_secret}' '--from-literal=apiurl=${apiurl}'
 
 	ensure_ancillary_items
 }
@@ -70,7 +70,6 @@ ensure_ancillary_items() {
 	fi
 
 	echo "Requesting Brightbox cloud controller activation"
-	#cat <<EOF | kubectl apply -f -
 	cat <<EOF > $HOME/install/cloud-controller.yml
 ---
 apiVersion: v1
@@ -199,16 +198,15 @@ spec:
           name: cloud-controller-manager
         name: cloud-controller-conf
 EOF
-	kubectl apply -f $HOME/install/cloud-controller.yml
+	retry 5 kubectl apply -f $HOME/install/cloud-controller.yml
 
 	echo "Installing Calico network controllers"
-	kubectl apply -f \
+	retry 5 kubectl apply -f \
 	https://docs.projectcalico.org/v${calico_release}/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
-	kubectl apply -f \
+	retry 5 kubectl apply -f \
 	https://docs.projectcalico.org/v${calico_release}/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
 
 	echo "Installing Local Storage Provisioner"
-	#cat <<EOF | kubectl apply -f -
 	cat <<EOF > $HOME/install/local-storage-provisioner.yml
 ---
 # Source: provisioner/templates/provisioner.yaml
@@ -346,7 +344,7 @@ roleRef:
   name: local-storage-provisioner-node-clusterrole
   apiGroup: rbac.authorization.k8s.io
 EOF
-	kubectl apply -f $HOME/install/local-storage-provisioner.yml
+	retry 5 kubectl apply -f $HOME/install/local-storage-provisioner.yml
 }
 
 upgrade() {
