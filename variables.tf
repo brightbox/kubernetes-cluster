@@ -87,15 +87,15 @@ variable "cluster_name" {
 
 variable "brightbox_cloud_controller_release" {
   description = "Version of Brightbox cloud controller to use"
-  default     = "0.0.11"
+  default     = "0.0.12"
 }
 
 variable "kubernetes_release" {
   description = "Version of Kubernetes to install"
-  default     = "1.12.1"
+  default     = "1.12.3"
 }
 
 variable "calico_release" {
   description = "Version of Calico plugin to install"
-  default     = "3.2"
+  default     = "3.3"
 }
