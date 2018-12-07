@@ -87,7 +87,7 @@ variable "cluster_name" {
 
 variable "brightbox_cloud_controller_release" {
   description = "Version of Brightbox cloud controller to use"
-  default     = "0.0.12"
+  default     = "0.0.11"
 }
 
 variable "kubernetes_release" {
