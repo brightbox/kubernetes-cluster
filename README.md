@@ -285,7 +285,7 @@ shown in the Manager. You may want to set the reverse DNS on the CloudIP too.
 
 The load balancer will automatically obtain the appropriate SSL certificates and install them. Once they are in place you can access via an https URL
 ## Upgrade a Cluster
-The scripts will upgrade the version of Kubernetes on an existing cluster. Change the `kubernetes_release` or `brightbox_cloud_controller_release` version number as required and run `terraform apply`. Both the master and workers will be upgraded to the new version. 
+The scripts will upgrade the version of Kubernetes on an existing cluster. Change the `kubernetes_release` version number as required and run `terraform apply`. Both the master and workers will be upgraded to the new version.
 Upgrades will only work if permitted by the `kubeadm upgrade` facility. You can check before hand by logging onto your master and running [`kubeadm upgrade plan`](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-upgrade/#cmd-upgrade-plan)
 ## Adding and Removing Workers
 You can add and remove workers by changing the `worker_count` variable and running `terraform apply`. You can also change the `worker_type` and even the `image_desc` and new workers will use those values. Reducing workers operates using the last in, first out principle and will only allow you to reduce workers if there is sufficient space on other workers to accommodate evicted pods. The scripts try to drain the nodes fully before deleting them, and you may need to increase `worker_drain_timeout` if your applications take a long time to shut down or migrate. The default is to wait for 120 seconds.

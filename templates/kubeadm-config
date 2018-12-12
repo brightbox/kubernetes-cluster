@@ -3,8 +3,10 @@
 set -e
 
 create_kubeadm_config() {
-	echo "Installing kubeadm.conf"
-	cat <<EOF >$HOME/install/kubeadm.conf
+        echo "Installing kubeadm.conf"
+        case ${kubernetes_release} in
+                1.11.* )
+        cat <<EOF >$HOME/install/kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1alpha2
 kubernetesVersion: ${kubernetes_release}
 apiServerExtraArgs:
@@ -37,6 +39,98 @@ kubeProxy:
     ipvs:
       scheduler: lc
 EOF
+        ;;
+                1.12.*)
+        cat <<EOF >$HOME/install/kubeadm.conf
+apiVersion: kubeadm.k8s.io/v1alpha3
+kind: InitConfiguration
+apiEndpoint:
+  advertiseAddress: ${external_ip}
+bootstrapTokens:
+- token: "${boot_token}"
+  description: "kubeadm bootstrap token"
+nodeRegistration:
+  kubeletExtraArgs:
+    cloud-provider: external
+---
+apiVersion: kubeadm.k8s.io/v1alpha3
+kind: ClusterConfiguration
+apiServerCertSANs:
+- ${fqdn}
+- ${ipv6_fqdn}
+- ${public_fqdn}
+- ${public_rdns}
+- ${public_ip}
+apiServerExtraArgs:
+  cloud-provider: external
+clusterName: ${cluster_name}
+controllerManagerExtraArgs:
+  cloud-provider: external
+kubernetesVersion: "v${kubernetes_release}"
+networking:
+  dnsDomain: ${cluster_domainname}
+  podSubnet: ${cluster_cidr}
+  serviceSubnet: ${service_cidr}
+---
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+clusterCIDR: ${cluster_cidr}
+ipvs:
+  scheduler: lc
+mode: ipvs
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+clusterDomain: ${cluster_domainname}
+EOF
+                ;;
+                1.13.*)
+        cat <<EOF >$HOME/install/kubeadm.conf
+apiVersion: kubeadm.k8s.io/v1beta1
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: ${external_ip}
+bootstrapTokens:
+- token: "${boot_token}"
+  description: "kubeadm bootstrap token"
+nodeRegistration:
+  kubeletExtraArgs:
+    cloud-provider: external
+---
+apiVersion: kubeadm.k8s.io/v1beta1
+kind: ClusterConfiguration
+apiServer:
+  certSANs:
+  - ${fqdn}
+  - ${ipv6_fqdn}
+  - ${public_fqdn}
+  - ${public_rdns}
+  - ${public_ip}
+  extraArgs:
+    cloud-provider: external
+clusterName: ${cluster_name}
+controllerManager:
+  extraArgs:
+    cloud-provider: external
+kubernetesVersion: "v${kubernetes_release}"
+networking:
+  dnsDomain: ${cluster_domainname}
+  podSubnet: ${cluster_cidr}
+  serviceSubnet: ${service_cidr}
+---
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+clusterCIDR: ${cluster_cidr}
+ipvs:
+  scheduler: lc
+mode: ipvs
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+clusterDomain: ${cluster_domainname}
+EOF
+                ;;
+        esac
 }
 
 create_kubeadm_config

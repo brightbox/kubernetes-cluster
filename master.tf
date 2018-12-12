@@ -80,7 +80,6 @@ resource "null_resource" "k8s_master_configure" {
   triggers {
     master_id                = "${brightbox_server.k8s_master.id}"
     k8s_release              = "${var.kubernetes_release}"
-    cloud_controller_release = "${var.brightbox_cloud_controller_release}"
   }
 
   connection {
@@ -141,7 +140,6 @@ data "template_file" "master-provisioner-script" {
     calico_release           = "${var.calico_release}"
     cluster_name             = "${var.cluster_name}"
     external_ip              = "${local.external_ip}"
-    cloud_controller_release = "${var.brightbox_cloud_controller_release}"
     service_cluster_ip_range = "${local.service_cidr}"
     controller_client        = "${var.controller_client}"
     controller_client_secret = "${var.controller_client_secret}"

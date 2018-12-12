@@ -85,14 +85,9 @@ variable "cluster_name" {
 
 # Releases
 
-variable "brightbox_cloud_controller_release" {
-  description = "Version of Brightbox cloud controller to use"
-  default     = "0.0.11"
-}
-
 variable "kubernetes_release" {
   description = "Version of Kubernetes to install"
-  default     = "1.12.3"
+  default     = "1.13.0"
 }
 
 variable "calico_release" {

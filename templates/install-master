@@ -40,37 +40,37 @@ seconds..."
 controller_key_name=brightbox-cloud-controller
 
 install() {
-	echo "Installing CA"
-	sudo mkdir -p /etc/kubernetes/pki/etcd
-	install_cert ca
+        echo "Installing CA"
+        sudo mkdir -p /etc/kubernetes/pki/etcd
+        install_cert ca
 
-	echo "Running kubeadm init"
-	sudo kubeadm init --config $HOME/install/kubeadm.conf
+        echo "Running kubeadm init"
+        sudo kubeadm init --config $HOME/install/kubeadm.conf
 
-	ensure_admin_config
+        ensure_admin_config
 
-	echo "Installing Secrets for Cloud Controller"
-	retry 5 kubectl -n kube-system create secret generic $${controller_key_name} '--from-literal=controller-client=${controller_client}' '--from-literal=controller-client-secret=${controller_client_secret}' '--from-literal=apiurl=${apiurl}'
+        echo "Installing Secrets for Cloud Controller"
+        retry 5 kubectl -n kube-system create secret generic $${controller_key_name} '--from-literal=controller-client=${controller_client}' '--from-literal=controller-client-secret=${controller_client_secret}' '--from-literal=apiurl=${apiurl}'
 
-	ensure_ancillary_items
+        ensure_ancillary_items
 }
 
 ensure_admin_config() {
-	echo "Installing admin config"
-	mkdir -p $HOME/.kube
-	sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
-	sudo chown $(id -u):$(id -g) $HOME/.kube/config
+        echo "Installing admin config"
+        mkdir -p $HOME/.kube
+        sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
+        sudo chown $(id -u):$(id -g) $HOME/.kube/config
 }
 
 ensure_ancillary_items() {
-	echo "Patching kube-proxy scheduling tolerations"
-	if ! kubectl -n kube-system patch ds kube-proxy -p='{ "spec": { "template": { "spec": { "tolerations": [ { "key": "CriticalAddonsOnly", "operator": "Exists" }, { "effect": "NoSchedule", "key": "node-role.kubernetes.io/master" } ] } } } }'
-	then
-		echo "Patch already applied - skipping"
-	fi
+        echo "Patching kube-proxy scheduling tolerations"
+        if ! kubectl -n kube-system patch ds kube-proxy -p='{ "spec": { "template": { "spec": { "tolerations": [ { "key": "CriticalAddonsOnly", "operator": "Exists" }, { "effect": "NoSchedule", "key": "node-role.kubernetes.io/master" } ] } } } }'
+        then
+                echo "Patch already applied - skipping"
+        fi
 
-	echo "Requesting Brightbox cloud controller activation"
-	cat <<EOF > $HOME/install/cloud-controller.yml
+        echo "Requesting Brightbox cloud controller activation"
+        cat <<EOF > $HOME/install/cloud-controller.yml
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -136,6 +136,7 @@ spec:
         k8s-app: cloud-controller-manager
     spec:
       dnsPolicy: Default
+      hostNetwork: true
       serviceAccountName: cloud-controller-manager
       nodeSelector:
         node-role.kubernetes.io/master: ""
@@ -147,20 +148,27 @@ spec:
           effect: "NoSchedule"
         - key: "CriticalAddonsOnly"
           operator: "Exists"
-        # cloud controller manages should be able to run on masters
         - key: "node-role.kubernetes.io/master"
           effect: NoSchedule
+        - effect: NoExecute
+          key: node.kubernetes.io/not-ready
+          operator: Exists
+          tolerationSeconds: 300
+        - effect: NoExecute
+          key: node.kubernetes.io/unreachable
+          operator: Exists
+          tolerationSeconds: 300
       containers:
       - name: cloud-controller-manager
         # for in-tree providers we use k8s.gcr.io/cloud-controller-manager
         # this can be replaced with any other image for out-of-tree providers
-        image: brightbox/brightbox-cloud-controller-manager:${cloud_controller_release}
+        image: brightbox/brightbox-cloud-controller-manager:${kubernetes_release}
         command:
           - "/bin/brightbox-cloud-controller-manager"
           - "--cloud-provider=brightbox"
           - "--bind-address=::1"
           - "--port=0"
-          - "--secure-port=10253"
+          - "--secure-port=10258"
           - "--configure-cloud-routes=false"
           - "--kubeconfig=/etc/kubernetes/cloud-controller.conf"
           - "--cluster-name=${cluster_name}"
@@ -171,6 +179,10 @@ spec:
             cpu: 100m
             memory: 50Mi
         env:
+          - name: KUBERNETES_SERVICE_HOST
+            value: "${external_ip}"
+          - name: KUBERNETES_SERVICE_PORT
+            value: "6443"
           - name: BRIGHTBOX_CLIENT
             valueFrom:
               secretKeyRef:
@@ -198,16 +210,16 @@ spec:
           name: cloud-controller-manager
         name: cloud-controller-conf
 EOF
-	retry 5 kubectl apply -f $HOME/install/cloud-controller.yml
+        retry 5 kubectl apply -f $HOME/install/cloud-controller.yml
 
-	echo "Installing Calico network controllers"
-	retry 5 kubectl apply -f \
-	https://docs.projectcalico.org/v${calico_release}/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
-	retry 5 kubectl apply -f \
-	https://docs.projectcalico.org/v${calico_release}/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
+        echo "Installing Calico network controllers"
+        retry 5 kubectl apply -f \
+        https://docs.projectcalico.org/v${calico_release}/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
+        retry 5 kubectl apply -f \
+        https://docs.projectcalico.org/v${calico_release}/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
 
-	echo "Installing Local Storage Provisioner"
-	cat <<EOF > $HOME/install/local-storage-provisioner.yml
+        echo "Installing Local Storage Provisioner"
+        cat <<EOF > $HOME/install/local-storage-provisioner.yml
 ---
 # Source: provisioner/templates/provisioner.yaml
 apiVersion: v1
@@ -344,29 +356,29 @@ roleRef:
   name: local-storage-provisioner-node-clusterrole
   apiGroup: rbac.authorization.k8s.io
 EOF
-	retry 5 kubectl apply -f $HOME/install/local-storage-provisioner.yml
+        retry 5 kubectl apply -f $HOME/install/local-storage-provisioner.yml
 }
 
 upgrade() {
-	echo "Kubeadm installed master detected - checking for upgrade"
-	if sudo kubeadm upgrade plan --config $HOME/install/kubeadm.conf | egrep '^\s*kubeadm upgrade apply'
-	then
-		sudo apt-get -qq update -y
-		sudo apt-get -qq install kubeadm=${kubernetes_release}-00 
-		retry 5 sudo kubeadm upgrade apply -y --config $HOME/install/kubeadm.conf
-		sudo apt-get -qq install \
-			kubectl=${kubernetes_release}-00 \
-			kubelet=${kubernetes_release}-00
-	else
-		echo "Already at version ${kubernetes_release} or greater - skipping"
-	fi
-	ensure_admin_config
-	ensure_ancillary_items
+        echo "Kubeadm installed master detected - checking for upgrade"
+	sudo apt-get -qq update -y
+	sudo apt-get -qq install kubeadm=${kubernetes_release}-00
+        if sudo kubeadm upgrade plan --config $HOME/install/kubeadm.conf | egrep '^\s*kubeadm upgrade apply'
+        then
+                retry 5 sudo kubeadm upgrade apply -y --config $HOME/install/kubeadm.conf
+                sudo apt-get -qq install \
+                        kubectl=${kubernetes_release}-00 \
+                        kubelet=${kubernetes_release}-00
+        else
+                echo "Already at version ${kubernetes_release} or greater - skipping"
+        fi
+        ensure_admin_config
+        ensure_ancillary_items
 }
 
 if sudo kubeadm config view  >/dev/null 2>&1
 then
-	upgrade
+        upgrade
 else
-	install
+        install
 fi
