@@ -20,6 +20,18 @@ provider "brightbox" {
   apiclient = "${var.apiclient}"
   apisecret = "${var.apisecret}"
 }
+provider "null" {
+  version = "~> 2.0"
+}
+provider "random" {
+  version = "~> 2.0"
+}
+provider "template" {
+  version = "~> 2.0"
+}
+provider "tls" {
+  version = "~> 1.2"
+}
 
 resource "random_string" "token_suffix" {
   length  = 16

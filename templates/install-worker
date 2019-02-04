@@ -3,8 +3,8 @@
 set -e
 
 install_cert() {
-	local source_prefix=$$1
-	local dest_prefix=$${2:-$$1}
+	local source_prefix=$${1}
+	local dest_prefix=$${2:-$${1}}
         local pki_dir=/etc/kubernetes/pki
 
 	for word in crt key
