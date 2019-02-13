@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: percona
+  annotations:
+    service.beta.kubernetes.io/brightbox-load-balancer-listener-protocol: "tcp"
+    #    service.beta.kubernetes.io/brightbox-load-balancer-listener-proxy-protocol: "v2-ssl-cn"
+    service.beta.kubernetes.io/brightbox-load-balancer-healthcheck-protocol: "tcp"
+spec:
+  selector:
+    app: percona
+  type: LoadBalancer
+  ports:
+  - name: mysql
+    port: 3306
+    protocol: TCP
+    targetPort: percona
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: percona
+spec:
+  selector:
+    matchLabels:
+      app: percona
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: percona
+    spec:
+      containers:
+      - image: percona:8
+        name: percona
+        args: 
+        - --log-error-verbosity=3
+          #        - --proxy-protocol-networks=*
+        env:
+        - name: MYSQL_RANDOM_ROOT_PASSWORD
+          value: "yes"
+        ports:
+        - containerPort: 3306
+          name: percona
+          protocol: TCP
+        volumeMounts:
+        - name: internal-temp
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: internal-temp
+        emptyDir: {}

@@ -246,6 +246,67 @@ works by creating the TCP protocol annoation on the loadbalancer.
 ```
 kubectl annotate service loadbalancer service.beta.kubernetes.io/brightbox-load-balancer-listener-protocol=tcp
 ```
+### loadbalancer-proxy-example.yaml
+Brightbox Cloud load balancers support the [Proxy
+Protocol](https://www.brightbox.com/docs/reference/load-balancers/#proxy-protocol-support)
+allowing the source IP to be obtained easily if your backend software
+supports it.  This example creates a Percona database which you can
+connect to with a version 8 client.
+
+Apply the example
+```
+kubectl apply -f examples/loadbalancer-proxy-example.yaml
+```
+Once the load balancer has completed building, get the pod names
+```
+kubectl get pods
+```
+and obtain the root password from the logs
+```
+$ kubectl logs percona-5cb97df57c-db2p5 | grep GENERATED
+GENERATED ROOT PASSWORD: 4q6eNPylWuxykirluM)urIbipoJ
+```
+
+Then connect with a mysql client to the load balancer address and run a show process list
+```
+$ mysql -v -h cip-wyre0.gb1.brightbox.com -e 'show full processlist;' -u root -p
+Enter password: 
+--------------
+show full processlist
+--------------
+
++----+-----------------+-------------------+------+---------+------+------------------------+-----------------------+-----------+---------------+
+| Id | User            | Host              | db   | Command | Time | State                  | Info                  | Rows_sent | Rows_examined |
++----+-----------------+-------------------+------+---------+------+------------------------+-----------------------+-----------+---------------+
+|  4 | event_scheduler | localhost         | NULL | Daemon  |  705 | Waiting on empty queue | NULL                  |         0 |             0 |
+| 10 | root            | 192.168.2.1:59186 | NULL | Query   |    0 | starting               | show full processlist |         0 |             0 |
++----+-----------------+-------------------+------+---------+------+------------------------+-----------------------+-----------+---------------+
+```
+You'll see that the Host address is a local address from the internal k8s network.
+
+Now delete the example
+```
+kubectl delete -f examples/loadbalancer-proxy-example.yaml
+```
+then edit and uncomment the lines that turn on proxy support in the
+loadbalancer and the database before applying the example again. Remember
+to get the new root password.
+
+This time when you connect you'll see that the Host address is the address of the client you are connecting from.
+```
+$ mysql -v -h cip-wyre0.gb1.brightbox.com -e 'show full processlist;' -u root -p
+Enter password: 
+--------------
+show full processlist
+--------------
+
++----+-----------------+----------------------+------+---------+------+------------------------+-----------------------+-----------+---------------+
+| Id | User            | Host                 | db   | Command | Time | State                  | Info                  | Rows_sent | Rows_examined |
++----+-----------------+----------------------+------+---------+------+------------------------+-----------------------+-----------+---------------+
+|  4 | event_scheduler | localhost            | NULL | Daemon  |   34 | Waiting on empty queue | NULL                  |         0 |             0 |
+|  8 | root            | 82.132.242.240:47962 | NULL | Query   |    0 | starting               | show full processlist |         0 |             0 |
++----+-----------------+----------------------+------+---------+------+------------------------+-----------------------+-----------+---------------+
+```
 ## Automatic SSL certificate management
 Brightbox Cloud load balancers support [automatic generation of SSL certificates](https://www.brightbox.com/docs/reference/load-balancers/#certificates) via Let's Encrypt.
 
@@ -284,6 +345,7 @@ shown in the Manager. You may want to set the reverse DNS on the CloudIP too.
 - Apply the manifest with `kubectl apply -f`
 
 The load balancer will automatically obtain the appropriate SSL certificates and install them. Once they are in place you can access via an https URL
+
 ## Upgrade a Cluster
 The scripts will upgrade the version of Kubernetes on an existing cluster. Change the `kubernetes_release` version number as required and run `terraform apply`. Both the master and workers will be upgraded to the new version.
 Upgrades will only work if permitted by the `kubeadm upgrade` facility. You can check before hand by logging onto your master and running [`kubeadm upgrade plan`](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-upgrade/#cmd-upgrade-plan)
