@@ -45,7 +45,7 @@ variable "master_type" {
 
 variable "management_source" {
   description = "CIDR of any external management workstations"
-  default     = "0.0.0.0/32"
+  default     = ["0.0.0.0/32"]
 }
 
 variable "image_desc" {
