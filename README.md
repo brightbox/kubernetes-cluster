@@ -241,7 +241,7 @@ You can see the different responses by following the [Source IP test instruction
 
 TCP loadbalancers obviously don't have the `X-Forwarded-For` header
 set. The source address is set as with HTTP load balancers. See how that
-works by creating the TCP protocol annoation on the loadbalancer.
+works by creating the TCP protocol annotation on the loadbalancer.
 
 ```
 kubectl annotate service loadbalancer service.beta.kubernetes.io/brightbox-load-balancer-listener-protocol=tcp
