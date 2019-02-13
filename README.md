@@ -282,14 +282,14 @@ show full processlist
 | 10 | root            | 192.168.2.1:59186 | NULL | Query   |    0 | starting               | show full processlist |         0 |             0 |
 +----+-----------------+-------------------+------+---------+------+------------------------+-----------------------+-----------+---------------+
 ```
-You'll see that the Host address is a local address from the internal k8s network.
+You'll see that the Host address is a local address from the internal kubernetes network.
 
 Now delete the example
 ```
 kubectl delete -f examples/loadbalancer-proxy-example.yaml
 ```
 then edit and uncomment the lines that turn on proxy support in the
-loadbalancer and the database before applying the example again. Remember
+loadbalancer and the database, before applying the example again. Remember
 to get the new root password.
 
 This time when you connect you'll see that the Host address is the address of the client you are connecting from.
