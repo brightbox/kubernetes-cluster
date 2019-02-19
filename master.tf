@@ -33,7 +33,7 @@ resource "brightbox_server" "k8s_master" {
   server_groups = ["${brightbox_server_group.k8s.id}"]
 
   lifecycle {
-    ignore_changes  = ["image", "type"]
+    ignore_changes = ["image", "type"]
   }
 }
 
@@ -78,8 +78,8 @@ resource "null_resource" "k8s_master_configure" {
   depends_on = ["null_resource.k8s_master"]
 
   triggers {
-    master_id                = "${brightbox_server.k8s_master.id}"
-    k8s_release              = "${var.kubernetes_release}"
+    master_id   = "${brightbox_server.k8s_master.id}"
+    k8s_release = "${var.kubernetes_release}"
   }
 
   connection {

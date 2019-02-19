@@ -11,7 +11,7 @@ resource "brightbox_server" "k8s_worker" {
   server_groups = ["${brightbox_server_group.k8s.id}"]
 
   lifecycle {
-    ignore_changes = ["image", "type", "server_groups"]
+    ignore_changes        = ["image", "type", "server_groups"]
     create_before_destroy = true
   }
 
@@ -54,7 +54,7 @@ resource "null_resource" "k8s_worker_configure" {
   triggers {
     worker_id   = "${element(brightbox_server.k8s_worker.*.id, count.index)}"
     k8s_release = "${var.kubernetes_release}"
-    vol_count = "${var.worker_vol_count}"
+    vol_count   = "${var.worker_vol_count}"
   }
 
   connection {
