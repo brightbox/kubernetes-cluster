@@ -327,7 +327,10 @@ service/loadbalancer patched
 $ kubectl annotate service loadbalancer service.beta.kubernetes.io/brightbox-load-balancer-ssl-domains=my-domain.co
 service/loadbalancer annotated
 ```
-The load balancer will automatically obtain the appropriate SSL certificates and install them. Once they are in place you can access via an https URL
+The load balancer will automatically obtain the appropriate SSL
+certificates, install them and turn on the HTTPS redirect service. This
+will ensure that any access to URLs on the specified domains will go
+via a secure connection straightaway.
 ```
 $ curl https://my-domain.co/
 ```
