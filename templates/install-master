@@ -73,7 +73,7 @@ fi
 
 USER=$${1}
 GROUP=$${2}
-CLUSTERENDPOINT=https://[${external_ip}]:6443
+CLUSTERENDPOINT=https://${public_fqdn}:6443
 CLUSTERNAME=${cluster_name}
 CACERT=/etc/kubernetes/pki/ca.crt
 CAKEY=/etc/kubernetes/pki/ca.key

@@ -78,9 +78,9 @@ resource "null_resource" "k8s_master_configure" {
   depends_on = ["null_resource.k8s_master"]
 
   triggers {
-    master_id   = "${brightbox_server.k8s_master.id}"
-    k8s_release = "${var.kubernetes_release}"
-    master_script = "${data.template_file.master-provisioner-script.rendered}"
+    master_id      = "${brightbox_server.k8s_master.id}"
+    k8s_release    = "${var.kubernetes_release}"
+    master_script  = "${data.template_file.master-provisioner-script.rendered}"
     kubeadm_script = "${data.template_file.kubeadm-config-script.rendered}"
   }
 
@@ -142,6 +142,7 @@ data "template_file" "master-provisioner-script" {
     calico_release           = "${var.calico_release}"
     cluster_name             = "${var.cluster_name}"
     external_ip              = "${local.external_ip}"
+    public_fqdn              = "${local.public_fqdn}"
     service_cluster_ip_range = "${local.service_cidr}"
     controller_client        = "${var.controller_client}"
     controller_client_secret = "${var.controller_client_secret}"
