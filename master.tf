@@ -80,6 +80,8 @@ resource "null_resource" "k8s_master_configure" {
   triggers {
     master_id   = "${brightbox_server.k8s_master.id}"
     k8s_release = "${var.kubernetes_release}"
+    master_script = "${data.template_file.master-provisioner-script.rendered}"
+    kubeadm_script = "${data.template_file.kubeadm-config-script.rendered}"
   }
 
   connection {
