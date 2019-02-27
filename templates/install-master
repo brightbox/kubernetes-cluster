@@ -62,17 +62,20 @@ ensure_admin_config() {
         sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 	echo "Installing client cert generator"
-	mkdir -p $HOME/bin
-	cat <<"CLIENTSCRIPT" >$HOME/bin/generate-client-cert.sh
+	cat <<"CLIENTSCRIPT" | sudo tee /usr/local/bin/generate-client-cert.sh
 #!/usr/bin/env bash
 
-if [[ "$${#}" -ne 2 ]]; then
-    echo "Usage: $${0} user group"
+if [[ "$${#}" -lt 2 ]]; then
+    echo "Usage: $${0} user group [group ...]"
     exit 1
 fi
 
-USER=$${1}
-GROUP=$${2}
+USER=$${1}; shift
+GROUP=""
+for word
+do
+  GROUP="$${GROUP}/O=$${word}"
+done
 CLUSTERENDPOINT=https://${public_fqdn}:6443
 CLUSTERNAME=${cluster_name}
 CACERT=/etc/kubernetes/pki/ca.crt
@@ -90,7 +93,7 @@ mkdir -p clients/$${USER}
 
 openssl genrsa -out $${CLIENTCERTKEY} 4096
 openssl req -new -key $${CLIENTCERTKEY} -out $${CLIENTCERTCSR} \
-      -subj "/O=$${GROUP}/CN=$${USER}"
+      -subj "/CN=$${USER}$${GROUP}"
 openssl x509 -req -days 365 -sha256 -in $${CLIENTCERTCSR} -CA $${CACERT} -CAkey $${CAKEY} -set_serial 2 -out $${CLIENTCERTCRT}
 
 cat <<-EOF > clients/$${USER}/kubeconfig
@@ -103,7 +106,8 @@ clusters:
 - name: $${CLUSTERNAME}
   cluster:
     server: $${CLUSTERENDPOINT}
-    certificate-authority-data: $(cat $${CACERT} | base64 --wrap=0)
+    certificate-authority-data: |-
+      $(base64 --wrap=0 $${CACERT})
 contexts:
 - context:
     cluster: $${CLUSTERNAME}
@@ -112,12 +116,14 @@ contexts:
 users:
 - name: $${USER}
   user:
-    client-certificate-data: $(cat $${CLIENTCERTCRT} | base64 --wrap=0)
-    client-key-data: $(cat $${CLIENTCERTKEY} | base64 --wrap=0)
+    client-certificate-data: |-
+      $(base64 --wrap=0 $${CLIENTCERTCRT})
+    client-key-data: |-
+      $(base64 --wrap=0 $${CLIENTCERTKEY})
 EOF
 CLIENTSCRIPT
 	echo "Setting permissions"
-	chmod 755 $HOME/bin/generate-client-cert.sh
+	sudo chmod 755 /usr/local/bin/generate-client-cert.sh
 }
 
 ensure_ancillary_items() {
