@@ -146,7 +146,7 @@ data "template_file" "master-provisioner-script" {
     service_cluster_ip_range = "${local.service_cidr}"
     controller_client        = "${var.controller_client}"
     controller_client_secret = "${var.controller_client_secret}"
-    apiurl                   = "${local.default_apiurl}"
+    apiurl                   = "https://api.${var.region}.brightbox.com"
   }
 }
 
