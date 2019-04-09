@@ -84,7 +84,7 @@ kind: KubeletConfiguration
 clusterDomain: ${cluster_domainname}
 EOF
                 ;;
-                1.13.*)
+                1.1[34].*)
         cat <<EOF >$HOME/install/kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: InitConfiguration
@@ -130,6 +130,9 @@ kind: KubeletConfiguration
 clusterDomain: ${cluster_domainname}
 EOF
                 ;;
+	*)
+		echo "Version ${kubernetes_release} not supported"
+		exit 3
         esac
 }
 

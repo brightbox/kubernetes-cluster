@@ -41,3 +41,8 @@ resource "brightbox_firewall_rule" "k8s_icmp" {
   icmp_type_name  = "any"
   firewall_policy = "${brightbox_firewall_policy.k8s.id}"
 }
+
+resource "brightbox_api_client" "controller_client" {
+  name              = "Cloud Controller ${var.cluster_name}"
+  permissions_group = "full"
+}

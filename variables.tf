@@ -16,21 +16,13 @@ variable "account" {
 }
 
 variable "apiclient" {
-  description = "Brightbox API Client ID for building nodes"
+  description = "Brightbox API application client id"
   default     = "app-dkmch"
 }
 
 variable "apisecret" {
-  description = "Secret for the node building API Client ID"
+  description = "Brightbox API application shared secret"
   default     = "uogoelzgt0nwawb"
-}
-
-variable "controller_client" {
-  description = "Brightbox API Client ID for the Brightbox cloud controller app"
-}
-
-variable "controller_client_secret" {
-  description = "Secret for the Controller API Client ID"
 }
 
 variable "master_count" {
@@ -87,7 +79,7 @@ variable "cluster_name" {
 
 variable "kubernetes_release" {
   description = "Version of Kubernetes to install"
-  default     = "1.13.5"
+  default     = "1.14.1"
 }
 
 variable "calico_release" {

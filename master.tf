@@ -144,8 +144,8 @@ data "template_file" "master-provisioner-script" {
     external_ip              = "${local.external_ip}"
     public_fqdn              = "${local.public_fqdn}"
     service_cluster_ip_range = "${local.service_cidr}"
-    controller_client        = "${var.controller_client}"
-    controller_client_secret = "${var.controller_client_secret}"
+    controller_client        = "${brightbox_api_client.controller_client.id}"
+    controller_client_secret = "${brightbox_api_client.controller_client.secret}"
     apiurl                   = "https://api.${var.region}.brightbox.com"
   }
 }

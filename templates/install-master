@@ -37,7 +37,6 @@ seconds..."
         fi
     done
 }
-controller_key_name=brightbox-cloud-controller
 
 install() {
         echo "Installing CA"
@@ -48,10 +47,6 @@ install() {
         sudo kubeadm init --config $HOME/install/kubeadm.conf
 
         ensure_admin_config
-
-        echo "Installing Secrets for Cloud Controller"
-        retry 5 kubectl -n kube-system create secret generic $${controller_key_name} '--from-literal=controller-client=${controller_client}' '--from-literal=controller-client-secret=${controller_client_secret}' '--from-literal=apiurl=${apiurl}'
-
         ensure_ancillary_items
 }
 
@@ -126,6 +121,11 @@ CLIENTSCRIPT
 	sudo chmod 755 /usr/local/bin/generate-client-cert.sh
 }
 
+controller_key_name=brightbox-cloud-controller
+apiurl_b64=$(echo -n ${apiurl} | base64)
+controller_client_b64=$(echo -n ${controller_client} | base64)
+controller_client_secret_b64=$(echo -n ${controller_client_secret} | base64)
+
 ensure_ancillary_items() {
         echo "Patching kube-proxy scheduling tolerations"
         if ! kubectl -n kube-system patch ds kube-proxy -p='{ "spec": { "template": { "spec": { "tolerations": [ { "key": "CriticalAddonsOnly", "operator": "Exists" }, { "effect": "NoSchedule", "key": "node-role.kubernetes.io/master" } ] } } } }'
@@ -135,6 +135,17 @@ ensure_ancillary_items() {
 
         echo "Requesting Brightbox cloud controller activation"
         cat <<EOF > $HOME/install/cloud-controller.yml
+---
+apiVersion: v1
+data:
+  apiurl: $${apiurl_b64}
+  controller-client: $${controller_client_b64}
+  controller-client-secret: $${controller_client_secret_b64}
+kind: Secret
+metadata:
+  name: $${controller_key_name}
+  namespace: kube-system
+type: Opaque
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -198,6 +209,9 @@ spec:
     metadata:
       labels:
         k8s-app: cloud-controller-manager
+      annotations: {
+        "apiclientid": "${controller_client}"
+      }
     spec:
       dnsPolicy: Default
       hostNetwork: true
