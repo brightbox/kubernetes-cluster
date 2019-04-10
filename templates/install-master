@@ -436,8 +436,10 @@ EOF
 }
 
 ensure_docker_settings() {
-	echo "Writing Updated Docker Configuration"
-	cat <<EOF | sudo tee /etc/docker/daemon.json
+	if [ ! -f /etc/docker/daemon.json ]
+	then
+		echo "Writing Updated Docker Configuration"
+		cat <<EOF | sudo tee /etc/docker/daemon.json
 {
   "log-driver": "json-file",
   "live-restore": true,
@@ -447,9 +449,10 @@ ensure_docker_settings() {
   "storage-driver": "overlay2"
 }
 EOF
-	sudo systemctl reload docker
-	sudo mkdir -p /etc/systemd/system/docker.service.d
-	sudo systemctl daemon-reload
+		sudo systemctl reload docker
+		sudo mkdir -p /etc/systemd/system/docker.service.d
+		sudo systemctl daemon-reload
+	fi
 }
 
 upgrade() {
