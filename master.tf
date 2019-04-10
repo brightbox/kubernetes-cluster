@@ -127,11 +127,7 @@ data "brightbox_image" "k8s_master" {
 }
 
 data "template_file" "master-cloud-config" {
-  template = "${file("${local.template_path}/master-cloud-config.yml")}"
-
-  vars {
-    discovery_url = "${file("${local.generated_path}/discovery${null_resource.etcd_discovery_url.id}")}"
-  }
+  template = "${file("${local.template_path}/cloud-config.yml")}"
 }
 
 data "template_file" "master-provisioner-script" {
@@ -147,17 +143,6 @@ data "template_file" "master-provisioner-script" {
     controller_client        = "${brightbox_api_client.controller_client.id}"
     controller_client_secret = "${brightbox_api_client.controller_client.secret}"
     apiurl                   = "https://api.${var.region}.brightbox.com"
-  }
-}
-
-resource "null_resource" "etcd_discovery_url" {
-  provisioner "local-exec" {
-    command = "[ -d ${local.generated_path} ] || mkdir -p ${local.generated_path} && curl -sSL --retry 3 https://discovery.etcd.io/new?size=${var.worker_count} > ${local.generated_path}/discovery${self.id}"
-  }
-
-  provisioner "local-exec" {
-    when    = "destroy"
-    command = "rm -f ${local.generated_path}/discovery${self.id}"
   }
 }
 

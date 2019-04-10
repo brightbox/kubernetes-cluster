@@ -52,9 +52,11 @@ resource "null_resource" "k8s_worker_configure" {
   count = "${var.worker_count}"
 
   triggers {
-    worker_id   = "${element(brightbox_server.k8s_worker.*.id, count.index)}"
-    k8s_release = "${var.kubernetes_release}"
-    vol_count   = "${var.worker_vol_count}"
+    worker_id      = "${element(brightbox_server.k8s_worker.*.id, count.index)}"
+    k8s_release    = "${var.kubernetes_release}"
+    vol_count      = "${var.worker_vol_count}"
+    worker_script  = "${data.template_file.worker-provisioner-script.rendered}"
+    kubeadm_script = "${data.template_file.kubeadm-config-script.rendered}"
   }
 
   connection {
@@ -80,7 +82,7 @@ data "brightbox_image" "k8s_worker" {
 }
 
 data "template_file" "worker-cloud-config" {
-  template = "${file("${local.template_path}/worker-cloud-config.yml")}"
+  template = "${file("${local.template_path}/cloud-config.yml")}"
 }
 
 data "template_file" "worker-provisioner-script" {
