@@ -67,11 +67,10 @@ install() {
 	sudo kubeadm join ${fqdn}:6443 --token ${boot_token} --discovery-token-ca-cert-hash sha256:$${discovery_ca_cert_hash}
 }
 
-ensure_docker_cgroup() {
-	echo "Make docker run in systemd cgroup"
+ensure_docker_settings() {
+	echo "Writing Updated Docker Configuration"
 	cat <<EOF | sudo tee /etc/docker/daemon.json
 {
-  "exec-opts": ["native.cgroupdriver=systemd"],
   "log-driver": "json-file",
   "live-restore": true,
   "log-opts": {
@@ -83,18 +82,14 @@ EOF
 	sudo systemctl reload docker
 	sudo mkdir -p /etc/systemd/system/docker.service.d
 	sudo systemctl daemon-reload
-	sudo systemctl restart docker
 }
 
 upgrade() {
-	if [ ! -f /etc/docker/daemon.json ]
-	then
-		ensure_docker_cgroup
-	fi
+	ensure_docker_settings
 	echo "Kubeadm installed worker node detected - checking for upgrade"
 	install_mount_points
-	echo "Restarting docker service to ensure correct cgroup"
-	sudo systemctl restart docker
+	#echo "Restarting docker service to ensure correct cgroup"
+	#sudo systemctl restart docker
 	sudo apt-get -qq update -y
 	if sudo apt-get -qq install kubeadm=${kubernetes_release}-00
 	then
