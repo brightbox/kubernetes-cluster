@@ -47,5 +47,22 @@ EOF
 echo "Installing bash completion"
 kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl >/dev/null 2>&1
 
+echo "Make docker run in systemd cgroup"
+cat <<EOF | sudo tee /etc/docker/daemon.json
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "live-restore": true,
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+sudo mkdir -p /etc/systemd/system/docker.service.d
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+
 echo "Activating k8s bootstrap services"
 sudo systemctl enable docker.service kubelet.service
+echo "docker.io docker.io/restart select true" | sudo debconf-set-selections -v
