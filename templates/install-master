@@ -461,6 +461,8 @@ upgrade() {
 	#sudo systemctl restart docker
         echo "Kubeadm installed master detected - checking for upgrade"
 	sudo apt-get -qq update -y
+	sudo apt-get -qq install debconf-utils
+	echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
 	sudo apt-get -qq install kubeadm=${kubernetes_release}-00
         if sudo kubeadm upgrade plan --config $HOME/install/kubeadm.conf | egrep '^\s*kubeadm upgrade apply'
         then
