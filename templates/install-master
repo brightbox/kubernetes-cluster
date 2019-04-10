@@ -292,8 +292,6 @@ EOF
 
         echo "Installing Calico network controllers"
         retry 5 kubectl apply -f \
-        https://docs.projectcalico.org/v${calico_release}/getting-started/kubernetes/installation/hosted/rbac-kdd.yaml
-        retry 5 kubectl apply -f \
         https://docs.projectcalico.org/v${calico_release}/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
 
         echo "Installing Local Storage Provisioner"
