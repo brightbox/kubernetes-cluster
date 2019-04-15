@@ -76,8 +76,8 @@ variable "cluster_name" {
 }
 
 variable "reclaim_volumes" {
-  description = "Whether to delete local volumes after a pod has used them, or retain them on the node. Defaults to delete"
-  default     = true
+  description = "Whether to delete local volumes after a pod has used them, or retain them on the node. Defaults to retain"
+  default     = false
 }
 
 # Releases
