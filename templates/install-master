@@ -372,17 +372,6 @@ spec:
           hostPath:
             path: /mnt/disks
 ---
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: local-storage
-  annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
-provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: WaitForFirstConsumer
-reclaimPolicy: Delete
-
----
 # Source: provisioner/templates/provisioner-service-account.yaml
 
 apiVersion: v1

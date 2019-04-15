@@ -98,6 +98,25 @@ resource "null_resource" "k8s_master_configure" {
   }
 }
 
+resource "null_resource" "k8s_storage_configure" {
+  depends_on = ["null_resource.k8s_master_configure"]
+
+  triggers {
+    master_id      = "${brightbox_server.k8s_master.id}"
+    reclaim_policy = "${var.reclaim_volumes}"
+    master_script  = "${data.template_file.storage-class-provisioner-script.rendered}"
+  }
+
+  connection {
+    user = "${brightbox_server.k8s_master.username}"
+    host = "${brightbox_cloudip.k8s_master.fqdn}"
+  }
+
+  provisioner "remote-exec" {
+    inline = "${data.template_file.storage-class-provisioner-script.rendered}"
+  }
+}
+
 resource "null_resource" "k8s_token_manager" {
   depends_on = ["null_resource.k8s_master_configure"]
 
@@ -143,6 +162,14 @@ data "template_file" "master-provisioner-script" {
     controller_client        = "${brightbox_api_client.controller_client.id}"
     controller_client_secret = "${brightbox_api_client.controller_client.secret}"
     apiurl                   = "https://api.${var.region}.brightbox.com"
+  }
+}
+
+data "template_file" "storage-class-provisioner-script" {
+  template = "${file("${local.template_path}/define-storage-class")}"
+
+  vars {
+    storage_reclaim_policy = "${var.reclaim_volumes ? "Delete" : "Retain"}"
   }
 }
 

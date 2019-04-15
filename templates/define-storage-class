@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -e
+
+output_storage_class() {
+	cat <<EOF
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: ${storage_reclaim_policy}
+EOF
+}
+
+
+echo "Installing Local Storage Class"
+if output_storage_class | sudo kubectl apply -f - 
+then
+	echo "Installed Local Storage Class"
+else
+	echo "Attempting to change default storage reclaim policy"
+	output_storage_class | sudo kubectl delete -f -
+	output_storage_class | sudo kubectl apply -f -
+	echo "Updated"
+fi
+
