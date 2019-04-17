@@ -6,7 +6,10 @@ Build a Kubernetes Cluster on Brightbox Cloud the easy way. [Read our step-by-st
 ## Installing kubectl on your workstation.
 The master node has kubectl set up and ready for operation, but you may want to operate your cluster directly from your workstation
 
-- set the `management_source` variable to the appropriate CIDR that includes your workstation, and apply to the cluster with `terraform apply`
+- set the `management_source` variable to the appropriate CIDR that includes your workstation, and apply to the cluster with `terraform apply`. You can do this automaitcally on the command line with
+```
+$ terraform apply -var "management_source=[\"$(curl -s ifconfig.co)/32\"]"
+```
 - [install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) using a method suitable for your workstation.
 - Copy the cluster config from the master node
 ```
