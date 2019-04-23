@@ -241,8 +241,7 @@ spec:
         # for in-tree providers we use k8s.gcr.io/cloud-controller-manager
         # this can be replaced with any other image for out-of-tree providers
         image: brightbox/brightbox-cloud-controller-manager:${kubernetes_release}
-        command:
-          - "/bin/brightbox-cloud-controller-manager"
+        args:
           - "--cloud-provider=brightbox"
           - "--bind-address=::1"
           - "--port=0"
