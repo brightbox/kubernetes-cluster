@@ -56,8 +56,8 @@ ensure_admin_config() {
         sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
         sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-	echo "Installing client cert generator"
-	cat <<"CLIENTSCRIPT" | sudo tee /usr/local/bin/generate-client-cert.sh
+        echo "Installing client cert generator"
+        cat <<"CLIENTSCRIPT" | sudo tee /usr/local/bin/generate-client-cert.sh
 #!/usr/bin/env bash
 
 if [[ "$${#}" -lt 2 ]]; then
@@ -117,8 +117,8 @@ users:
       $(base64 --wrap=0 $${CLIENTCERTKEY})
 EOF
 CLIENTSCRIPT
-	echo "Setting permissions"
-	sudo chmod 755 /usr/local/bin/generate-client-cert.sh
+        echo "Setting permissions"
+        sudo chmod 755 /usr/local/bin/generate-client-cert.sh
 }
 
 controller_key_name=brightbox-cloud-controller
@@ -240,6 +240,7 @@ spec:
       - name: cloud-controller-manager
         # for in-tree providers we use k8s.gcr.io/cloud-controller-manager
         # this can be replaced with any other image for out-of-tree providers
+        imagePullPolicy: Always
         image: brightbox/brightbox-cloud-controller-manager:${kubernetes_release}
         args:
           - "--cloud-provider=brightbox"
@@ -424,10 +425,10 @@ EOF
 }
 
 ensure_docker_settings() {
-	if [ ! -f /etc/docker/daemon.json ]
-	then
-		echo "Writing Updated Docker Configuration"
-		cat <<EOF | sudo tee /etc/docker/daemon.json
+        if [ ! -f /etc/docker/daemon.json ]
+        then
+                echo "Writing Updated Docker Configuration"
+                cat <<EOF | sudo tee /etc/docker/daemon.json
 {
   "log-driver": "json-file",
   "live-restore": true,
@@ -437,21 +438,21 @@ ensure_docker_settings() {
   "storage-driver": "overlay2"
 }
 EOF
-		sudo systemctl reload docker
-		sudo mkdir -p /etc/systemd/system/docker.service.d
-		sudo systemctl daemon-reload
-	fi
+                sudo systemctl reload docker
+                sudo mkdir -p /etc/systemd/system/docker.service.d
+                sudo systemctl daemon-reload
+        fi
 }
 
 upgrade() {
-	ensure_docker_settings
-	#echo "Restarting docker service to ensure correct cgroup"
-	#sudo systemctl restart docker
+        ensure_docker_settings
+        #echo "Restarting docker service to ensure correct cgroup"
+        #sudo systemctl restart docker
         echo "Kubeadm installed master detected - checking for upgrade"
-	sudo apt-get -qq update -y
-	sudo apt-get -qq install debconf-utils
-	echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
-	sudo apt-get -qq install kubeadm=${kubernetes_release}-00
+        sudo apt-get -qq update -y
+        sudo apt-get -qq install debconf-utils
+        echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
+        sudo apt-get -qq install kubeadm=${kubernetes_release}-00
         if sudo kubeadm upgrade plan --config $HOME/install/kubeadm.conf | egrep '^\s*kubeadm upgrade apply'
         then
                 retry 5 sudo kubeadm upgrade apply -y --config $HOME/install/kubeadm.conf
