@@ -89,5 +89,5 @@ variable "kubernetes_release" {
 
 variable "calico_release" {
   description = "Version of Calico plugin to install"
-  default     = "3.6"
+  default     = "3.7"
 }
