@@ -66,3 +66,10 @@ sudo systemctl restart docker
 echo "Activating k8s bootstrap services"
 sudo systemctl enable docker.service kubelet.service
 echo "docker.io docker.io/restart select true" | sudo debconf-set-selections -v
+
+echo "Making time sync run more often"
+cat <<EOF | sudo tee /etc/systemd/timesyncd.conf
+[Time]
+PollIntervalMaxSec=1024
+EOF
+sudo systemctl try-restart systemd-timesyncd
