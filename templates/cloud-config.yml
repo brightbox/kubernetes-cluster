@@ -7,7 +7,7 @@ packages:
   - conntrack
   - ipset
   - debconf-utils
-  - docker.io
+  - containerd
 apt_sources:
   - source: deb http://apt.kubernetes.io/ kubernetes-xenial main
     filename: kubernetes.list

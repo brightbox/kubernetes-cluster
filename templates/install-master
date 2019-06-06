@@ -445,7 +445,10 @@ EOF
 }
 
 upgrade() {
-        ensure_docker_settings
+	if [ -f /var/run/docker.sock ]
+	then
+		ensure_docker_settings
+	fi
         #echo "Restarting docker service to ensure correct cgroup"
         #sudo systemctl restart docker
         echo "Kubeadm installed master detected - checking for upgrade"

@@ -23,7 +23,7 @@ echo "Resetting sysctl"
 sudo systemctl try-restart systemd-sysctl
 
 echo "Loading IPVS modules"
-for word in ip_vs_wrr ip_vs_sh ip_vs ip_vs_rr
+for word in ip_vs_wrr ip_vs_sh ip_vs ip_vs_rr nf_conntrack_ipv4 br_netfilter
 do
 	sudo modprobe -- $${word}
 done
@@ -47,8 +47,10 @@ EOF
 echo "Installing bash completion"
 kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl >/dev/null 2>&1
 
-echo "Make docker run in systemd cgroup"
-cat <<EOF | sudo tee /etc/docker/daemon.json
+if [ -f /var/run/docker.sock ]
+then
+	echo "Make docker run in systemd cgroup"
+	cat <<EOF | sudo tee /etc/docker/daemon.json
 {
   "exec-opts": ["native.cgroupdriver=systemd"],
   "log-driver": "json-file",
@@ -59,13 +61,17 @@ cat <<EOF | sudo tee /etc/docker/daemon.json
   "storage-driver": "overlay2"
 }
 EOF
-sudo mkdir -p /etc/systemd/system/docker.service.d
-sudo systemctl daemon-reload
-sudo systemctl restart docker
+	sudo mkdir -p /etc/systemd/system/docker.service.d
+	sudo systemctl daemon-reload
+	sudo systemctl restart docker
 
-echo "Activating k8s bootstrap services"
-sudo systemctl enable docker.service kubelet.service
-echo "docker.io docker.io/restart select true" | sudo debconf-set-selections -v
+	echo "Activating docker bootstrap services"
+	sudo systemctl enable docker.service
+	echo "docker.io docker.io/restart select true" | sudo debconf-set-selections -v
+fi
+
+echo "Activating kubelet bootstrap services"
+sudo systemctl enable kubelet.service
 
 echo "Making time sync run more often"
 cat <<EOF | sudo tee /etc/systemd/timesyncd.conf

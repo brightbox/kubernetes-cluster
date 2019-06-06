@@ -89,7 +89,10 @@ EOF
 
 
 upgrade() {
-	ensure_docker_settings
+	if [ -f /var/run/docker.sock ]
+	then
+		ensure_docker_settings
+	fi
 	echo "Kubeadm installed worker node detected - checking for upgrade"
 	install_mount_points
 	#echo "Restarting docker service to ensure correct cgroup"
