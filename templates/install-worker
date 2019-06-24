@@ -98,7 +98,7 @@ upgrade() {
 	#echo "Restarting docker service to ensure correct cgroup"
 	#sudo systemctl restart docker
 	sudo apt-get -qq update -y
-	sudo apt-get -qq install debconf-utils
+	sudo apt-get -qq install -y debconf-utils lvm2
 	echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
 	if sudo apt-get -qq install kubeadm=${kubernetes_release}-00
 	then
