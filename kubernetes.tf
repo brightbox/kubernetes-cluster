@@ -11,7 +11,7 @@ locals {
 }
 
 provider "brightbox" {
-  version   = "~> 1.1"
+  version   = "~> 1.2"
   apiurl    = "https://api.${var.region}.brightbox.com"
   username  = "${var.username}"
   password  = "${var.password}"
@@ -33,7 +33,7 @@ provider "template" {
 }
 
 provider "tls" {
-  version = "~> 1.2"
+  version = "~> 2.0.1"
 }
 
 resource "random_string" "token_suffix" {
