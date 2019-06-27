@@ -37,6 +37,7 @@ variable "master_type" {
 
 variable "management_source" {
   description = "CIDR of any external management workstations"
+  type        = list
   default     = ["0.0.0.0/32"]
 }
 
@@ -91,3 +92,4 @@ variable "calico_release" {
   description = "Version of Calico plugin to install"
   default     = "3.7"
 }
+

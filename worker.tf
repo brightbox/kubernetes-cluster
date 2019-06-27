@@ -1,39 +1,54 @@
 resource "brightbox_server" "k8s_worker" {
-  count      = "${var.worker_count}"
-  depends_on = ["brightbox_firewall_policy.k8s", "brightbox_cloudip.k8s_master", "brightbox_firewall_rule.k8s_ssh", "brightbox_firewall_rule.k8s_icmp", "brightbox_firewall_rule.k8s_outbound", "brightbox_firewall_rule.k8s_intra_group"]
+  count = var.worker_count
+  depends_on = [
+    brightbox_firewall_policy.k8s,
+    brightbox_cloudip.k8s_master,
+    brightbox_firewall_rule.k8s_ssh,
+    brightbox_firewall_rule.k8s_icmp,
+    brightbox_firewall_rule.k8s_outbound,
+    brightbox_firewall_rule.k8s_intra_group,
+  ]
 
   name      = "k8s-worker-${count.index}.${local.cluster_fqdn}"
-  image     = "${data.brightbox_image.k8s_worker.id}"
-  type      = "${var.worker_type}"
-  user_data = "${data.template_file.worker-cloud-config.rendered}"
+  image     = data.brightbox_image.k8s_worker.id
+  type      = var.worker_type
+  user_data = data.template_file.worker-cloud-config.rendered
   zone      = "${var.region}-${count.index % 2 == 0 ? "a" : "b"}"
 
-  server_groups = ["${brightbox_server_group.k8s.id}"]
+  server_groups = [brightbox_server_group.k8s.id]
 
   lifecycle {
-    ignore_changes        = ["image", "type", "server_groups"]
+    ignore_changes = [
+      image,
+      type,
+      server_groups,
+    ]
     create_before_destroy = true
   }
 
   connection {
-    bastion_host = "${brightbox_cloudip.k8s_master.fqdn}"
+    host         = coalesce(self.public_hostname, self.ipv6_hostname, self.fqdn)
+    type         = "ssh"
+    bastion_host = brightbox_cloudip.k8s_master.fqdn
   }
 
   # Just the public key, so it can be hashed on the server
+  # Just the public key, so it can be hashed on the server
   provisioner "file" {
-    content     = "${tls_self_signed_cert.k8s_ca.cert_pem}"
+    content     = tls_self_signed_cert.k8s_ca.cert_pem
     destination = "ca.crt"
   }
 
   provisioner "remote-exec" {
-    inline = "${data.template_file.install-provisioner-script.rendered}"
+    inline = data.template_file.install-provisioner-script.rendered
   }
 
   provisioner "remote-exec" {
-    when = "destroy"
+    when = destroy
 
     connection {
-      host = "${brightbox_cloudip.k8s_master.fqdn}"
+      type = "ssh"
+      host = brightbox_cloudip.k8s_master.fqdn
     }
 
     inline = [
@@ -45,53 +60,54 @@ resource "brightbox_server" "k8s_worker" {
 
 resource "null_resource" "k8s_worker_configure" {
   depends_on = [
-    "null_resource.k8s_master_configure",
-    "null_resource.k8s_token_manager",
+    null_resource.k8s_master_configure,
+    null_resource.k8s_token_manager,
   ]
 
-  count = "${var.worker_count}"
+  count = var.worker_count
 
-  triggers {
-    worker_id      = "${element(brightbox_server.k8s_worker.*.id, count.index)}"
-    k8s_release    = "${var.kubernetes_release}"
-    vol_count      = "${var.worker_vol_count}"
-    worker_script  = "${data.template_file.worker-provisioner-script.rendered}"
-    kubeadm_script = "${data.template_file.kubeadm-config-script.rendered}"
+  triggers = {
+    worker_id      = element(brightbox_server.k8s_worker.*.id, count.index)
+    k8s_release    = var.kubernetes_release
+    vol_count      = var.worker_vol_count
+    worker_script  = data.template_file.worker-provisioner-script.rendered
+    kubeadm_script = data.template_file.kubeadm-config-script.rendered
   }
 
   connection {
-    user         = "${element(brightbox_server.k8s_worker.*.username, count.index)}"
-    host         = "${element(brightbox_server.k8s_worker.*.hostname, count.index)}"
-    bastion_host = "${brightbox_cloudip.k8s_master.fqdn}"
+    user         = element(brightbox_server.k8s_worker.*.username, count.index)
+    host         = element(brightbox_server.k8s_worker.*.hostname, count.index)
+    bastion_host = brightbox_cloudip.k8s_master.fqdn
   }
 
   provisioner "remote-exec" {
-    inline = "${data.template_file.kubeadm-config-script.rendered}"
+    inline = data.template_file.kubeadm-config-script.rendered
   }
 
   provisioner "remote-exec" {
-    inline = "${data.template_file.worker-provisioner-script.rendered}"
+    inline = data.template_file.worker-provisioner-script.rendered
   }
 }
 
 data "brightbox_image" "k8s_worker" {
-  name        = "${var.image_desc}"
+  name        = var.image_desc
   arch        = "x86_64"
   official    = true
   most_recent = true
 }
 
 data "template_file" "worker-cloud-config" {
-  template = "${file("${local.template_path}/cloud-config.yml")}"
+  template = file("${local.template_path}/cloud-config.yml")
 }
 
 data "template_file" "worker-provisioner-script" {
-  template = "${file("${local.template_path}/install-worker")}"
+  template = file("${local.template_path}/install-worker")
 
-  vars {
-    kubernetes_release = "${var.kubernetes_release}"
-    worker_vol_count   = "${var.worker_vol_count}"
-    boot_token         = "${local.boot_token}"
-    fqdn               = "${local.fqdn}"
+  vars = {
+    kubernetes_release = var.kubernetes_release
+    worker_vol_count   = var.worker_vol_count
+    boot_token         = local.boot_token
+    fqdn               = local.fqdn
   }
 }
+
