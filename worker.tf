@@ -27,7 +27,8 @@ resource "brightbox_server" "k8s_worker" {
   }
 
   connection {
-    host         = coalesce(self.public_hostname, self.ipv6_hostname, self.fqdn)
+    host         = self.hostname
+    user = self.username
     type         = "ssh"
     bastion_host = brightbox_cloudip.k8s_master.fqdn
   }
@@ -48,6 +49,7 @@ resource "brightbox_server" "k8s_worker" {
 
     connection {
       type = "ssh"
+      user = brightbox_server.k8s_master[0].username
       host = brightbox_cloudip.k8s_master.fqdn
     }
 
@@ -64,10 +66,10 @@ resource "null_resource" "k8s_worker_configure" {
     null_resource.k8s_token_manager,
   ]
 
-  count = var.worker_count
+  count = length(brightbox_server.k8s_worker)
 
   triggers = {
-    worker_id      = element(brightbox_server.k8s_worker.*.id, count.index)
+    worker_id      = brightbox_server.k8s_worker[count.index].id
     k8s_release    = var.kubernetes_release
     vol_count      = var.worker_vol_count
     worker_script  = data.template_file.worker-provisioner-script.rendered
@@ -75,8 +77,8 @@ resource "null_resource" "k8s_worker_configure" {
   }
 
   connection {
-    user         = element(brightbox_server.k8s_worker.*.username, count.index)
-    host         = element(brightbox_server.k8s_worker.*.hostname, count.index)
+    user         = brightbox_server.k8s_worker[count.index].username
+    host         = brightbox_server.k8s_worker[count.index].hostname
     bastion_host = brightbox_cloudip.k8s_master.fqdn
   }
 

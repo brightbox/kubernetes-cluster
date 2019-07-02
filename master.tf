@@ -30,6 +30,8 @@ resource "brightbox_server" "k8s_master" {
   image         = data.brightbox_image.k8s_master.id
   type          = var.master_type
   user_data     = data.template_file.master-cloud-config.rendered
+  zone = "${var.region}-${count.index % 2 == 0 ? "a" : "b"}"
+
   server_groups = [brightbox_server_group.k8s.id]
 
   lifecycle {
