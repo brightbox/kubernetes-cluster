@@ -41,7 +41,7 @@ resource "brightbox_server" "k8s_worker" {
   }
 
   provisioner "remote-exec" {
-    inline = data.template_file.install-provisioner-script.rendered
+    inline = [ data.template_file.install-provisioner-script.rendered ]
   }
 
   provisioner "remote-exec" {
@@ -83,11 +83,11 @@ resource "null_resource" "k8s_worker_configure" {
   }
 
   provisioner "remote-exec" {
-    inline = data.template_file.kubeadm-config-script.rendered
+    inline = [ data.template_file.kubeadm-config-script.rendered ]
   }
 
   provisioner "remote-exec" {
-    inline = data.template_file.worker-provisioner-script.rendered
+    inline = [ data.template_file.worker-provisioner-script.rendered ]
   }
 }
 
