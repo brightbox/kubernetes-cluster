@@ -22,6 +22,10 @@ resource "brightbox_cloudip" "k8s_master" {
   }
 }
 
+resource "random_id" "master_certificate_key" {
+  byte_length = 32
+}
+
 resource "brightbox_server" "k8s_master" {
   count      = var.master_count
   depends_on = [brightbox_firewall_policy.k8s]

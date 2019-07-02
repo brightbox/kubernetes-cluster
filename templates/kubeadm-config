@@ -136,6 +136,7 @@ apiVersion: kubeadm.k8s.io/v1beta2
 kind: InitConfiguration
 localAPIEndpoint:
   advertiseAddress: ${external_ip}
+certificateKey: ${master_certificate_key}
 bootstrapTokens:
 - token: "${boot_token}"
   description: "kubeadm bootstrap token"
@@ -143,7 +144,7 @@ nodeRegistration:
   kubeletExtraArgs:
     cloud-provider: external
 ---
-apiVersion: kubeadm.k8s.io/v1beta1
+apiVersion: kubeadm.k8s.io/v1beta2
 kind: ClusterConfiguration
 apiServer:
   certSANs:
@@ -159,6 +160,7 @@ controllerManager:
   extraArgs:
     cloud-provider: external
 kubernetesVersion: "v${kubernetes_release}"
+controlPlaneEndpoint: "${public_ip}:6443"
 networking:
   dnsDomain: ${cluster_domainname}
   podSubnet: ${cluster_cidr}
