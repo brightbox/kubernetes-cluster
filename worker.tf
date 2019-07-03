@@ -12,7 +12,7 @@ resource "brightbox_server" "k8s_worker" {
   name      = "k8s-worker-${count.index}.${local.cluster_fqdn}"
   image     = data.brightbox_image.k8s_worker.id
   type      = var.worker_type
-  user_data = data.template_file.worker-cloud-config.rendered
+  user_data = local.worker_cloud_config
   zone      = "${var.region}-${count.index % 2 == 0 ? "a" : "b"}"
 
   server_groups = [brightbox_server_group.k8s.id]
@@ -28,12 +28,11 @@ resource "brightbox_server" "k8s_worker" {
 
   connection {
     host         = self.hostname
-    user = self.username
+    user         = self.username
     type         = "ssh"
     bastion_host = brightbox_cloudip.k8s_master.fqdn
   }
 
-  # Just the public key, so it can be hashed on the server
   # Just the public key, so it can be hashed on the server
   provisioner "file" {
     content     = tls_self_signed_cert.k8s_ca.cert_pem
@@ -41,7 +40,7 @@ resource "brightbox_server" "k8s_worker" {
   }
 
   provisioner "remote-exec" {
-    inline = [ data.template_file.install-provisioner-script.rendered ]
+    inline = [local.install_provisioner_script]
   }
 
   provisioner "remote-exec" {
@@ -72,8 +71,8 @@ resource "null_resource" "k8s_worker_configure" {
     worker_id      = brightbox_server.k8s_worker[count.index].id
     k8s_release    = var.kubernetes_release
     vol_count      = var.worker_vol_count
-    worker_script  = data.template_file.worker-provisioner-script.rendered
-    kubeadm_script = data.template_file.kubeadm-config-script.rendered
+    worker_script  = local.worker_provisioner_script
+    kubeadm_script = local.kubeadm_config_script
   }
 
   connection {
@@ -83,11 +82,10 @@ resource "null_resource" "k8s_worker_configure" {
   }
 
   provisioner "remote-exec" {
-    inline = [ data.template_file.kubeadm-config-script.rendered ]
-  }
-
-  provisioner "remote-exec" {
-    inline = [ data.template_file.worker-provisioner-script.rendered ]
+    inline = [
+      local.kubeadm_config_script,
+      local.worker_provisioner_script
+    ]
   }
 }
 
@@ -96,20 +94,5 @@ data "brightbox_image" "k8s_worker" {
   arch        = "x86_64"
   official    = true
   most_recent = true
-}
-
-data "template_file" "worker-cloud-config" {
-  template = file("${local.template_path}/cloud-config.yml")
-}
-
-data "template_file" "worker-provisioner-script" {
-  template = file("${local.template_path}/install-worker")
-
-  vars = {
-    kubernetes_release = var.kubernetes_release
-    worker_vol_count   = var.worker_vol_count
-    boot_token         = local.boot_token
-    fqdn               = local.fqdn
-  }
 }
 
