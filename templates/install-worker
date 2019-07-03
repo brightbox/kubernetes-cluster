@@ -2,19 +2,6 @@
 
 set -e
 
-install_cert() {
-	local source_prefix=$${1}
-	local dest_prefix=$${2:-$${1}}
-        local pki_dir=/etc/kubernetes/pki
-
-	for word in crt key
-	do
-		sudo cp $${source_prefix}.$${word} $${pki_dir}/$${dest_prefix}.$${word}
-	done
-	sudo chmod 0600 $${pki_dir}/$${dest_prefix}.key
-	rm $${source_prefix}.key
-}
-
 # Retries a command on failure.
 # $1 - the max number of attempts
 # $2... - the command to run

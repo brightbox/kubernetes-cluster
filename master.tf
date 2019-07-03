@@ -13,12 +13,12 @@ resource "brightbox_cloudip" "k8s_master" {
 
   provisioner "local-exec" {
     when    = destroy
-    command = "ssh-keygen -R ${brightbox_cloudip.k8s_master.fqdn}"
+    command = "ssh-keygen -R ${local.public_fqdn}"
   }
 
   provisioner "local-exec" {
     when    = destroy
-    command = "ssh-keygen -R ${brightbox_cloudip.k8s_master.public_ip}"
+    command = "ssh-keygen -R ${local.public_ip}"
   }
 }
 
@@ -56,7 +56,7 @@ resource "null_resource" "k8s_master" {
 
   connection {
     user = brightbox_server.k8s_master[0].username
-    host = brightbox_cloudip.k8s_master.fqdn
+    host = local.public_fqdn
   }
 
   provisioner "file" {
@@ -88,10 +88,73 @@ resource "null_resource" "k8s_master" {
   }
 }
 
+resource "null_resource" "k8s_master_mirrors" {
+
+  count = max(0, length(brightbox_server.k8s_master) - 1)
+
+  triggers = {
+    mirror_id = brightbox_server.k8s_master[count.index + 1].id
+  }
+
+  connection {
+    host         = brightbox_server.k8s_master[count.index + 1].hostname
+    user         = brightbox_server.k8s_master[count.index + 1].username
+    type         = "ssh"
+    bastion_host = local.public_fqdn
+  }
+
+  provisioner "file" {
+    content     = tls_self_signed_cert.k8s_ca.cert_pem
+    destination = "ca.crt"
+  }
+
+  # Generic provisioner
+  provisioner "remote-exec" {
+    inline = [
+      local.install_provisioner_script,
+    ]
+  }
+
+}
+
+resource "null_resource" "k8s_master_mirrors_configure" {
+  depends_on = [
+    null_resource.k8s_master_configure,
+    null_resource.k8s_token_manager,
+    null_resource.k8s_master_mirrors,
+  ]
+
+  count = max(0, length(brightbox_server.k8s_master) - 1)
+
+  triggers = {
+    cert_key       = random_id.master_certificate_key.hex
+    mirror_id      = brightbox_server.k8s_master[count.index + 1].id
+    k8s_release    = var.kubernetes_release
+    master_script  = local.master_mirror_provisioner_script
+    kubeadm_script = local.kubeadm_config_script
+  }
+
+  connection {
+    host         = brightbox_server.k8s_master[count.index + 1].hostname
+    user         = brightbox_server.k8s_master[count.index + 1].username
+    type         = "ssh"
+    bastion_host = local.public_fqdn
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      local.kubeadm_config_script,
+      local.master_mirror_provisioner_script,
+    ]
+  }
+
+}
+
 resource "null_resource" "k8s_master_configure" {
   depends_on = [null_resource.k8s_master]
 
   triggers = {
+    cert_key       = random_id.master_certificate_key.hex
     master_id      = brightbox_server.k8s_master[0].id
     k8s_release    = var.kubernetes_release
     master_script  = local.master_provisioner_script
@@ -100,7 +163,7 @@ resource "null_resource" "k8s_master_configure" {
 
   connection {
     user = brightbox_server.k8s_master[0].username
-    host = brightbox_cloudip.k8s_master.fqdn
+    host = local.public_fqdn
   }
 
   provisioner "remote-exec" {
@@ -123,7 +186,7 @@ resource "null_resource" "k8s_storage_configure" {
 
   connection {
     user = brightbox_server.k8s_master[0].username
-    host = brightbox_cloudip.k8s_master.fqdn
+    host = local.public_fqdn
   }
 
   provisioner "remote-exec" {
@@ -136,19 +199,21 @@ resource "null_resource" "k8s_token_manager" {
 
   triggers = {
     boot_token   = local.boot_token
+    cert_key     = random_id.master_certificate_key.hex
     worker_count = var.worker_count
     master_count = var.master_count
   }
 
   connection {
     user = brightbox_server.k8s_master[0].username
-    host = brightbox_cloudip.k8s_master.fqdn
+    host = local.public_fqdn
   }
 
   provisioner "remote-exec" {
     inline = [
       "kubeadm token delete ${local.boot_token}",
       "kubeadm token create ${local.boot_token}",
+      "[ '${var.kubernetes_release}' \\< '1.15' ] || sudo kubeadm init phase upload-certs --upload-certs --config $${HOME}/install/kubeadm.conf"
     ]
   }
 }

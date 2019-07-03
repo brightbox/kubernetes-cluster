@@ -1,5 +1,5 @@
 output "master" {
-  value = brightbox_cloudip.k8s_master.fqdn
+  value = local.public_fqdn
 }
 
 output "group_fqdn" {

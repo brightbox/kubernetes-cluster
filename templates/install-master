@@ -469,7 +469,7 @@ upgrade() {
         ensure_ancillary_items
 }
 
-if sudo kubeadm config view  >/dev/null 2>&1
+if kubeadm config view  >/dev/null 2>&1
 then
         upgrade
 else

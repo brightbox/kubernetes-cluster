@@ -42,7 +42,7 @@ locals {
       boot_token             = local.boot_token,
       cluster_domainname     = var.cluster_domainname,
       hostname               = brightbox_server.k8s_master[0].hostname,
-#      master_certificate_key = random_id.master_certificate_key.hex,
+      master_certificate_key = random_id.master_certificate_key.hex,
     }
   )
 
@@ -52,7 +52,23 @@ locals {
       kubernetes_release = var.kubernetes_release
       worker_vol_count   = var.worker_vol_count
       boot_token         = local.boot_token
-      fqdn               = local.fqdn
+      fqdn               = local.public_fqdn
+    }
+  )
+
+  master_mirror_provisioner_script = templatefile("${local.template_path}/install-master-mirror", {
+    kubernetes_release       = var.kubernetes_release,
+    calico_release           = var.calico_release,
+    cluster_name             = var.cluster_name,
+    external_ip              = local.external_ip,
+    public_fqdn              = local.public_fqdn,
+    service_cluster_ip_range = local.service_cidr,
+    controller_client        = brightbox_api_client.controller_client.id,
+    controller_client_secret = brightbox_api_client.controller_client.secret,
+    apiurl                   = "https://api.${var.region}.brightbox.com",
+    boot_token               = local.boot_token
+    fqdn                     = local.public_fqdn
+    master_certificate_key   = random_id.master_certificate_key.hex,
     }
   )
 }
