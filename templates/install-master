@@ -71,7 +71,7 @@ for word
 do
   GROUP="$${GROUP}/O=$${word}"
 done
-CLUSTERENDPOINT=https://${public_fqdn}:6443
+CLUSTERENDPOINT=https://${public_fqdn}:${service_port}
 CLUSTERNAME=${cluster_name}
 CACERT=/etc/kubernetes/pki/ca.crt
 CAKEY=/etc/kubernetes/pki/ca.key
@@ -180,7 +180,7 @@ data:
     clusters:
     - cluster:
         certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        server: https://[${external_ip}]:6443
+        server: https://[${external_ip}]:${service_port}
       name: default
     contexts:
     - context:
@@ -260,7 +260,7 @@ spec:
           - name: KUBERNETES_SERVICE_HOST
             value: "${external_ip}"
           - name: KUBERNETES_SERVICE_PORT
-            value: "6443"
+            value: "${service_port}"
           - name: BRIGHTBOX_CLIENT
             valueFrom:
               secretKeyRef:

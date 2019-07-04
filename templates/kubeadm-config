@@ -160,7 +160,7 @@ controllerManager:
   extraArgs:
     cloud-provider: external
 kubernetesVersion: "v${kubernetes_release}"
-controlPlaneEndpoint: "${public_ip}:6443"
+controlPlaneEndpoint: "${public_ip}:${service_port}"
 networking:
   dnsDomain: ${cluster_domainname}
   podSubnet: ${cluster_cidr}

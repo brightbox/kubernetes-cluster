@@ -3,5 +3,5 @@
 # area on the current workstation
 set -e
 mkdir -p $HOME/.kube
-scp ubuntu@$(terraform output master):.kube/config ~/.kube/config
+scp ubuntu@$(terraform output bastion):.kube/config ~/.kube/config
 sed -i "s/https:.*$/https:\/\/$(terraform output master):6443/" ~/.kube/config

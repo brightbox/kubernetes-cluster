@@ -8,6 +8,7 @@ locals {
   cluster_cidr    = "192.168.0.0/16"
   boot_token      = "${random_string.token_prefix.result}.${random_string.token_suffix.result}"
   cluster_fqdn    = "${var.cluster_name}.${var.cluster_domainname}"
+  service_port    = "6443"
 }
 
 provider "brightbox" {

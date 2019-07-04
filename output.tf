@@ -1,5 +1,9 @@
 output "master" {
-  value = local.public_fqdn
+  value = local.public_ip
+}
+
+output "bastion" {
+  value = local.bastion
 }
 
 output "group_fqdn" {

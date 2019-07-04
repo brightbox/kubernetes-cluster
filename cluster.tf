@@ -22,7 +22,7 @@ resource "brightbox_firewall_rule" "k8s_ssh" {
 
 resource "brightbox_firewall_rule" "k8s_cluster" {
   count            = length(var.management_source)
-  destination_port = "6443"
+  destination_port = local.service_port
   protocol         = "tcp"
   source           = var.management_source[count.index]
   description      = "API access"

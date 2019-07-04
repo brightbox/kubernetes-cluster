@@ -28,7 +28,7 @@ install() {
         echo "Joining Cluster Control Plane"
 	discovery_ca_cert_hash=$(openssl x509 -in $HOME/ca.crt -noout -pubkey |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)
 
-	sudo kubeadm join ${fqdn}:6443 --token ${boot_token} --discovery-token-ca-cert-hash sha256:$${discovery_ca_cert_hash} --control-plane --certificate-key ${master_certificate_key}
+	retry 5 sudo kubeadm join ${fqdn}:${service_port} --token ${boot_token} --discovery-token-ca-cert-hash sha256:$${discovery_ca_cert_hash} --control-plane --certificate-key ${master_certificate_key}
 	
 
 }
@@ -54,7 +54,7 @@ for word
 do
   GROUP="$${GROUP}/O=$${word}"
 done
-CLUSTERENDPOINT=https://${public_fqdn}:6443
+CLUSTERENDPOINT=https://${public_fqdn}:${service_port}
 CLUSTERNAME=${cluster_name}
 CACERT=/etc/kubernetes/pki/ca.crt
 CAKEY=/etc/kubernetes/pki/ca.key

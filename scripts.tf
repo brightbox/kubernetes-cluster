@@ -22,6 +22,7 @@ locals {
     controller_client        = brightbox_api_client.controller_client.id,
     controller_client_secret = brightbox_api_client.controller_client.secret,
     apiurl                   = "https://api.${var.region}.brightbox.com",
+    service_port             = local.service_port,
     }
   )
 
@@ -43,6 +44,7 @@ locals {
       cluster_domainname     = var.cluster_domainname,
       hostname               = brightbox_server.k8s_master[0].hostname,
       master_certificate_key = random_id.master_certificate_key.hex,
+      service_port           = local.service_port,
     }
   )
 
@@ -53,6 +55,7 @@ locals {
       worker_vol_count   = var.worker_vol_count
       boot_token         = local.boot_token
       fqdn               = local.public_fqdn
+      service_port       = local.service_port
     }
   )
 
@@ -69,6 +72,7 @@ locals {
     boot_token               = local.boot_token
     fqdn                     = local.public_fqdn
     master_certificate_key   = random_id.master_certificate_key.hex,
+    service_port             = local.service_port
     }
   )
 }
