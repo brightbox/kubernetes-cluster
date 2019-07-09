@@ -13,6 +13,11 @@ resource "brightbox_cloudip" "k8s_ha_master" {
   count  = local.lb_count
   name   = "k8s-ha-master.${var.cluster_name}"
   target = brightbox_load_balancer.k8s_master[0].id
+  provisioner "local-exec" {
+    when    = destroy
+    command = "ssh-keygen -R ${brightbox_cloudip.k8s_ha_master[count.index].fqdn}; ssh-keygen -R ${brightbox_cloudip.k8s_ha_master[count.index].public_ip}"
+  }
+
 }
 
 resource "brightbox_cloudip" "k8s_master" {
@@ -21,12 +26,7 @@ resource "brightbox_cloudip" "k8s_master" {
 
   provisioner "local-exec" {
     when    = destroy
-    command = "ssh-keygen -R ${local.bastion}"
-  }
-
-  provisioner "local-exec" {
-    when    = destroy
-    command = "ssh-keygen -R ${local.bastion}"
+    command = "ssh-keygen -R ${brightbox_cloudip.k8s_master.fqdn}; ssh-keygen -R ${brightbox_cloudip.k8s_master.public_ip}"
   }
 }
 
