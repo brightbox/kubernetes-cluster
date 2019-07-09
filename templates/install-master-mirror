@@ -24,6 +24,14 @@ seconds..."
     done
 }
 
+spread_deployments() {
+	if [ $(kubectl -n kube-system get pods -o=custom-columns=NODE:.spec.nodeName --selector=k8s-app=kube-dns --no-headers| sort -u | wc -l) -eq 1 ]
+	then
+		echo "Redeploying services across nodes"
+		kubectl -n kube-system rollout restart deployment coredns
+	fi
+}
+
 install() {
         echo "Joining Cluster Control Plane"
 	discovery_ca_cert_hash=$(openssl x509 -in $HOME/ca.crt -noout -pubkey |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)
@@ -159,3 +167,4 @@ else
         install
 fi
 ensure_admin_config
+spread_deployments
