@@ -188,7 +188,7 @@ data:
     clusters:
     - cluster:
         certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        server: https://[${external_ip}]:${service_port}
+        server: https://[${public_ip}]:${service_port}
       name: default
     contexts:
     - context:
@@ -266,7 +266,7 @@ spec:
             memory: 50Mi
         env:
           - name: KUBERNETES_SERVICE_HOST
-            value: "${external_ip}"
+            value: "${public_ip}"
           - name: KUBERNETES_SERVICE_PORT
             value: "${service_port}"
           - name: BRIGHTBOX_CLIENT
