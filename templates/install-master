@@ -38,14 +38,6 @@ seconds..."
     done
 }
 
-spread_deployments() {
-	if [ $(kubectl -n kube-system get pods -o=custom-columns=NODE:.spec.nodeName --selector=k8s-app=kube-dns --no-headers| sort -u | wc -l) -eq 1 ]
-	then
-		echo "Redeploying services across nodes"
-		retry 5 kubectl -n kube-system rollout restart deployment coredns
-	fi
-}
-
 install() {
         echo "Installing CA"
         sudo mkdir -p /etc/kubernetes/pki/etcd
@@ -483,4 +475,3 @@ then
 else
         install
 fi
-spread_deployments
