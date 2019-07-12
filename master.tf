@@ -1,28 +1,16 @@
 locals {
-  external_ip = brightbox_server.k8s_master[0].ipv4_address_private
-  fqdn        = brightbox_server.k8s_master[0].fqdn
-  ipv6_fqdn   = brightbox_server.k8s_master[0].ipv6_hostname
-  lb_count    = var.master_count > 1 ? 1 : 0
-  public_ip   = local.lb_count == 1 ? brightbox_cloudip.k8s_ha_master[0].public_ip : brightbox_cloudip.k8s_master.public_ip
-  public_rdns = local.lb_count == 1 ? brightbox_cloudip.k8s_ha_master[0].reverse_dns : brightbox_cloudip.k8s_master.reverse_dns
-  public_fqdn = local.lb_count == 1 ? brightbox_cloudip.k8s_ha_master[0].fqdn : brightbox_cloudip.k8s_master.fqdn
-  bastion     = brightbox_cloudip.k8s_master.fqdn
-}
-
-resource "brightbox_cloudip" "k8s_ha_master" {
-  count  = local.lb_count
-  name   = "k8s-ha-master.${var.cluster_name}"
-  target = brightbox_load_balancer.k8s_master[0].id
-  provisioner "local-exec" {
-    when    = destroy
-    command = "ssh-keygen -R ${brightbox_cloudip.k8s_ha_master[count.index].fqdn}; ssh-keygen -R ${brightbox_cloudip.k8s_ha_master[count.index].public_ip}"
-  }
-
+  public_ip    = brightbox_cloudip.k8s_master.public_ip
+  public_rdns  = brightbox_cloudip.k8s_master.reverse_dns
+  public_fqdn  = brightbox_cloudip.k8s_master.fqdn
+  lb_count     = var.master_count > 1 ? 1 : 0
+  bastion      = local.lb_count == 1 ? brightbox_cloudip.bastion[0].fqdn : local.public_fqdn
+  bastion_user = brightbox_server.k8s_master[0].username
+  api_target   = local.lb_count == 1 ? brightbox_load_balancer.k8s_master[0].id : brightbox_server.k8s_master[0].interface
 }
 
 resource "brightbox_cloudip" "k8s_master" {
   name   = "k8s-master.${var.cluster_name}"
-  target = brightbox_server.k8s_master[0].interface
+  target = local.api_target
 
   provisioner "local-exec" {
     when    = destroy
@@ -45,6 +33,17 @@ resource "brightbox_load_balancer" "k8s_master" {
   }
 
   nodes = brightbox_server.k8s_master[*].id
+}
+
+resource "brightbox_cloudip" "bastion" {
+  count  = local.lb_count
+  name   = "bastion.${var.cluster_name}"
+  target = brightbox_server.k8s_master[0].interface
+  provisioner "local-exec" {
+    when    = destroy
+    command = "ssh-keygen -R ${brightbox_cloudip.bastion[count.index].fqdn}; ssh-keygen -R ${brightbox_cloudip.bastion[count.index].public_ip}"
+  }
+
 }
 
 resource "brightbox_firewall_rule" "k8s_lb" {
@@ -89,7 +88,7 @@ resource "null_resource" "k8s_master" {
   }
 
   connection {
-    user = brightbox_server.k8s_master[0].username
+    user = local.bastion_user
     host = local.bastion
   }
 
@@ -139,6 +138,7 @@ resource "null_resource" "k8s_master_mirrors" {
     user         = brightbox_server.k8s_master[count.index + 1].username
     type         = "ssh"
     bastion_host = local.bastion
+    bastion_user = local.bastion_user
   }
 
   provisioner "file" {
@@ -175,6 +175,7 @@ resource "null_resource" "k8s_master_mirrors_configure" {
     user         = brightbox_server.k8s_master[count.index + 1].username
     type         = "ssh"
     bastion_host = local.bastion
+    bastion_user = local.bastion_user
   }
 
   provisioner "remote-exec" {
@@ -183,6 +184,7 @@ resource "null_resource" "k8s_master_mirrors_configure" {
       local.master_mirror_provisioner_script,
     ]
   }
+
 
 }
 
@@ -198,7 +200,7 @@ resource "null_resource" "k8s_master_configure" {
   }
 
   connection {
-    user = brightbox_server.k8s_master[0].username
+    user = local.bastion_user
     host = local.bastion
   }
 
@@ -221,7 +223,7 @@ resource "null_resource" "k8s_storage_configure" {
   }
 
   connection {
-    user = brightbox_server.k8s_master[0].username
+    user = local.bastion_user
     host = local.bastion
   }
 
@@ -241,7 +243,7 @@ resource "null_resource" "k8s_token_manager" {
   }
 
   connection {
-    user = brightbox_server.k8s_master[0].username
+    user = local.bastion_user
     host = local.bastion
   }
 

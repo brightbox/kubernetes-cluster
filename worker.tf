@@ -4,7 +4,6 @@ resource "brightbox_server" "k8s_worker" {
     brightbox_server.k8s_master,
     brightbox_firewall_policy.k8s,
     brightbox_cloudip.k8s_master,
-    brightbox_cloudip.k8s_ha_master,
     brightbox_load_balancer.k8s_master,
     brightbox_firewall_rule.k8s_ssh,
     brightbox_firewall_rule.k8s_icmp,
@@ -36,6 +35,7 @@ resource "brightbox_server" "k8s_worker" {
     user         = self.username
     type         = "ssh"
     bastion_host = local.bastion
+    bastion_user = local.bastion_user
   }
 
   # Just the public key, so it can be hashed on the server
@@ -53,7 +53,7 @@ resource "brightbox_server" "k8s_worker" {
 
     connection {
       type = "ssh"
-      user = brightbox_server.k8s_master[0].username
+      user = local.bastion_user
       host = local.bastion
     }
 
@@ -84,6 +84,7 @@ resource "null_resource" "k8s_worker_configure" {
     user         = brightbox_server.k8s_worker[count.index].username
     host         = brightbox_server.k8s_worker[count.index].hostname
     bastion_host = local.bastion
+    bastion_user = local.bastion_user
   }
 
   provisioner "remote-exec" {

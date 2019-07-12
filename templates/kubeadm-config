@@ -5,47 +5,7 @@ set -e
 create_kubeadm_config() {
         echo "Installing kubeadm.conf"
         case ${kubernetes_release} in
-                1.12.*)
-        cat <<EOF >$HOME/install/kubeadm.conf
-apiVersion: kubeadm.k8s.io/v1alpha3
-kind: InitConfiguration
-bootstrapTokens:
-- token: "${boot_token}"
-  description: "kubeadm bootstrap token"
-nodeRegistration:
-  kubeletExtraArgs:
-    cloud-provider: external
----
-apiVersion: kubeadm.k8s.io/v1alpha3
-kind: ClusterConfiguration
-apiServerCertSANs:
-- ${public_fqdn}
-- ${public_rdns}
-- ${public_ip}
-apiServerExtraArgs:
-  cloud-provider: external
-clusterName: ${cluster_name}
-controllerManagerExtraArgs:
-  cloud-provider: external
-kubernetesVersion: "v${kubernetes_release}"
-networking:
-  dnsDomain: ${cluster_domainname}
-  podSubnet: ${cluster_cidr}
-  serviceSubnet: ${service_cidr}
----
-apiVersion: kubeproxy.config.k8s.io/v1alpha1
-kind: KubeProxyConfiguration
-clusterCIDR: ${cluster_cidr}
-ipvs:
-  scheduler: lc
-mode: ipvs
----
-apiVersion: kubelet.config.k8s.io/v1beta1
-kind: KubeletConfiguration
-clusterDomain: ${cluster_domainname}
-EOF
-                ;;
-                1.1[34].*)
+                1.14.*)
         cat <<EOF >$HOME/install/kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: InitConfiguration
@@ -86,6 +46,7 @@ mode: ipvs
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
 clusterDomain: ${cluster_domainname}
+cgroupDriver: systemd
 EOF
                 ;;
                 1.1[5].*)
@@ -130,6 +91,7 @@ mode: ipvs
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
 clusterDomain: ${cluster_domainname}
+cgroupDriver: systemd
 EOF
                 ;;
 	*)

@@ -37,11 +37,8 @@ locals {
       public_ip              = local.public_ip,
       public_rdns            = local.public_rdns,
       public_fqdn            = local.public_fqdn,
-      fqdn                   = local.fqdn,
-      ipv6_fqdn              = local.ipv6_fqdn,
       boot_token             = local.boot_token,
       cluster_domainname     = var.cluster_domainname,
-      hostname               = brightbox_server.k8s_master[0].hostname,
       master_certificate_key = random_id.master_certificate_key.hex,
       service_port           = local.service_port,
     }
