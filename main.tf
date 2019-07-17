@@ -2,7 +2,6 @@
 locals {
   validity_period = 8760
   region_suffix   = "${var.region}.brightbox.com"
-  generated_path  = "${path.root}/generated"
   template_path   = "${path.root}/templates"
   service_cidr    = "172.30.0.0/16"
   cluster_cidr    = "192.168.0.0/16"
