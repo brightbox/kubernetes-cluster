@@ -92,3 +92,14 @@ variable "cluster_ready" {
   description = "resource that indicates the cluster containers are ready "
 }
 
+variable "worker_name" {
+  type =string
+  description = "The name prefix of the worker in this group"
+  default = "k8s-worker"
+}
+
+variable "worker_zone" {
+  type = string
+  description = "The zone the workers are to be built in: 'a' or 'b'. Default is to spread between the zones"
+  default = ""
+}

@@ -14,6 +14,8 @@ module "k8s_worker" {
   internal_cluster_fqdn  = local.cluster_fqdn
   apiserver_service_port = local.service_port
   worker_drain_timeout   = var.worker_drain_timeout
+ # worker_name = "k8s-storage"
+ # worker_zone = "b"
 
   #Injections
   cluster_server_group  = module.k8s_cluster.group_id

@@ -22,11 +22,11 @@ resource "brightbox_server" "k8s_worker" {
   ]
   count = var.worker_count
 
-  name      = "k8s-worker-${count.index}.${var.internal_cluster_fqdn}"
+  name      = "${var.worker_name}-${count.index}.${var.internal_cluster_fqdn}"
   image     = data.brightbox_image.k8s_worker.id
   type      = var.worker_type
   user_data = var.cloud_config
-  zone      = "${var.region}-${count.index % 2 == 0 ? "a" : "b"}"
+  zone      = "${var.region}-${var.worker_zone == "" ? (count.index % 2 == 0 ? "a" : "b") : var.worker_zone}"
 
   server_groups = [var.cluster_server_group]
 
@@ -68,6 +68,10 @@ resource "null_resource" "k8s_worker" {
     inline = [var.install_script]
   }
 
+  lifecycle {
+    create_before_destroy = true
+  }
+
   provisioner "remote-exec" {
     when = destroy
 
@@ -79,7 +83,7 @@ resource "null_resource" "k8s_worker" {
 
     inline = [
       "kubectl drain --ignore-daemonsets --timeout=${var.worker_drain_timeout} ${brightbox_server.k8s_worker[count.index].id}",
-      "kubectl delete node ${brightbox_server.k8s_worker[count.index].id}",
+      "kubectl delete node ${brightbox_server.k8s_worker[count.index].id} || true",
     ]
   }
 }
