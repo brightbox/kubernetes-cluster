@@ -28,7 +28,7 @@ resource "brightbox_server" "k8s_worker" {
   user_data = var.cloud_config
   zone      = "${var.region}-${count.index % 2 == 0 ? "a" : "b"}"
 
-  server_groups = var.server_groups
+  server_groups = [var.cluster_server_group]
 
   lifecycle {
     ignore_changes = [
@@ -43,7 +43,7 @@ resource "brightbox_server" "k8s_worker" {
 
 resource "null_resource" "k8s_worker" {
   depends_on = [
-    var.master_ready
+    var.apiserver_ready
   ]
   count = length(brightbox_server.k8s_worker)
   triggers = {
@@ -85,7 +85,7 @@ resource "null_resource" "k8s_worker" {
 }
 
 resource "null_resource" "k8s_worker_token_manager" {
-  depends_on = [var.master_ready]
+  depends_on = [var.apiserver_ready]
   count      = var.worker_count
 
   connection {

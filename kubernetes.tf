@@ -6,7 +6,6 @@ locals {
   template_path   = "${path.root}/templates"
   service_cidr    = "172.30.0.0/16"
   cluster_cidr    = "192.168.0.0/16"
-  boot_token      = "${random_string.token_prefix.result}.${random_string.token_suffix.result}"
   cluster_fqdn    = "${var.cluster_name}.${var.cluster_domainname}"
   service_port    = "6443"
 }
@@ -31,17 +30,5 @@ provider "random" {
 
 provider "tls" {
   version = "~> 2.0.1"
-}
-
-resource "random_string" "token_suffix" {
-  length  = 16
-  special = false
-  upper   = false
-}
-
-resource "random_string" "token_prefix" {
-  length  = 6
-  special = false
-  upper   = false
 }
 

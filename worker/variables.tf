@@ -23,9 +23,9 @@ variable "worker_count" {
   description = "Number of worker nodes"
 }
 
-variable "server_groups" {
-  type        = list(string)
-  description = "List of Server Groups Ids in which worker nodes will be built"
+variable "cluster_server_group" {
+  type        = string
+  description = "The cluster server group to place worker nodes in"
 }
 
 variable "internal_cluster_fqdn" {
@@ -83,9 +83,9 @@ variable "worker_vol_count" {
   description = "Number of local volumes to create on each worker node"
 }
 
-variable "master_ready" {
+variable "apiserver_ready" {
   type        = object({ id = string })
-  description = "resource that indicates the master is ready to receive instructions"
+  description = "resource that indicates the apiserver is ready to receive instructions"
 }
 
 variable "cluster_ready" {

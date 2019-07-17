@@ -1,9 +1,9 @@
 output "master" {
-  value = local.public_ip
+  value = module.k8s_master.apiserver
 }
 
 output "bastion" {
-  value = local.bastion
+  value = module.k8s_master.bastion
 }
 
 output "group_fqdn" {
