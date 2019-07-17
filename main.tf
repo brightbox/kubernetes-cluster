@@ -8,6 +8,11 @@ locals {
   cluster_cidr    = "192.168.0.0/16"
   cluster_fqdn    = "${var.cluster_name}.${var.cluster_domainname}"
   service_port    = "6443"
+  cloud_config = file("${local.template_path}/cloud-config.yml")
+  install_provisioner_script = templatefile(
+    "${local.template_path}/install-kube",
+    { kubernetes_release = var.kubernetes_release }
+  )
 }
 
 provider "brightbox" {
@@ -32,3 +37,20 @@ provider "tls" {
   version = "~> 2.0.1"
 }
 
+resource "null_resource" "spread_deployments" {
+
+  depends_on = [
+    module.k8s_worker,
+    module.k8s_master,
+  ]
+
+  connection {
+    user = module.k8s_master.bastion_user
+    host = module.k8s_master.bastion
+  }
+
+  provisioner "remote-exec" {
+    script = "${local.template_path}/spread-deployments"
+  }
+
+}
