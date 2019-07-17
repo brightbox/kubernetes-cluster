@@ -44,17 +44,6 @@ locals {
     }
   )
 
-  worker_provisioner_script = templatefile(
-    "${local.template_path}/install-worker",
-    {
-      kubernetes_release = var.kubernetes_release
-      worker_vol_count   = var.worker_vol_count
-      boot_token         = local.boot_token
-      fqdn               = local.public_fqdn
-      service_port       = local.service_port
-    }
-  )
-
   master_mirror_provisioner_script = templatefile("${local.template_path}/install-master-mirror", {
     kubernetes_release       = var.kubernetes_release,
     calico_release           = var.calico_release,

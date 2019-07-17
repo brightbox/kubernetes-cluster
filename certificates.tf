@@ -8,7 +8,7 @@ resource "tls_self_signed_cert" "k8s_ca" {
 
   subject {
     common_name         = "apiserver"
-    organizational_unit = brightbox_server_group.k8s.name
+    organizational_unit = local.cluster_fqdn
   }
 
   validity_period_hours = local.validity_period

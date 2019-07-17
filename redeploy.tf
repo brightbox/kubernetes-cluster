@@ -1,13 +1,13 @@
 resource "null_resource" "spread_deployments" {
 
   depends_on = [
+    module.k8s_worker,
     null_resource.k8s_master_configure,
-    null_resource.k8s_worker_configure,
     null_resource.k8s_master_mirrors_configure,
   ]
 
   connection {
-    user = brightbox_server.k8s_master[0].username
+    user = local.bastion_user
     host = local.bastion
   }
 

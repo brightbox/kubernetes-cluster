@@ -9,6 +9,13 @@ locals {
 }
 
 resource "brightbox_cloudip" "k8s_master" {
+  # The firewall rules have to be there before the bastion will work. 
+  # This is used as the bastion ip if there is only one master.
+  depends_on = [
+    module.k8s_cluster,
+    brightbox_load_balancer.k8s_master,
+    brightbox_firewall_rule.k8s_lb,
+  ]
   name   = "k8s-master.${var.cluster_name}"
   target = local.api_target
 
@@ -36,6 +43,14 @@ resource "brightbox_load_balancer" "k8s_master" {
 }
 
 resource "brightbox_cloudip" "bastion" {
+  # The firewall rules have to be there before the bastion will work
+  depends_on = [
+    module.k8s_cluster,
+    brightbox_load_balancer.k8s_master,
+    brightbox_cloudip.k8s_master,
+    brightbox_firewall_rule.k8s_lb,
+  ]
+
   count  = local.lb_count
   name   = "bastion.${var.cluster_name}"
   target = brightbox_server.k8s_master[0].interface
@@ -52,7 +67,7 @@ resource "brightbox_firewall_rule" "k8s_lb" {
   protocol         = "tcp"
   source           = brightbox_load_balancer.k8s_master[count.index].id
   description      = "${brightbox_load_balancer.k8s_master[count.index].id} API access"
-  firewall_policy  = brightbox_firewall_policy.k8s.id
+  firewall_policy  = module.k8s_cluster.firewall_policy_id
 }
 
 resource "random_id" "master_certificate_key" {
@@ -60,8 +75,10 @@ resource "random_id" "master_certificate_key" {
 }
 
 resource "brightbox_server" "k8s_master" {
-  count      = var.master_count
-  depends_on = [brightbox_firewall_policy.k8s]
+  depends_on = [
+    module.k8s_cluster
+  ]
+  count = var.master_count
 
   name      = "k8s-master-${count.index}.${local.cluster_fqdn}"
   image     = data.brightbox_image.k8s_master.id
@@ -69,7 +86,7 @@ resource "brightbox_server" "k8s_master" {
   user_data = local.master_cloud_config
   zone      = "${var.region}-${count.index % 2 == 0 ? "a" : "b"}"
 
-  server_groups = [brightbox_server_group.k8s.id]
+  server_groups = [module.k8s_cluster.group_id]
 
   lifecycle {
     ignore_changes = [
@@ -121,9 +138,35 @@ resource "null_resource" "k8s_master" {
   }
 }
 
+resource "null_resource" "k8s_master_configure" {
+  depends_on = [
+    null_resource.k8s_master,
+  ]
+
+  triggers = {
+    cert_key       = random_id.master_certificate_key.hex
+    master_id      = brightbox_server.k8s_master[0].id
+    k8s_release    = var.kubernetes_release
+    master_script  = local.master_provisioner_script
+    kubeadm_script = local.kubeadm_config_script
+  }
+
+  connection {
+    user = local.bastion_user
+    host = local.bastion
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      local.kubeadm_config_script,
+      local.master_provisioner_script,
+    ]
+  }
+
+}
+
 resource "null_resource" "k8s_master_mirrors" {
   depends_on = [
-    null_resource.k8s_master_configure,
     null_resource.k8s_token_manager,
   ]
 
@@ -188,31 +231,6 @@ resource "null_resource" "k8s_master_mirrors_configure" {
 
 }
 
-resource "null_resource" "k8s_master_configure" {
-  depends_on = [null_resource.k8s_master]
-
-  triggers = {
-    cert_key       = random_id.master_certificate_key.hex
-    master_id      = brightbox_server.k8s_master[0].id
-    k8s_release    = var.kubernetes_release
-    master_script  = local.master_provisioner_script
-    kubeadm_script = local.kubeadm_config_script
-  }
-
-  connection {
-    user = local.bastion_user
-    host = local.bastion
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      local.kubeadm_config_script,
-      local.master_provisioner_script,
-    ]
-  }
-
-}
-
 resource "null_resource" "k8s_storage_configure" {
   depends_on = [null_resource.k8s_master_configure]
 
@@ -262,3 +280,9 @@ data "brightbox_image" "k8s_master" {
   official    = true
   most_recent = true
 }
+
+resource "brightbox_api_client" "controller_client" {
+  name              = "Cloud Controller ${var.cluster_name}"
+  permissions_group = "full"
+}
+

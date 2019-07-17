@@ -7,6 +7,6 @@ output "bastion" {
 }
 
 output "group_fqdn" {
-  value = "${brightbox_server_group.k8s.id}.${local.region_suffix}"
+  value = "${module.k8s_cluster.group_id}.${local.region_suffix}"
 }
 
