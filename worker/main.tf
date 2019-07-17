@@ -86,7 +86,7 @@ resource "null_resource" "k8s_worker" {
 
 resource "null_resource" "k8s_worker_token_manager" {
   depends_on = [var.master_ready]
-  count = var.worker_count
+  count      = var.worker_count
 
   connection {
     user = var.bastion_user

@@ -84,7 +84,7 @@ variable "worker_vol_count" {
 }
 
 variable "master_ready" {
-  type = object({id = string})
+  type        = object({ id = string })
   description = "resource that indicates the master is ready to receive instructions"
 }
 

@@ -1,9 +1,9 @@
 module "k8s_worker" {
   source = "./worker"
   #Dependencies
-  server_groups   = [module.k8s_cluster.group_id]
-  master_ready    = null_resource.k8s_master_configure
-  cluster_ready    = module.k8s_cluster
+  server_groups = [module.k8s_cluster.group_id]
+  master_ready  = null_resource.k8s_master_configure
+  cluster_ready = module.k8s_cluster
 
   #Variables
   worker_count       = var.worker_count
