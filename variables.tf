@@ -102,7 +102,7 @@ variable "reclaim_volumes" {
 variable "kubernetes_release" {
   type        = string
   description = "Version of Kubernetes to install"
-  default     = "1.14.3"
+  default     = "1.15.1"
 }
 
 variable "calico_release" {
