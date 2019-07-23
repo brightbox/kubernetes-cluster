@@ -229,24 +229,24 @@ resource "null_resource" "k8s_master_mirrors_configure" {
 
 }
 
-resource "null_resource" "k8s_storage_configure" {
-  depends_on = [null_resource.k8s_master_configure]
-
-  triggers = {
-    master_id      = brightbox_server.k8s_master[0].id
-    reclaim_policy = var.reclaim_volumes
-    master_script  = local.storage_class_provisioner_script
-  }
-
-  connection {
-    user = local.bastion_user
-    host = local.bastion
-  }
-
-  provisioner "remote-exec" {
-    inline = [local.storage_class_provisioner_script]
-  }
-}
+#resource "null_resource" "k8s_storage_configure" {
+#  depends_on = [null_resource.k8s_master_configure]
+#
+#  triggers = {
+#    master_id      = brightbox_server.k8s_master[0].id
+#    reclaim_policy = var.reclaim_volumes
+#    master_script  = local.storage_class_provisioner_script
+#  }
+#
+#  connection {
+#    user = local.bastion_user
+#    host = local.bastion
+#  }
+#
+#  provisioner "remote-exec" {
+#    inline = [local.storage_class_provisioner_script]
+#  }
+#}
 
 resource "null_resource" "k8s_token_manager" {
   depends_on = [null_resource.k8s_master_configure]

@@ -6,7 +6,6 @@ module "k8s_worker" {
 
   #Variables
   worker_count           = var.worker_count
-  worker_vol_count       = var.worker_vol_count
   worker_type            = var.worker_type
   image_desc             = var.image_desc
   region                 = var.region

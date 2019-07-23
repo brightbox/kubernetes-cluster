@@ -24,30 +24,9 @@ seconds..."
     done
 }
 
-install_mount_points() {
-	echo "Creating local-storage mount point"
-	for ((i=1; i<=${worker_vol_count}; i++))
-	do
-		sudo mkdir -p /srv/export/vol$${i}
-		cat <<EOF | sudo tee /etc/systemd/system/mnt-disks-vol$${i}.mount
-[Unit]
-Before=local-fs.target
-
-[Mount]
-Where=/mnt/disks/vol$${i}
-What=/srv/export/vol$${i}
-Type=none
-Options=bind
-
-[Install]
-WantedBy=local-fs.target
-EOF
-		sudo systemctl enable --now mnt-disks-vol$${i}.mount
-	done
-}
-
 install() {
-	install_mount_points
+	retry 5 sudo systemctl enable iscsid
+	retry 5 sudo systemctl start iscsid
 	echo "Joining cluster"
 	discovery_ca_cert_hash=$(openssl x509 -in $HOME/ca.crt -noout -pubkey |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)
 
@@ -81,9 +60,7 @@ upgrade() {
 		ensure_docker_settings
 	fi
 	echo "Kubeadm installed worker node detected - checking for upgrade"
-	install_mount_points
-	#echo "Restarting docker service to ensure correct cgroup"
-	#sudo systemctl restart docker
+	sudo systemctl enable iscsid && sudo systemctl start iscsid
 	sudo apt-get -qq update -y
 	sudo apt-get -qq install -y debconf-utils lvm2
 	echo "docker.io docker.io/restart select true" | sudo debconf-set-selections

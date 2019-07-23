@@ -73,12 +73,6 @@ variable "worker_drain_timeout" {
   default     = "120s"
 }
 
-variable "worker_vol_count" {
-  type        = number
-  description = "The number of Permanent Volumes to create on each node"
-  default     = 1
-}
-
 variable "cluster_domainname" {
   type        = string
   description = "internal domain name of the Kubernetes Cluster"
@@ -108,6 +102,11 @@ variable "kubernetes_release" {
 variable "calico_release" {
   type        = string
   description = "Version of Calico plugin to install"
-  default     = "3.7"
+  default     = "3.8"
 }
 
+variable "openebs_release" {
+  type = string
+  description = "Version of OpenEBS namespace to install"
+  default = "1.0.0"
+}

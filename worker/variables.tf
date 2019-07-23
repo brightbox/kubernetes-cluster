@@ -78,11 +78,6 @@ variable "worker_drain_timeout" {
   description = "How long to wait for worker to drain pods as a kubeadm time spec"
 }
 
-variable "worker_vol_count" {
-  type        = number
-  description = "Number of local volumes to create on each worker node"
-}
-
 variable "apiserver_ready" {
   type        = object({ id = string })
   description = "resource that indicates the apiserver is ready to receive instructions"

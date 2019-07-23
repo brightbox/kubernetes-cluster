@@ -116,12 +116,12 @@ resource "null_resource" "k8s_worker_configure" {
   triggers = {
     worker_id      = brightbox_server.k8s_worker[count.index].id
     k8s_release    = var.kubernetes_release
-    vol_count      = var.worker_vol_count
     prefix         = random_string.token_prefix[count.index].result
     suffix         = random_string.token_suffix[count.index].result
     fqdn           = var.apiserver_fqdn
     service_port   = var.apiserver_service_port
     kubeadm_script = var.kubeadm_config_script
+    install_script = file("${local.template_path}/install-worker")
   }
 
   connection {
@@ -138,7 +138,6 @@ resource "null_resource" "k8s_worker_configure" {
         "${local.template_path}/install-worker",
         {
           kubernetes_release = var.kubernetes_release
-          worker_vol_count   = var.worker_vol_count
           boot_token         = "${random_string.token_prefix[count.index].result}.${random_string.token_suffix[count.index].result}",
           fqdn               = var.apiserver_fqdn
           service_port       = var.apiserver_service_port
