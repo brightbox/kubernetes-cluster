@@ -13,11 +13,6 @@ variable "calico_release" {
   description = "Version of Calico to install"
 }
 
-variable "reclaim_volumes" {
-  type        = bool
-  description = "Whether to delete local volumes after a pod has used them, or retain them on the node."
-}
-
 variable "image_desc" {
   type        = string
   description = "Image pattern to use to select boot image"

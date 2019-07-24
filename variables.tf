@@ -85,12 +85,6 @@ variable "cluster_name" {
   default     = "kubernetes"
 }
 
-variable "reclaim_volumes" {
-  type        = bool
-  description = "Whether to delete local volumes after a pod has used them, or retain them on the node. Defaults to retain"
-  default     = false
-}
-
 # Releases
 
 variable "kubernetes_release" {

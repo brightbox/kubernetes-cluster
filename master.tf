@@ -12,7 +12,6 @@ module "k8s_master" {
   calico_release         = var.calico_release
   cluster_name           = var.cluster_name
   cluster_domainname     = var.cluster_domainname
-  reclaim_volumes        = var.reclaim_volumes
   cluster_cidr           = local.cluster_cidr
   service_cidr           = local.service_cidr
   apiserver_service_port = local.service_port
