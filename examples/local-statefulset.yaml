@@ -33,7 +33,7 @@ spec:
       name: local-vol
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: "local-storage"
+      storageClassName: "openebs-hostpath"
       resources:
         requests:
           storage: 1Gi
