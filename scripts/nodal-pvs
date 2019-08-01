@@ -18,6 +18,7 @@ spec:
   accessModes:
   - ReadWriteOnce
   storageClassName: ${storageclass}
+  claimRef:
   local:
     path: ${target}
   nodeAffinity:
