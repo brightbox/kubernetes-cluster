@@ -95,8 +95,11 @@ then
 	echo "Make containerd CRI v1 runtime use systemd cgroup"
 	sudo mkdir -p /etc/containerd
 	cat <<EOF | sudo tee /etc/containerd/config.toml
-plugins.cri.systemd_cgroup = true
+[plugins."io.containerd.grpc.v1.cri"]
+	systemd_cgroup = true
 EOF
+sudo systemctl reload-or-restart containerd
+
 	echo "Setting up critools"
 	cat <<EOF | sudo tee /etc/crictl.yaml
 runtime-endpoint: unix:///run/containerd/containerd.sock
