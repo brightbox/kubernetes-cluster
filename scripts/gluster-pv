@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+
+require "resolv"
+require "yaml"
+
+address_hash = ARGV.map do |name|
+  Resolv.getaddresses(name).map {|address| {"ip" => address}}
+end.flatten
+
+endpoint_hash = {
+  "apiVersion" => "v1",
+  "kind" => "Endpoints",
+  "metadata" => {
+    "name" => "glusterfs-cluster"
+  },
+  "subsets" => [
+    "addresses" => address_hash
+  ]
+}
+
+puts endpoint_hash.to_yaml
