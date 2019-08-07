@@ -83,7 +83,7 @@ resource "brightbox_server" "k8s_master" {
   image     = data.brightbox_image.k8s_master.id
   type      = var.master_type
   user_data = var.cloud_config
-  zone      = "${var.region}-${count.index % 2 == 0 ? "a" : "b"}"
+  zone      = "${var.region}-${var.master_zone == "" ? (count.index % 2 == 0 ? "a" : "b") : var.master_zone}"
 
   server_groups = [var.cluster_server_group]
 
