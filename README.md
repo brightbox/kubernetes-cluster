@@ -23,7 +23,7 @@ The `download-config.sh` script in the `scripts` directory will copy the cluster
 
 ## Adding Storage to your cluster
 
-Is described [over here](STORAGE.md)
+Is described [over here](examples/storage/README.md)
 
 ## Running the examples
 If you are using kubectl on the master node, copy the examples directory to the master node first
