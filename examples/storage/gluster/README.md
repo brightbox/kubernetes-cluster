@@ -58,7 +58,7 @@ the administrator to set access to subdirectories on the Gluster volume
 by GID.
 
 Pods have to run as a non-root user to make this work.
-###Resetting Persistent Volumes
+### Resetting Persistent Volumes
 If you accidentally delete the Volume Claim, then the Gluster PV will enter Released mode. To return it to Available just rerun the initial creation command
 ```
 $ ./scripts/gluster-pv gv0 5Gi srv-pe288.gb1.brightbox.com srv-425y7.gb1.brightbox.com | kubectl apply -f -
