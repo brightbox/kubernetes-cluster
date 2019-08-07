@@ -2,7 +2,7 @@
 
 OpenEBS(https://openebs.io) is a Kubernetes Native storage manager that
 can create both worker node local Persistent Volumes and replicated
-Persistent Volumes that are availalbe to pods across all worker nodes.
+Persistent Volumes that are available to pods across all worker nodes.
 
 ### Installation
 
