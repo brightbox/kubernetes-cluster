@@ -67,7 +67,7 @@ persistentvolume/gluster-volume-gv0 created
 ```
 This removes and resets the claimRef. 
 
-##Example
+## Example
 ### gluster-deployment.yaml
 This example creates a set of pods on each node that writes to a central test file concurrently.
 
