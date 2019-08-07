@@ -1,6 +1,6 @@
 ## GlusterFS
 
-GlusterFS is a scalable network filesystem suitable for data-intensive
+[GlusterFS](https://www.gluster.org) is a scalable network filesystem suitable for data-intensive
 tasks such as cloud storage and media streaming.
 GlusterFS can be used natively by Kubernetes as a client, however the
 server has to be set up manually to work effectively at present. This
