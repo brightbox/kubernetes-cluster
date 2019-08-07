@@ -1,8 +1,3 @@
-# Adding Storage Options to a Kubernetes Cluster
-
-Once you have a built a cluster you will want to add a storage manager
-to handle any persistent storage you have available on your worker nodes.
-
 ## OpenEBS
 
 OpenEBS(https://openebs.io) is a Kubernetes Native storage manager that
@@ -95,3 +90,65 @@ spec:
 See the [OpenEBS user guide](https://docs.openebs.io/docs/next/jivaguide.html) for more details on Jiva Volumes and how to
 backup and restore them.
 
+
+## Examples
+### local-statefulset.yaml
+This example creates a set of pods that write to the openebs-hostpath Persistent Volumes (PV) on each node.
+
+- apply the set
+```
+$ kubectl apply -f local-statefulset.yaml
+statefulset.apps/local-test created
+deployment.extensions/local-test-reader created
+```
+- check the bindings have all worked as expected
+```
+$ kubectl get pods
+NAME                                 READY     STATUS    RESTARTS   AGE
+local-test-0                         1/1       Running   0          34s
+local-test-1                         1/1       Running   0          31s
+local-test-2                         1/1       Running   0          29s
+local-test-reader-56d45cb67f-d66l8   1/1       Running   1          33s
+$ kubectl get pvc
+NAME                     STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS       AGE
+local-vol-local-test-0   Bound    pvc-cc04fe59-38b8-4b32-b311-04d2e4d35b52   1Gi        RWO            openebs-hostpath   60s
+local-vol-local-test-1   Bound    pvc-4015f95a-fef5-4647-a3f7-8bf90ca4169c   1Gi        RWO            openebs-hostpath   50s
+local-vol-local-test-2   Bound    pvc-39ad3669-f7d7-4536-9854-eeb14b927776   1Gi        RWO            openebs-hostpath   36s
+$ kubectl get pv
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                            STORAGECLASS       REASON   AGE
+pvc-39ad3669-f7d7-4536-9854-eeb14b927776   1Gi        RWO            Delete           Bound    default/local-vol-local-test-2   openebs-hostpath            54s
+pvc-4015f95a-fef5-4647-a3f7-8bf90ca4169c   1Gi        RWO            Delete           Bound    default/local-vol-local-test-1   openebs-hostpath            65s
+pvc-cc04fe59-38b8-4b32-b311-04d2e4d35b52   1Gi        RWO            Delete           Bound    default/local-vol-local-test-0   openebs-hostpath            79s
+```
+- check that the pods are writing to the persistent volume
+```
+$ kubectl logs local-test-reader-56d45cb67f-d66l8
+Thu Sep 13 16:29:28 UTC 2018
+This is local-test-0, count=1
+Thu Sep 13 16:29:38 UTC 2018
+This is local-test-0, count=1
+Thu Sep 13 16:29:48 UTC 2018
+This is local-test-0, count=1
+Thu Sep 13 16:29:58 UTC 2018
+This is local-test-0, count=1
+Thu Sep 13 16:30:08 UTC 2018
+This is local-test-0, count=1
+```
+- once you've finished remove the pods
+```
+$ kubectl delete -f local-statefulset.yaml
+statefulset.apps "local-test" deleted
+deployment.extensions "local-test-reader" deleted
+```
+- and strip out the volume claims
+```
+$ kubectl delete pvc --all
+persistentvolumeclaim "local-vol-local-test-0" deleted
+persistentvolumeclaim "local-vol-local-test-1" deleted
+persistentvolumeclaim "local-vol-local-test-2" deleted
+```
+- and the pvs are cleaned up automatically
+```
+$ kubectl get pv
+No resources found.
+```
