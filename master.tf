@@ -15,6 +15,7 @@ module "k8s_master" {
   cluster_cidr           = local.cluster_cidr
   service_cidr           = local.service_cidr
   apiserver_service_port = local.service_port
+  # master_zone = "b"
 
   #Injections
   cluster_server_group    = module.k8s_cluster.group_id
