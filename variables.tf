@@ -57,7 +57,7 @@ variable "image_desc" {
 
 variable "worker_count" {
   type        = number
-  description = "Number of worker servers in cluster"
+  description = "Number of worker nodes in cluster"
   default     = 1
 }
 
@@ -67,11 +67,48 @@ variable "worker_type" {
   default     = "2gb.ssd"
 }
 
+variable "worker_name" {
+   type = string
+   description = "The name given to worker nodes on the cluster"
+   default = "k8s-worker"
+}
+
+variable "worker_zone" {
+   type = string
+   description = "The zone in which the worker nodes should be built. The default is to spread them across all zones."
+   default = ""
+}
+
 variable "worker_drain_timeout" {
   type        = string
   description = "How long to wait for pods to move off a node before it is deleted"
   default     = "120s"
 }
+
+variable "storage_count" {
+  type        = number
+  description = "Number of storage nodes in cluster"
+  default     = 0
+}
+
+variable "storage_type" {
+  type        = string
+  description = "Type of node to use as k8s storage node"
+  default     = "2gb.ssd"
+}
+
+variable "storage_name" {
+   type = string
+   description = "The name given to storage nodes on the cluster"
+   default = "k8s-storage"
+}
+
+variable "storage_zone" {
+   type = string
+   description = "The zone in which the storage nodes should be built. The default is to spread them across all zones."
+   default = ""
+}
+
 
 variable "cluster_domainname" {
   type        = string

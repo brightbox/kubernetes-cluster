@@ -45,7 +45,7 @@ resource "null_resource" "k8s_worker" {
   depends_on = [
     var.apiserver_ready
   ]
-  count = length(brightbox_server.k8s_worker)
+  count = var.worker_count
   triggers = {
     worker_id = brightbox_server.k8s_worker[count.index].id
   }
@@ -111,7 +111,7 @@ resource "null_resource" "k8s_worker_configure" {
     null_resource.k8s_worker,
   ]
 
-  count = length(brightbox_server.k8s_worker)
+  count = var.worker_count
 
   triggers = {
     worker_id      = brightbox_server.k8s_worker[count.index].id
