@@ -40,6 +40,7 @@ resource "null_resource" "spread_deployments" {
 
   depends_on = [
     module.k8s_worker,
+    module.k8s_storage,
     module.k8s_master,
   ]
 
