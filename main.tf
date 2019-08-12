@@ -7,11 +7,21 @@ locals {
   cluster_cidr    = "192.168.0.0/16"
   cluster_fqdn    = "${var.cluster_name}.${var.cluster_domainname}"
   service_port    = "6443"
-  cloud_config = file("${local.template_path}/cloud-config.yml")
+  cloud_config    = file("${local.template_path}/cloud-config.yml")
   install_provisioner_script = templatefile(
     "${local.template_path}/install-kube",
     { kubernetes_release = var.kubernetes_release }
   )
+  worker_label_script = <<EOT
+%{if var.worker_count != 0~}
+      kubectl label --overwrite ${join(" ", formatlist("node/%s", module.k8s_worker.node_ids))} 'node-role.kubernetes.io/worker=' 'node-role.kubernetes.io/storage-'
+%{~endif}
+EOT
+  storage_label_script = <<EOT
+%{if var.storage_count != 0~}
+      kubectl label --overwrite ${join(" ", formatlist("node/%s", module.k8s_storage.node_ids))} 'node-role.kubernetes.io/storage=' 'node-role.kubernetes.io/worker-'
+%{~endif}
+EOT
 }
 
 provider "brightbox" {
@@ -51,6 +61,33 @@ resource "null_resource" "spread_deployments" {
 
   provisioner "remote-exec" {
     script = "${local.template_path}/spread-deployments"
+  }
+
+}
+
+resource "null_resource" "label_nodes" {
+
+  depends_on = [
+    module.k8s_worker,
+    module.k8s_storage,
+    module.k8s_master,
+  ]
+
+  triggers = {
+    worker_script  = local.worker_label_script
+    storage_script = local.storage_label_script
+  }
+
+  connection {
+    user = module.k8s_master.bastion_user
+    host = module.k8s_master.bastion
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      local.worker_label_script,
+      local.storage_label_script,
+    ]
   }
 
 }

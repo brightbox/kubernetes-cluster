@@ -68,15 +68,15 @@ variable "worker_type" {
 }
 
 variable "worker_name" {
-   type = string
-   description = "The name given to worker nodes on the cluster"
-   default = "k8s-worker"
+  type        = string
+  description = "The name given to worker nodes on the cluster"
+  default     = "k8s-worker"
 }
 
 variable "worker_zone" {
-   type = string
-   description = "The zone in which the worker nodes should be built. The default is to spread them across all zones."
-   default = ""
+  type        = string
+  description = "The zone in which the worker nodes should be built. The default is to spread them across all zones."
+  default     = ""
 }
 
 variable "worker_drain_timeout" {
@@ -98,15 +98,15 @@ variable "storage_type" {
 }
 
 variable "storage_name" {
-   type = string
-   description = "The name given to storage nodes on the cluster"
-   default = "k8s-storage"
+  type        = string
+  description = "The name given to storage nodes on the cluster"
+  default     = "k8s-storage"
 }
 
 variable "storage_zone" {
-   type = string
-   description = "The zone in which the storage nodes should be built. The default is to spread them across all zones."
-   default = ""
+  type        = string
+  description = "The zone in which the storage nodes should be built. The default is to spread them across all zones."
+  default     = ""
 }
 
 
@@ -137,7 +137,7 @@ variable "calico_release" {
 }
 
 variable "openebs_release" {
-  type = string
+  type        = string
   description = "Version of OpenEBS namespace to install"
-  default = "1.0.0"
+  default     = "1.0.0"
 }
