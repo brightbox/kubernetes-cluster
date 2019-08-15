@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gluster-volume-gv0
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+  - ReadWriteMany
+  claimRef:
+  glusterfs:
+    endpoints: server
+    endpointsNamespace: glusterfs
+    path: gv0
+    readOnly: false
+  persistentVolumeReclaimPolicy: Retain

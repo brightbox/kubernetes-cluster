@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+
+if ARGV.length < 1
+  STDERR << "Supply the name of the volume to create\n"
+  exit 1
+end
+
+KUBECTL_CMD='kubectl -n glusterfs'
+KUBECTL_EXEC=KUBECTL_CMD+' exec daemonset/server'
+VOLUME_NAME=ARGV.first
+
+def storage_nodes
+  @nodes ||= `#{KUBECTL_CMD} get node -o name --selector='node-role.kubernetes.io/storage'`.split.map{|x| x.delete_prefix("node/")}
+end
+
+def ensure_peered
+  storage_nodes.each do |node|
+    system("#{KUBECTL_EXEC} gluster peer probe #{node}")
+  end
+end
+
+def brick_list(vol_name) 
+  storage_nodes.map {|node| "#{node}:/data/#{vol_name}"}.join(" ")
+end
+
+ensure_peered
+system("#{KUBECTL_EXEC} gluster volume create #{VOLUME_NAME} replica 2 #{brick_list(VOLUME_NAME)} force")
+system("#{KUBECTL_EXEC} gluster volume start #{VOLUME_NAME}")

@@ -4,7 +4,7 @@ require "resolv"
 require "yaml"
 
 if ARGV.length < 3
-  STDERR << "Please supply the gluster volume name, size string, and the DNS names of the gluster servers"
+  STDERR << "Please supply the gluster volume name, size string, and the DNS names of the gluster servers\n"
   exit
 end
 

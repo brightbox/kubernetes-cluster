@@ -6,11 +6,39 @@ GlusterFS can be used natively by Kubernetes as a client, however the
 server has to be set up manually to work effectively at present. This
 can be elsewhere on Brightbox Cloud or on the Cluster nodes themselves.
 
-### Installation
+## Internal Gluster
+This will run GlusterFS on the k8s cluster storage nodes under the
+control of the k8s scheduler.
+### Installing the Gluster Server
+
+- Deploy the Gluster Server
+```
+$ kubectl apply -f examples/storage/gluster/gluster-server.yaml
+```
+- Create a gluster volume
+```
+$ ./examples/storage/gluster/create-volume gv0
+```
+- Create the PV
+```
+$ kubectl apply -f examples/storage/gluster/gluster-pv.yaml
+```
+Any volume claim created can be mounted by any pod on any worker node. 
+
+### Resetting Persistent Volumes
+If you accidentally delete the Volume Claim, then the Gluster PV will enter Released mode. To return it to Available just rerun the initial creation command
+```
+$ kubectl apply -f examples/storage/gluster/gluster-pv.yaml
+```
+This removes and resets the claimRef and returns the PV to Available
+
+## External Gluster
+
+### Using Persistent Volumes
 
 The GlusterFS client is installed on all nodes as part of the cluster
 installation. Setting up Kubernetes to use Gluster is then a matter of
-creating the correct endpoints and Persistent Volume to point at Gluster.
+creating the correct endpoints and Persistent Volume to point at a Gluster Server.
 
 Obtain the name of the gluster volume from the gluster server
 ```
@@ -40,6 +68,16 @@ gluster-volume-gv0   5Gi        RWX            Retain           Available       
 ```
 Any volume claim created can be mounted by any pod on any worker node. 
 
+
+### Resetting Persistent Volumes
+If you accidentally delete the Volume Claim, then the Gluster PV will enter Released mode. To return it to Available just rerun the initial creation command
+```
+$ ./scripts/gluster-pv gv0 5Gi srv-pe288.gb1.brightbox.com srv-425y7.gb1.brightbox.com | kubectl apply -f -
+endpoints/glusterfs-cluster configured
+persistentvolume/gluster-volume-gv0 created
+```
+This removes and resets the claimRef. 
+
 ### File permissions
 Rudimentary security for the Gluster volume comes from creating multiple
 PVs with [differing GID annotations](https://kubernetes.io/docs/tasks/configure-pod-container/configure-persistent-volume-storage/#access-control). 
@@ -58,14 +96,6 @@ the administrator to set access to subdirectories on the Gluster volume
 by GID.
 
 Pods have to run as a non-root user to make this work.
-### Resetting Persistent Volumes
-If you accidentally delete the Volume Claim, then the Gluster PV will enter Released mode. To return it to Available just rerun the initial creation command
-```
-$ ./scripts/gluster-pv gv0 5Gi srv-pe288.gb1.brightbox.com srv-425y7.gb1.brightbox.com | kubectl apply -f -
-endpoints/glusterfs-cluster configured
-persistentvolume/gluster-volume-gv0 created
-```
-This removes and resets the claimRef. 
 
 ## Example
 ### gluster-deployment.yaml
