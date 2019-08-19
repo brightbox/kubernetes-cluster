@@ -1,0 +1,49 @@
+#!/usr/bin/env ruby
+
+require "resolv"
+require "yaml"
+
+if ARGV.length < 3
+  STDERR << "Please supply the gluster volume name, size string, and the DNS names of the gluster servers\n"
+  exit
+end
+
+gluster_volume = ARGV.shift
+size = ARGV.shift
+endpoint_name = "glusterfs-cluster"
+
+address_hash = ARGV.map do |name|
+  Resolv.getaddresses(name).map {|address| {"ip" => address}}
+end.flatten
+
+endpoint_hash = {
+  "apiVersion" => "v1",
+  "kind" => "Endpoints",
+  "metadata" => {
+    "name" => endpoint_name
+  },
+  "subsets" => [
+    "addresses" => address_hash
+  ]
+}
+glusterpv_hash = {
+  "apiVersion" => "v1",
+  "kind" => "PersistentVolume",
+  "metadata" => {
+    "name" => "gluster-volume-#{gluster_volume}"
+  },
+  "spec" => {
+    "capacity" => {"storage" => size},
+    "accessModes" => ["ReadWriteMany"],
+    "claimRef" => nil,
+    "glusterfs" => {
+      "endpoints" => endpoint_name,
+      "path" => gluster_volume,
+      "readOnly" => false,
+    },
+    "persistentVolumeReclaimPolicy" => "Retain"
+  }
+}
+
+puts endpoint_hash.to_yaml
+puts glusterpv_hash.to_yaml

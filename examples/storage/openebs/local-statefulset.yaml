@@ -1,9 +1,14 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: local-test
+  labels:
+    app: local-test
 spec:
   serviceName: "local-service"
+  selector:
+    matchLabels:
+      app: local-test
   replicas: 3
   template:
     metadata:
@@ -33,16 +38,21 @@ spec:
       name: local-vol
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: "local-storage"
+      storageClassName: "openebs-hostpath"
       resources:
         requests:
           storage: 1Gi
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: local-test-reader
+  labels:
+    app: local-test-reader
 spec:
+  selector:
+    matchLabels:
+      app: local-test-reader
   replicas: 1
   template:
     metadata:

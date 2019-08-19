@@ -1,98 +1,58 @@
-resource "brightbox_server" "k8s_worker" {
-  count = var.worker_count
-  depends_on = [
-    brightbox_firewall_policy.k8s,
-    brightbox_cloudip.k8s_master,
-    brightbox_firewall_rule.k8s_ssh,
-    brightbox_firewall_rule.k8s_icmp,
-    brightbox_firewall_rule.k8s_outbound,
-    brightbox_firewall_rule.k8s_intra_group,
-  ]
+module "k8s_worker" {
+  source = "./worker"
+  #Dependencies
+  apiserver_ready = module.k8s_master.apiserver_ready
+  cluster_ready   = module.k8s_cluster
 
-  name      = "k8s-worker-${count.index}.${local.cluster_fqdn}"
-  image     = data.brightbox_image.k8s_worker.id
-  type      = var.worker_type
-  user_data = local.worker_cloud_config
-  zone      = "${var.region}-${count.index % 2 == 0 ? "a" : "b"}"
+  #Variables
+  worker_count           = var.worker_count
+  worker_type            = var.worker_type
+  image_desc             = var.image_desc
+  region                 = var.region
+  kubernetes_release     = var.kubernetes_release
+  internal_cluster_fqdn  = local.cluster_fqdn
+  apiserver_service_port = local.service_port
+  worker_drain_timeout   = var.worker_drain_timeout
+  worker_name            = var.worker_name
+  worker_zone            = var.worker_zone
 
-  server_groups = [brightbox_server_group.k8s.id]
-
-  lifecycle {
-    ignore_changes = [
-      image,
-      type,
-      server_groups,
-    ]
-    create_before_destroy = true
-  }
-
-  connection {
-    host         = self.hostname
-    user         = self.username
-    type         = "ssh"
-    bastion_host = brightbox_cloudip.k8s_master.fqdn
-  }
-
-  # Just the public key, so it can be hashed on the server
-  provisioner "file" {
-    content     = tls_self_signed_cert.k8s_ca.cert_pem
-    destination = "ca.crt"
-  }
-
-  provisioner "remote-exec" {
-    inline = [local.install_provisioner_script]
-  }
-
-  provisioner "remote-exec" {
-    when = destroy
-
-    connection {
-      type = "ssh"
-      user = brightbox_server.k8s_master[0].username
-      host = brightbox_cloudip.k8s_master.fqdn
-    }
-
-    inline = [
-      "kubectl drain --ignore-daemonsets --timeout=${var.worker_drain_timeout} ${self.id}",
-      "kubectl delete node ${self.id}",
-    ]
-  }
+  #Injections
+  cluster_server_group  = module.k8s_cluster.group_id
+  bastion               = module.k8s_master.bastion
+  bastion_user          = module.k8s_master.bastion_user
+  apiserver_fqdn        = module.k8s_master.apiserver
+  ca_cert_pem           = tls_self_signed_cert.k8s_ca.cert_pem
+  install_script        = local.install_provisioner_script
+  cloud_config          = local.cloud_config
+  kubeadm_config_script = module.k8s_master.kubeadm_config
 }
 
-resource "null_resource" "k8s_worker_configure" {
-  depends_on = [
-    null_resource.k8s_master_configure,
-    null_resource.k8s_token_manager,
-  ]
+module "k8s_storage" {
+  source = "./worker"
+  #Dependencies
+  apiserver_ready = module.k8s_master.apiserver_ready
+  cluster_ready   = module.k8s_cluster
 
-  count = length(brightbox_server.k8s_worker)
+  #Variables
+  worker_count           = var.storage_count
+  worker_type            = var.storage_type
+  image_desc             = var.image_desc
+  region                 = var.region
+  kubernetes_release     = var.kubernetes_release
+  internal_cluster_fqdn  = local.cluster_fqdn
+  apiserver_service_port = local.service_port
+  worker_drain_timeout   = var.worker_drain_timeout
+  worker_name            = var.storage_name
+  worker_zone            = var.storage_zone
 
-  triggers = {
-    worker_id      = brightbox_server.k8s_worker[count.index].id
-    k8s_release    = var.kubernetes_release
-    vol_count      = var.worker_vol_count
-    worker_script  = local.worker_provisioner_script
-    kubeadm_script = local.kubeadm_config_script
-  }
-
-  connection {
-    user         = brightbox_server.k8s_worker[count.index].username
-    host         = brightbox_server.k8s_worker[count.index].hostname
-    bastion_host = brightbox_cloudip.k8s_master.fqdn
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      local.kubeadm_config_script,
-      local.worker_provisioner_script
-    ]
-  }
-}
-
-data "brightbox_image" "k8s_worker" {
-  name        = var.image_desc
-  arch        = "x86_64"
-  official    = true
-  most_recent = true
+  #Injections
+  cluster_server_group  = module.k8s_cluster.group_id
+  bastion               = module.k8s_master.bastion
+  bastion_user          = module.k8s_master.bastion_user
+  apiserver_fqdn        = module.k8s_master.apiserver
+  ca_cert_pem           = tls_self_signed_cert.k8s_ca.cert_pem
+  install_script        = local.install_provisioner_script
+  cloud_config          = local.cloud_config
+  kubeadm_config_script = module.k8s_master.kubeadm_config
 }
 

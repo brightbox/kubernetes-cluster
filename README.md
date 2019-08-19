@@ -21,6 +21,10 @@ $ sed -i "s/https:.*$/https:\/\/$(terraform output master):6443/" ~/.kube/config
 
 The `download-config.sh` script in the `scripts` directory will copy the cluster config into place for you.
 
+## Adding Storage to your cluster
+
+Is described [over here](examples/storage/README.md)
+
 ## Running the examples
 If you are using kubectl on the master node, copy the examples directory to the master node first
 ```
@@ -98,83 +102,6 @@ Events:
 ```
 kubectl delete -f examples/pod-example.yaml
 pod "busybox" deleted
-```
-
-### local-statefulset.yaml
-This example creates a set of pods that write to the local-storage Persistent Volumes (PV) on each node.
-To run the example ensure you have at least 3 PVs available on your cluster. You can alter the
-`worker-vol-count` variable to get more PVs on each node when the cluster is built.
-
-- apply the set
-```
-$ kubectl apply -f examples/local-statefulset.yaml
-statefulset.apps/local-test created
-deployment.extensions/local-test-reader created
-```
-- check the bindings have all worked as expected
-```
-$ kubectl get pods
-NAME                                 READY     STATUS    RESTARTS   AGE
-local-test-0                         1/1       Running   0          34s
-local-test-1                         1/1       Running   0          31s
-local-test-2                         1/1       Running   0          29s
-local-test-reader-56d45cb67f-d66l8   1/1       Running   1          33s
-$ kubectl get pvc
-NAME                     STATUS    VOLUME              CAPACITY   ACCESS MODES   STORAGECLASS    AGE
-local-vol-local-test-0   Bound     local-pv-cd2ebe56   38Gi       RWO            local-storage   38s
-local-vol-local-test-1   Bound     local-pv-50394804   38Gi       RWO            local-storage   36s
-local-vol-local-test-2   Bound     local-pv-14b3c6ec   38Gi       RWO            local-storage   33s
-$ kubectl get pv
-NAME                CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM                            STORAGECLASS    REASON    AGE
-local-pv-14b3c6ec   38Gi       RWO            Delete           Bound       default/local-vol-local-test-2   local-storage             11m
-local-pv-50394804   38Gi       RWO            Delete           Bound       default/local-vol-local-test-1   local-storage             1m
-local-pv-cd2ebe56   38Gi       RWO            Delete           Bound       default/local-vol-local-test-0   local-storage             1m
-local-pv-da420fe3   38Gi       RWO            Delete           Available                                    local-storage             1m
-```
-- check that the pods are writing to the persistent volume
-```
-$ kubectl logs local-test-reader-56d45cb67f-d66l8
-Thu Sep 13 16:29:28 UTC 2018
-This is local-test-0, count=1
-Thu Sep 13 16:29:38 UTC 2018
-This is local-test-0, count=1
-Thu Sep 13 16:29:48 UTC 2018
-This is local-test-0, count=1
-Thu Sep 13 16:29:58 UTC 2018
-This is local-test-0, count=1
-Thu Sep 13 16:30:08 UTC 2018
-This is local-test-0, count=1
-```
-- once you've finished remove the pods
-```
-$ kubectl delete -f examples/local-statefulset.yaml
-statefulset.apps "local-test" deleted
-deployment.extensions "local-test-reader" deleted
-```
-- and strip out the volume claims
-```
-$ kubectl delete pvc --all
-persistentvolumeclaim "local-vol-local-test-0" deleted
-persistentvolumeclaim "local-vol-local-test-1" deleted
-persistentvolumeclaim "local-vol-local-test-2" deleted
-```
-- then watch as the volumes are released, reclaimed and regenerated
-```
-$ kubectl get pv
-NAME                CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM                            STORAGECLASS    REASON    AGE
-local-pv-14b3c6ec   38Gi       RWO            Delete           Released    default/local-vol-local-test-2   local-storage             16m
-local-pv-50394804   38Gi       RWO            Delete           Released    default/local-vol-local-test-1   local-storage             5m
-local-pv-cd2ebe56   38Gi       RWO            Delete           Released    default/local-vol-local-test-0   local-storage             5m
-local-pv-da420fe3   38Gi       RWO            Delete           Available                                    local-storage             5m
-$ kubectl get pv
-NAME                CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM     STORAGECLASS    REASON    AGE
-local-pv-da420fe3   38Gi       RWO            Delete           Available             local-storage             6m
-$ kubectl get pv
-NAME                CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM     STORAGECLASS    REASON    AGE
-local-pv-14b3c6ec   38Gi       RWO            Delete           Available             local-storage             47s
-local-pv-50394804   38Gi       RWO            Delete           Available             local-storage             44s
-local-pv-cd2ebe56   38Gi       RWO            Delete           Available             local-storage             47s
-local-pv-da420fe3   38Gi       RWO            Delete           Available             local-storage             6m
 ```
 
 ### loadbalancer-example.yaml

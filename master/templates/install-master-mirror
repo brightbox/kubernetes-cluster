@@ -1,0 +1,161 @@
+#!/bin/bash
+
+set -e
+
+# Retries a command on failure.
+# $1 - the max number of attempts
+# $2... - the command to run
+retry() {
+    local max_attempts="$${1}"; shift
+    local attempt_num=1
+
+    until "$${@}"
+    do
+        if [ "$${attempt_num}" -eq "$${max_attempts}" ]
+        then
+            echo "Attempt $${attempt_num} failed and there are no more attempts l
+eft!"
+            return 1
+        else
+            echo "Attempt $${attempt_num} failed! Trying again in $${attempt_num}
+seconds..."
+            sleep $(( attempt_num=attempt_num + 1 ))
+        fi
+    done
+}
+
+install() {
+        echo "Joining Cluster Control Plane"
+	discovery_ca_cert_hash=$(openssl x509 -in $HOME/ca.crt -noout -pubkey |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)
+
+	retry 5 sudo kubeadm join ${fqdn}:${service_port} --token ${boot_token} --discovery-token-ca-cert-hash sha256:$${discovery_ca_cert_hash} --control-plane --certificate-key ${master_certificate_key}
+	
+
+}
+
+ensure_admin_config() {
+        echo "Installing admin config"
+        mkdir -p $HOME/.kube
+        sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
+        sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+        echo "Installing client cert generator"
+        cat <<"CLIENTSCRIPT" | sudo tee /usr/local/bin/generate-client-cert.sh
+#!/usr/bin/env bash
+
+if [[ "$${#}" -lt 2 ]]; then
+    echo "Usage: $${0} user group [group ...]"
+    exit 1
+fi
+
+USER=$${1}; shift
+GROUP=""
+for word
+do
+  GROUP="$${GROUP}/O=$${word}"
+done
+CLUSTERENDPOINT=https://${public_fqdn}:${service_port}
+CLUSTERNAME=${cluster_name}
+CACERT=/etc/kubernetes/pki/ca.crt
+CAKEY=/etc/kubernetes/pki/ca.key
+CLIENTCERTKEY=clients/$${USER}/$${USER}.key
+CLIENTCERTCSR=clients/$${USER}/$${USER}.csr
+CLIENTCERTCRT=clients/$${USER}/$${USER}.crt
+
+if [ ! -r "$${CAKEY}" ]; then
+    echo "Insufficent permissions to read $${CAKEY}"
+    exit 1
+fi
+
+mkdir -p clients/$${USER}
+
+openssl genrsa -out $${CLIENTCERTKEY} 4096
+openssl req -new -key $${CLIENTCERTKEY} -out $${CLIENTCERTCSR} \
+      -subj "/CN=$${USER}$${GROUP}"
+openssl x509 -req -days 365 -sha256 -in $${CLIENTCERTCSR} -CA $${CACERT} -CAkey $${CAKEY} -set_serial 2 -out $${CLIENTCERTCRT}
+
+cat <<-EOF > clients/$${USER}/kubeconfig
+apiVersion: v1
+kind: Config
+preferences:
+  colors: true
+current-context: $${CLUSTERNAME}
+clusters:
+- name: $${CLUSTERNAME}
+  cluster:
+    server: $${CLUSTERENDPOINT}
+    certificate-authority-data: |-
+      $(base64 --wrap=0 $${CACERT})
+contexts:
+- context:
+    cluster: $${CLUSTERNAME}
+    user: $${USER}
+  name: $${CLUSTERNAME}
+users:
+- name: $${USER}
+  user:
+    client-certificate-data: |-
+      $(base64 --wrap=0 $${CLIENTCERTCRT})
+    client-key-data: |-
+      $(base64 --wrap=0 $${CLIENTCERTKEY})
+EOF
+CLIENTSCRIPT
+        echo "Setting permissions"
+        sudo chmod 755 /usr/local/bin/generate-client-cert.sh
+}
+
+ensure_docker_settings() {
+        if [ ! -f /etc/docker/daemon.json ]
+        then
+                echo "Writing Updated Docker Configuration"
+                cat <<EOF | sudo tee /etc/docker/daemon.json
+{
+  "log-driver": "json-file",
+  "live-restore": true,
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+                sudo systemctl reload docker
+                sudo mkdir -p /etc/systemd/system/docker.service.d
+                sudo systemctl daemon-reload
+        fi
+}
+
+upgrade() {
+	if [ -f /var/run/docker.sock ]
+	then
+		ensure_docker_settings
+	fi
+        #echo "Restarting docker service to ensure correct cgroup"
+        #sudo systemctl restart docker
+        echo "Kubeadm installed master detected - checking for upgrade"
+        sudo apt-get -qq update -y
+        sudo apt-get -qq install debconf-utils
+        echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
+        sudo apt-get -qq install kubeadm=${kubernetes_release}-00
+        if sudo kubeadm upgrade plan --config $HOME/install/kubeadm.conf | egrep '^\s*kubeadm upgrade apply'
+        then
+                retry 5 sudo kubeadm upgrade apply -y --config $HOME/install/kubeadm.conf
+                sudo apt-get -qq install \
+                        kubectl=${kubernetes_release}-00 \
+                        kubelet=${kubernetes_release}-00
+        else
+                echo "Already at version ${kubernetes_release} or greater - skipping"
+        fi
+}
+
+if [ "${kubernetes_release}" \< "1.15" ]; then
+	echo "HA on version ${kubernetes_release} is not supported. Upgrade to 1.15 or newer"
+	sleep 2
+	exit 1
+fi
+if kubeadm config view  >/dev/null 2>&1
+then
+        upgrade
+else
+        install
+fi
+ensure_admin_config

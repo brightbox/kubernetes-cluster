@@ -71,7 +71,7 @@ for word
 do
   GROUP="$${GROUP}/O=$${word}"
 done
-CLUSTERENDPOINT=https://${public_fqdn}:6443
+CLUSTERENDPOINT=https://${public_fqdn}:${service_port}
 CLUSTERNAME=${cluster_name}
 CACERT=/etc/kubernetes/pki/ca.crt
 CAKEY=/etc/kubernetes/pki/ca.key
@@ -180,7 +180,7 @@ data:
     clusters:
     - cluster:
         certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        server: https://[${external_ip}]:6443
+        server: https://[${public_ip}]:${service_port}
       name: default
     contexts:
     - context:
@@ -258,9 +258,9 @@ spec:
             memory: 50Mi
         env:
           - name: KUBERNETES_SERVICE_HOST
-            value: "${external_ip}"
+            value: "${public_ip}"
           - name: KUBERNETES_SERVICE_PORT
-            value: "6443"
+            value: "${service_port}"
           - name: BRIGHTBOX_CLIENT
             valueFrom:
               secretKeyRef:
@@ -293,135 +293,6 @@ EOF
         echo "Installing Calico network controllers"
         retry 5 kubectl apply -f \
         https://docs.projectcalico.org/v${calico_release}/getting-started/kubernetes/installation/hosted/kubernetes-datastore/calico-networking/1.7/calico.yaml
-
-        echo "Installing Local Storage Provisioner"
-        cat <<EOF > $HOME/install/local-storage-provisioner.yml
----
-# Source: provisioner/templates/provisioner.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: local-provisioner-config
-  namespace: kube-system
-data:
-  storageClassMap: |
-    local-storage:
-       hostDir: /mnt/disks
-       mountDir: /mnt/disks
-       blockCleanerCommand:
-         - "/scripts/shred.sh"
-         - "2"
----
-apiVersion: extensions/v1beta1
-kind: DaemonSet
-metadata:
-  name: local-volume-provisioner
-  namespace: kube-system
-  labels:
-    app: local-volume-provisioner
-spec:
-  selector:
-    matchLabels:
-      app: local-volume-provisioner
-  template:
-    metadata:
-      labels:
-        app: local-volume-provisioner
-    spec:
-      serviceAccountName: local-storage-admin
-      containers:
-        - image: "quay.io/external_storage/local-volume-provisioner:v2.2.0"
-          name: provisioner
-          securityContext:
-            privileged: true
-          resources:
-            limits:
-              cpu: 100m
-              memory: 200Mi
-            requests:
-              cpu: 50m
-              memory: 100Mi
-          env:
-          - name: MY_NODE_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: spec.nodeName
-          - name: MY_NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          - name: JOB_CONTAINER_IMAGE
-            value: "quay.io/external_storage/local-volume-provisioner:v2.2.0"
-          volumeMounts:
-            - mountPath: /etc/provisioner/config
-              name: provisioner-config
-              readOnly: true
-            - mountPath: /dev
-              name: provisioner-dev
-            - mountPath: /mnt/disks
-              name: local-storage
-              mountPropagation: "HostToContainer"
-      volumes:
-        - name: provisioner-config
-          configMap:
-            name: local-provisioner-config
-        - name: provisioner-dev
-          hostPath:
-            path: /dev
-        - name: local-storage
-          hostPath:
-            path: /mnt/disks
----
-# Source: provisioner/templates/provisioner-service-account.yaml
-
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: local-storage-admin
-  namespace: kube-system
-
----
-# Source: provisioner/templates/provisioner-cluster-role-binding.yaml
-
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: local-storage-provisioner-pv-binding
-  namespace: kube-system
-subjects:
-- kind: ServiceAccount
-  name: local-storage-admin
-  namespace: kube-system
-roleRef:
-  kind: ClusterRole
-  name: system:persistent-volume-provisioner
-  apiGroup: rbac.authorization.k8s.io
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: local-storage-provisioner-node-clusterrole
-  namespace: kube-system
-rules:
-- apiGroups: [""]
-  resources: ["nodes"]
-  verbs: ["get"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: local-storage-provisioner-node-binding
-  namespace: kube-system
-subjects:
-- kind: ServiceAccount
-  name: local-storage-admin
-  namespace: kube-system
-roleRef:
-  kind: ClusterRole
-  name: local-storage-provisioner-node-clusterrole
-  apiGroup: rbac.authorization.k8s.io
-EOF
-        retry 5 kubectl apply -f $HOME/install/local-storage-provisioner.yml
 }
 
 ensure_docker_settings() {
@@ -469,7 +340,7 @@ upgrade() {
         ensure_ancillary_items
 }
 
-if sudo kubeadm config view  >/dev/null 2>&1
+if kubeadm config view  >/dev/null 2>&1
 then
         upgrade
 else

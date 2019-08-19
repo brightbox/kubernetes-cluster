@@ -1,157 +1,28 @@
-locals {
-  external_ip = brightbox_server.k8s_master[0].ipv4_address_private
-  fqdn        = brightbox_server.k8s_master[0].fqdn
-  ipv6_fqdn   = brightbox_server.k8s_master[0].ipv6_hostname
-  public_ip   = brightbox_cloudip.k8s_master.public_ip
-  public_rdns = brightbox_cloudip.k8s_master.reverse_dns
-  public_fqdn = brightbox_cloudip.k8s_master.fqdn
+module "k8s_master" {
+  source = "./master"
+  #Dependencies
+  cluster_ready = module.k8s_cluster
+
+  #Variables
+  master_count           = var.master_count
+  master_type            = var.master_type
+  image_desc             = var.image_desc
+  region                 = var.region
+  kubernetes_release     = var.kubernetes_release
+  calico_release         = var.calico_release
+  cluster_name           = var.cluster_name
+  cluster_domainname     = var.cluster_domainname
+  cluster_cidr           = local.cluster_cidr
+  service_cidr           = local.service_cidr
+  apiserver_service_port = local.service_port
+  # master_zone = "b"
+
+  #Injections
+  cluster_server_group    = module.k8s_cluster.group_id
+  cluster_firewall_policy = module.k8s_cluster.firewall_policy_id
+  ca_cert_pem             = tls_self_signed_cert.k8s_ca.cert_pem
+  ca_private_key_pem      = tls_private_key.k8s_ca.private_key_pem
+  install_script          = local.install_provisioner_script
+  cloud_config            = local.cloud_config
 }
 
-resource "brightbox_cloudip" "k8s_master" {
-  target = brightbox_server.k8s_master[0].interface
-  name   = "k8s-master.${var.cluster_name}"
-
-  provisioner "local-exec" {
-    when    = destroy
-    command = "ssh-keygen -R ${brightbox_cloudip.k8s_master.fqdn}"
-  }
-
-  provisioner "local-exec" {
-    when    = destroy
-    command = "ssh-keygen -R ${brightbox_cloudip.k8s_master.public_ip}"
-  }
-}
-
-resource "brightbox_server" "k8s_master" {
-  count      = var.master_count
-  depends_on = [brightbox_firewall_policy.k8s]
-
-  name      = "k8s-master-${count.index}.${local.cluster_fqdn}"
-  image     = data.brightbox_image.k8s_master.id
-  type      = var.master_type
-  user_data = local.master_cloud_config
-  zone      = "${var.region}-${count.index % 2 == 0 ? "a" : "b"}"
-
-  server_groups = [brightbox_server_group.k8s.id]
-
-  lifecycle {
-    ignore_changes = [
-      image,
-      type,
-      server_groups,
-    ]
-    create_before_destroy = true
-  }
-
-}
-
-resource "null_resource" "k8s_master" {
-  triggers = {
-    master_id = brightbox_server.k8s_master[0].id
-  }
-
-  connection {
-    user = brightbox_server.k8s_master[0].username
-    host = brightbox_cloudip.k8s_master.fqdn
-  }
-
-  provisioner "file" {
-    content     = tls_self_signed_cert.k8s_ca.cert_pem
-    destination = "ca.crt"
-  }
-
-  provisioner "file" {
-    content     = tls_private_key.k8s_ca.private_key_pem
-    destination = "ca.key"
-  }
-
-  # Generic provisioners
-  provisioner "remote-exec" {
-    inline = [
-      local.install_provisioner_script
-    ]
-  }
-
-  provisioner "remote-exec" {
-    when = destroy
-
-    # The sleep 10 is a hack to workaround the lack of wait on the delete
-    # command
-    inline = [
-      "kubectl get services -o=jsonpath='{range .items[?(.spec.type==\"LoadBalancer\")]}{\"service/\"}{.metadata.name}{\" \"}{end}' | xargs -r kubectl delete",
-      "sleep 10",
-    ]
-  }
-}
-
-resource "null_resource" "k8s_master_configure" {
-  depends_on = [null_resource.k8s_master]
-
-  triggers = {
-    master_id      = brightbox_server.k8s_master[0].id
-    k8s_release    = var.kubernetes_release
-    master_script  = local.master_provisioner_script
-    kubeadm_script = local.kubeadm_config_script
-  }
-
-  connection {
-    user = brightbox_server.k8s_master[0].username
-    host = brightbox_cloudip.k8s_master.fqdn
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      local.kubeadm_config_script,
-      local.master_provisioner_script,
-    ]
-  }
-
-}
-
-resource "null_resource" "k8s_storage_configure" {
-  depends_on = [null_resource.k8s_master_configure]
-
-  triggers = {
-    master_id      = brightbox_server.k8s_master[0].id
-    reclaim_policy = var.reclaim_volumes
-    master_script  = local.storage_class_provisioner_script
-  }
-
-  connection {
-    user = brightbox_server.k8s_master[0].username
-    host = brightbox_cloudip.k8s_master.fqdn
-  }
-
-  provisioner "remote-exec" {
-    inline = [local.storage_class_provisioner_script]
-  }
-}
-
-resource "null_resource" "k8s_token_manager" {
-  depends_on = [null_resource.k8s_master_configure]
-
-  triggers = {
-    boot_token   = local.boot_token
-    worker_count = var.worker_count
-    master_count = var.master_count
-  }
-
-  connection {
-    user = brightbox_server.k8s_master[0].username
-    host = brightbox_cloudip.k8s_master.fqdn
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "kubeadm token delete ${local.boot_token}",
-      "kubeadm token create ${local.boot_token}",
-    ]
-  }
-}
-
-data "brightbox_image" "k8s_master" {
-  name        = var.image_desc
-  arch        = "x86_64"
-  official    = true
-  most_recent = true
-}

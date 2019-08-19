@@ -5,91 +5,10 @@ set -e
 create_kubeadm_config() {
         echo "Installing kubeadm.conf"
         case ${kubernetes_release} in
-                1.11.* )
-        cat <<EOF >$HOME/install/kubeadm.conf
-apiVersion: kubeadm.k8s.io/v1alpha2
-kubernetesVersion: ${kubernetes_release}
-apiServerExtraArgs:
-  cloud-provider: external
-controllerManagerExtraArgs:
-  cloud-provider: external
-nodeRegistration:
-  kubeletExtraArgs:
-    cloud-provider: external
-kind: MasterConfiguration
-clusterName: ${cluster_name}
-api:
-  advertiseAddress: ${external_ip}
-networking:
-  dnsDomain: ${cluster_domainname}
-  podSubnet: ${cluster_cidr}
-  serviceSubnet: ${service_cidr}
-bootstrapTokens:
-  - token: ${boot_token}
-apiServerCertSANs:
-- ${fqdn}
-- ${ipv6_fqdn}
-- ${public_fqdn}
-- ${public_rdns}
-- ${public_ip}
-
-kubeProxy:
-  config:
-    mode: ipvs
-    ipvs:
-      scheduler: lc
-EOF
-        ;;
-                1.12.*)
-        cat <<EOF >$HOME/install/kubeadm.conf
-apiVersion: kubeadm.k8s.io/v1alpha3
-kind: InitConfiguration
-apiEndpoint:
-  advertiseAddress: ${external_ip}
-bootstrapTokens:
-- token: "${boot_token}"
-  description: "kubeadm bootstrap token"
-nodeRegistration:
-  kubeletExtraArgs:
-    cloud-provider: external
----
-apiVersion: kubeadm.k8s.io/v1alpha3
-kind: ClusterConfiguration
-apiServerCertSANs:
-- ${fqdn}
-- ${ipv6_fqdn}
-- ${public_fqdn}
-- ${public_rdns}
-- ${public_ip}
-apiServerExtraArgs:
-  cloud-provider: external
-clusterName: ${cluster_name}
-controllerManagerExtraArgs:
-  cloud-provider: external
-kubernetesVersion: "v${kubernetes_release}"
-networking:
-  dnsDomain: ${cluster_domainname}
-  podSubnet: ${cluster_cidr}
-  serviceSubnet: ${service_cidr}
----
-apiVersion: kubeproxy.config.k8s.io/v1alpha1
-kind: KubeProxyConfiguration
-clusterCIDR: ${cluster_cidr}
-ipvs:
-  scheduler: lc
-mode: ipvs
----
-apiVersion: kubelet.config.k8s.io/v1beta1
-kind: KubeletConfiguration
-clusterDomain: ${cluster_domainname}
-EOF
-                ;;
-                1.1[34].*)
+                1.14.*)
         cat <<EOF >$HOME/install/kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1beta1
 kind: InitConfiguration
-localAPIEndpoint:
-  advertiseAddress: ${external_ip}
 bootstrapTokens:
 - token: "${boot_token}"
   description: "kubeadm bootstrap token"
@@ -101,14 +20,13 @@ apiVersion: kubeadm.k8s.io/v1beta1
 kind: ClusterConfiguration
 apiServer:
   certSANs:
-  - ${fqdn}
-  - ${ipv6_fqdn}
   - ${public_fqdn}
   - ${public_rdns}
   - ${public_ip}
   extraArgs:
     cloud-provider: external
 clusterName: ${cluster_name}
+controlPlaneEndpoint: "${public_ip}:${service_port}"
 controllerManager:
   extraArgs:
     cloud-provider: external
@@ -128,14 +46,14 @@ mode: ipvs
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
 clusterDomain: ${cluster_domainname}
+cgroupDriver: systemd
 EOF
                 ;;
                 1.1[5].*)
         cat <<EOF >$HOME/install/kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: InitConfiguration
-localAPIEndpoint:
-  advertiseAddress: ${external_ip}
+certificateKey: ${master_certificate_key}
 bootstrapTokens:
 - token: "${boot_token}"
   description: "kubeadm bootstrap token"
@@ -143,12 +61,10 @@ nodeRegistration:
   kubeletExtraArgs:
     cloud-provider: external
 ---
-apiVersion: kubeadm.k8s.io/v1beta1
+apiVersion: kubeadm.k8s.io/v1beta2
 kind: ClusterConfiguration
 apiServer:
   certSANs:
-  - ${fqdn}
-  - ${ipv6_fqdn}
   - ${public_fqdn}
   - ${public_rdns}
   - ${public_ip}
@@ -159,6 +75,7 @@ controllerManager:
   extraArgs:
     cloud-provider: external
 kubernetesVersion: "v${kubernetes_release}"
+controlPlaneEndpoint: "${public_ip}:${service_port}"
 networking:
   dnsDomain: ${cluster_domainname}
   podSubnet: ${cluster_cidr}
@@ -174,6 +91,7 @@ mode: ipvs
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
 clusterDomain: ${cluster_domainname}
+cgroupDriver: systemd
 EOF
                 ;;
 	*)

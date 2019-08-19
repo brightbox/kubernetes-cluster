@@ -1,0 +1,44 @@
+#!/bin/sh
+# Create PVs across all nodes
+
+storageclass=local-retain
+
+nodepv() {
+        local node=$1
+        local target=$2
+        cat <<EOF
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: local-pv-${node}
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ${storageclass}
+  claimRef:
+  local:
+    path: ${target}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - ${node}
+EOF
+}
+
+if [ "$#" -ne 1 ]
+then
+  echo "Usage: $(basename $0) target-dir" >&2
+  exit 2
+fi
+
+for word in $(kubectl get nodes -l '!node-role.kubernetes.io/master' -o name | sed 's/node\///')
+  do 
+    nodepv ${word} ${1}
+  done
