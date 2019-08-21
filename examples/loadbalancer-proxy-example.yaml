@@ -4,6 +4,7 @@ metadata:
   name: percona
   annotations:
     service.beta.kubernetes.io/brightbox-load-balancer-listener-protocol: "tcp"
+    #    service.beta.kubernetes.io/brightbox-load-balancer-listener-idle-timeout: "100000"
     #    service.beta.kubernetes.io/brightbox-load-balancer-listener-proxy-protocol: "v2-ssl-cn"
     service.beta.kubernetes.io/brightbox-load-balancer-healthcheck-protocol: "tcp"
 spec:
