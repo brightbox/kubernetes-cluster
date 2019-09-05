@@ -85,6 +85,12 @@ variable "worker_drain_timeout" {
   default     = "120s"
 }
 
+variable "worker_cloudip_count" {
+  type        = number
+  description = "Number of workers to allocate fixed cloud ips to"
+  default     = 0
+}
+
 variable "storage_count" {
   type        = number
   description = "Number of storage nodes in cluster"
@@ -127,7 +133,7 @@ variable "cluster_name" {
 variable "kubernetes_release" {
   type        = string
   description = "Version of Kubernetes to install"
-  default     = "1.15.2"
+  default     = "1.15.3"
 }
 
 variable "calico_release" {

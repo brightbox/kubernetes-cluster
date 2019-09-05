@@ -35,6 +35,7 @@ resource "brightbox_load_balancer" "k8s_master" {
     protocol = "tcp"
     in       = var.apiserver_service_port
     out      = var.apiserver_service_port
+    timeout = 86400000
   }
 
   healthcheck {
@@ -101,6 +102,7 @@ resource "brightbox_server" "k8s_master" {
 resource "null_resource" "k8s_master" {
   triggers = {
     master_id = brightbox_server.k8s_master[0].id
+    cert_change = var.ca_cert_pem
   }
 
   connection {
@@ -146,6 +148,7 @@ resource "null_resource" "k8s_master_configure" {
     cert_key       = random_id.master_certificate_key.hex
     master_id      = brightbox_server.k8s_master[0].id
     k8s_release    = var.kubernetes_release
+    cert_change = var.ca_cert_pem
     master_script  = local.master_provisioner_script
     kubeadm_script = local.kubeadm_config_script
   }
@@ -173,6 +176,7 @@ resource "null_resource" "k8s_master_mirrors" {
 
   triggers = {
     mirror_id = brightbox_server.k8s_master[count.index + 1].id
+    cert_change = var.ca_cert_pem
   }
 
   connection {
@@ -208,6 +212,7 @@ resource "null_resource" "k8s_master_mirrors_configure" {
     cert_key       = random_id.master_certificate_key.hex
     mirror_id      = brightbox_server.k8s_master[count.index + 1].id
     k8s_release    = var.kubernetes_release
+    cert_change = var.ca_cert_pem
     master_script  = local.master_mirror_provisioner_script
     kubeadm_script = local.kubeadm_config_script
   }

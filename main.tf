@@ -1,25 +1,28 @@
 # Computed variables
 locals {
-  validity_period = 8760
-  region_suffix   = "${var.region}.brightbox.com"
-  template_path   = "${path.root}/templates"
-  service_cidr    = "172.30.0.0/16"
-  cluster_cidr    = "192.168.0.0/16"
-  cluster_fqdn    = "${var.cluster_name}.${var.cluster_domainname}"
-  service_port    = "6443"
-  cloud_config    = file("${local.template_path}/cloud-config.yml")
+  validity_period  = 87600
+  renew_period     = 730
+  region_suffix    = "${var.region}.brightbox.com"
+  template_path    = "${path.root}/templates"
+  service_cidr     = "172.30.0.0/16"
+  cluster_cidr     = "192.168.0.0/16"
+  cluster_fqdn     = "${var.cluster_name}.${var.cluster_domainname}"
+  service_port     = "6443"
+  cloud_config     = file("${local.template_path}/cloud-config.yml")
+  worker_node_ids  = module.k8s_worker.servers[*].id
+  storage_node_ids = module.k8s_storage.servers[*].id
   install_provisioner_script = templatefile(
     "${local.template_path}/install-kube",
     { kubernetes_release = var.kubernetes_release }
   )
   worker_label_script = <<EOT
 %{if var.worker_count != 0~}
-      kubectl label --overwrite ${join(" ", formatlist("node/%s", module.k8s_worker.node_ids))} 'node-role.kubernetes.io/worker=' 'node-role.kubernetes.io/storage-'
+      kubectl label --overwrite ${join(" ", formatlist("node/%s", local.worker_node_ids))} 'node-role.kubernetes.io/worker=' 'node-role.kubernetes.io/storage-'
 %{~endif}
 EOT
   storage_label_script = <<EOT
 %{if var.storage_count != 0~}
-      kubectl label --overwrite ${join(" ", formatlist("node/%s", module.k8s_storage.node_ids))} 'node-role.kubernetes.io/storage=' 'node-role.kubernetes.io/worker-'
+      kubectl label --overwrite ${join(" ", formatlist("node/%s", local.storage_node_ids))} 'node-role.kubernetes.io/storage=' 'node-role.kubernetes.io/worker-'
 %{~endif}
 EOT
 }
@@ -106,6 +109,7 @@ resource "tls_self_signed_cert" "k8s_ca" {
   }
 
   validity_period_hours = local.validity_period
+  early_renewal_hours   = local.renew_period
 
   allowed_uses = [
     "key_encipherment",

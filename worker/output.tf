@@ -1,4 +1,4 @@
-output "node_ids" {
-  value = brightbox_server.k8s_worker[*].id
-  description = "List of this modules node ids"
+output "servers" {
+  value = brightbox_server.k8s_worker
+  description = "List of this modules brightbox servers"
 }
