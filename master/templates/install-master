@@ -71,20 +71,21 @@ install() {
         ensure_ancillary_items
 }
 
-ensure_updated_certs() {
+ensure_updated_ca() {
 	if newer_cert ca
 	then
 		install_ca
-		echo "Refreshing cerficates"
-		retry 5 sudo kubeadm alpha certs renew all
 	fi
 }
 
 ensure_admin_config() {
-        echo "Installing admin config"
-        mkdir -p $HOME/.kube
-        sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
-        sudo chown $(id -u):$(id -g) $HOME/.kube/config
+	if [ -e /etc/kubernetes/admin.conf ]
+	then
+		echo "Installing admin config"
+		mkdir -p $HOME/.kube
+		sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
+		sudo chown $(id -u):$(id -g) $HOME/.kube/config
+	fi
 
         echo "Installing client cert generator"
         cat <<"CLIENTSCRIPT" | sudo tee /usr/local/bin/generate-client-cert.sh
@@ -346,6 +347,8 @@ EOF
 }
 
 upgrade() {
+	ensure_updated_ca
+
 	if [ -f /var/run/docker.sock ]
 	then
 		ensure_docker_settings
@@ -357,7 +360,7 @@ upgrade() {
         sudo apt-get -qq install debconf-utils
         echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
         sudo apt-get -qq install kubeadm=${kubernetes_release}-00
-        if sudo kubeadm upgrade plan --config $HOME/install/kubeadm.conf | egrep '^\s*kubeadm upgrade apply'
+        if sudo kubeadm upgrade plan --config $HOME/install/kubeadm.conf | egrep -q '^\s*kubeadm upgrade apply'
         then
                 retry 5 sudo kubeadm upgrade apply -y --config $HOME/install/kubeadm.conf
                 sudo apt-get -qq install \
@@ -366,12 +369,11 @@ upgrade() {
         else
                 echo "Already at version ${kubernetes_release} or greater - skipping"
         fi
-	ensure_updated_certs
         ensure_admin_config
         ensure_ancillary_items
 }
 
-if kubeadm config view  >/dev/null 2>&1
+if sudo kubeadm init phase preflight --config install/kubeadm.conf 2>&1 | grep -q "ERROR Port-6443"
 then
         upgrade
 else
