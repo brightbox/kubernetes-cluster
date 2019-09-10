@@ -1,6 +1,6 @@
 # Computed variables
 locals {
-  validity_period = 8760
+  validity_period = 87600
   region_suffix   = "${var.region}.brightbox.com"
   generated_path  = "${path.root}/generated"
   template_path   = "${path.root}/templates"
