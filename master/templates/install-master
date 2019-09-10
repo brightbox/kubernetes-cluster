@@ -75,7 +75,15 @@ ensure_updated_ca() {
 	if newer_cert ca
 	then
 		install_ca
+		update_cert_configs
+		echo "CA CERTS UPDATED - NODES NEED RESTARTING"
 	fi
+}
+
+update_cert_configs() {
+	sudo mv /etc/kubernetes/*.conf /tmp
+	sudo kubeadm init phase kubeconfig all --config $HOME/install/kubeadm.conf
+	sudo kubeadm alpha certs renew all
 }
 
 ensure_admin_config() {
