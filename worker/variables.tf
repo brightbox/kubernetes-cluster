@@ -88,13 +88,13 @@ variable "cluster_ready" {
 }
 
 variable "worker_name" {
-  type =string
+  type        = string
   description = "The name prefix of the worker in this group"
-  default = "k8s-worker"
+  default     = "k8s-worker"
 }
 
 variable "worker_zone" {
-  type = string
+  type        = string
   description = "The zone the workers are to be built in: 'a' or 'b'. Default is to spread between the zones"
-  default = ""
+  default     = ""
 }

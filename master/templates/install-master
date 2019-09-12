@@ -84,6 +84,8 @@ update_cert_configs() {
 	sudo mv /etc/kubernetes/*.conf /tmp
 	sudo kubeadm init phase kubeconfig all --config $HOME/install/kubeadm.conf
 	sudo kubeadm alpha certs renew all
+	sudo kubeadm init phase bootstrap-token --config $HOME/install/kubeadm.conf
+	sudo kubeadm init phase upload-config all
 }
 
 ensure_admin_config() {
