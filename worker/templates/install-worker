@@ -52,6 +52,11 @@ reset_if_newer_ca(){
 install() {
 	retry 5 sudo systemctl enable iscsid
 	retry 5 sudo systemctl start iscsid
+	echo "Loading IPVS modules"
+	for word in ip_vs_wrr ip_vs_sh ip_vs ip_vs_rr nf_conntrack_ipv4 br_netfilter
+	do
+		sudo modprobe -- $${word}
+	done
 	echo "Joining cluster"
 	discovery_ca_cert_hash=$(openssl x509 -in $HOME/ca.crt -noout -pubkey |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)
 

@@ -120,7 +120,7 @@ resource "null_resource" "k8s_master" {
     destination = "ca.key"
   }
 
-  # Generic provisioners
+  # Generic provisioner
   provisioner "remote-exec" {
     inline = [
       var.install_script
@@ -192,10 +192,15 @@ resource "null_resource" "k8s_master_mirrors" {
     destination = "ca.crt"
   }
 
+  provisioner "file" {
+    content     = var.ca_private_key_pem
+    destination = "ca.key"
+  }
+
   # Generic provisioner
   provisioner "remote-exec" {
     inline = [
-      var.install_script,
+      var.install_script
     ]
   }
 

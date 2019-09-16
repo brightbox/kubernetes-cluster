@@ -24,6 +24,56 @@ seconds..."
     done
 }
 
+install_cert() {
+        local source_prefix=$${1}
+        local dest_prefix=$${2:-$${1}}
+        local target_suffix=$${3:-crt}
+        local pki_dir=/etc/kubernetes/pki
+
+        for word in $${target_suffix} key
+        do
+                sudo cp $${source_prefix}.$${word} $${pki_dir}/$${dest_prefix}.$${word}
+        done
+        sudo chmod 0600 $${pki_dir}/$${dest_prefix}.key
+        rm $${source_prefix}.key
+}
+
+newer_cert() {
+        local source_prefix=$${1}
+        local dest_prefix=$${2:-$${1}}
+        local target_suffix=$${3:-crt}
+        local pki_dir=/etc/kubernetes/pki
+
+        for word in $${target_suffix} key
+        do
+		if sudo test $${source_prefix}.$${word} -nt $${pki_dir}/$${dest_prefix}.$${word}
+		then
+			return 0
+		fi
+        done
+	return 1
+}
+
+install_ca() {
+        echo "Installing Updated CA"
+        sudo mkdir -p /etc/kubernetes/pki/etcd
+        install_cert ca
+}
+ensure_updated_ca() {
+	if newer_cert ca
+	then
+		install_ca
+		update_cert_configs
+		echo "CA CERTS UPDATED - NODES NEED RESTARTING"
+	fi
+}
+
+update_cert_configs() {
+	sudo mv /etc/kubernetes/*.conf /tmp
+	sudo kubeadm init phase kubeconfig all --config $HOME/install/kubeadm.conf
+	sudo kubeadm alpha certs renew all
+}
+
 install() {
         echo "Joining Cluster Control Plane"
 	discovery_ca_cert_hash=$(openssl x509 -in $HOME/ca.crt -noout -pubkey |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)
@@ -125,6 +175,8 @@ EOF
 }
 
 upgrade() {
+	ensure_updated_ca
+
 	if [ -f /var/run/docker.sock ]
 	then
 		ensure_docker_settings
@@ -152,7 +204,7 @@ if [ "${kubernetes_release}" \< "1.15" ]; then
 	sleep 2
 	exit 1
 fi
-if kubeadm config view  >/dev/null 2>&1
+if sudo kubeadm init phase preflight --config install/kubeadm.conf 2>&1 | grep -q "ERROR Port-6443"
 then
         upgrade
 else
