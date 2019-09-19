@@ -133,7 +133,7 @@ variable "cluster_name" {
 variable "kubernetes_release" {
   type        = string
   description = "Version of Kubernetes to install"
-  default     = "1.15.3"
+  default     = "1.15.4"
 }
 
 variable "calico_release" {
