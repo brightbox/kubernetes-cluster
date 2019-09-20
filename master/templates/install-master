@@ -383,7 +383,7 @@ upgrade() {
         ensure_ancillary_items
 }
 
-if sudo kubeadm init phase preflight --config install/kubeadm.conf 2>&1 | grep -q "ERROR Port-6443"
+if ss -lnt | grep -q :6443
 then
         upgrade
 else

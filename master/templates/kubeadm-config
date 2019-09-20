@@ -49,7 +49,7 @@ clusterDomain: ${cluster_domainname}
 cgroupDriver: systemd
 EOF
                 ;;
-                1.1[5].*)
+                1.1[56].*)
         cat <<EOF >$HOME/install/kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: InitConfiguration

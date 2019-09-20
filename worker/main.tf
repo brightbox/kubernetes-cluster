@@ -132,6 +132,7 @@ resource "null_resource" "k8s_worker_configure" {
     null_resource.k8s_worker_ca_certificate,
     null_resource.k8s_worker_token_manager,
     null_resource.k8s_worker,
+    var.apiserver_ready,
   ]
 
   count = var.worker_count

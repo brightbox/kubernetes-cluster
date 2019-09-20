@@ -19,6 +19,6 @@ output "kubeadm_config" {
 }
 
 output "apiserver_ready" {
-  value       = null_resource.k8s_master_configure
+  value       = local.masters_configured
   description = "Resource pre-requisite that signals the apiserver is ready"
 }

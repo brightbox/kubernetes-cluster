@@ -79,7 +79,7 @@ variable "worker_drain_timeout" {
 }
 
 variable "apiserver_ready" {
-  type        = object({ id = string })
+  type        = list(string)
   description = "resource that indicates the apiserver is ready to receive instructions"
 }
 

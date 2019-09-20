@@ -324,6 +324,8 @@ locals {
     }
   )
 
+  masters_configured = concat([null_resource.k8s_token_manager.id, null_resource.k8s_master_configure.id], null_resource.k8s_master_mirrors_configure[*].id)
+
 }
 
 resource "random_id" "master_certificate_key" {
