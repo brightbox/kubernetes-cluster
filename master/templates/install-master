@@ -285,8 +285,7 @@ spec:
         image: brightbox/brightbox-cloud-controller-manager:${kubernetes_release}
         args:
           - "--cloud-provider=brightbox"
-          - "--bind-address=::1"
-          - "--port=0"
+          - "--bind-address=${local_host}"
           - "--secure-port=10258"
           - "--configure-cloud-routes=false"
           - "--kubeconfig=/etc/kubernetes/cloud-controller.conf"

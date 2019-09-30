@@ -1,4 +1,5 @@
 locals {
+  local_host = "127.0.0.1"
   template_path = "${path.module}/templates"
   cluster_fqdn  = "${var.cluster_name}.${var.cluster_domainname}"
   boot_token    = "${random_string.token_prefix.result}.${random_string.token_suffix.result}"
@@ -287,6 +288,7 @@ locals {
     controller_client_secret = brightbox_api_client.controller_client.secret,
     apiurl                   = "https://api.${var.region}.brightbox.com",
     service_port             = var.apiserver_service_port,
+    local_host = local.local_host
     }
   )
 
