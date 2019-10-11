@@ -133,17 +133,11 @@ variable "cluster_name" {
 variable "kubernetes_release" {
   type        = string
   description = "Version of Kubernetes to install"
-  default     = "1.15.4"
+  default     = "1.16.1"
 }
 
 variable "calico_release" {
   type        = string
   description = "Version of Calico plugin to install"
-  default     = "3.8"
-}
-
-variable "openebs_release" {
-  type        = string
-  description = "Version of OpenEBS namespace to install"
-  default     = "1.0.0"
+  default     = "3.9"
 }

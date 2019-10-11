@@ -9,7 +9,7 @@ Persistent Volumes that are available to pods across all worker nodes.
 A single command will install the OpenEBS management system within its own `openebs` namespace
 
 ```
-kubectl apply -f https://openebs.github.io/charts/openebs-operator-1.0.0.yaml
+kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml
 ```
 
 This will create the storage management system within the `openebs` namespaces. Once running
