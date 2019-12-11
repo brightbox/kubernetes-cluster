@@ -23,6 +23,16 @@ variable "worker_count" {
   description = "Number of worker nodes"
 }
 
+variable "worker_min" {
+  type        = number
+  description = "Minimum number of worker nodes"
+}
+
+variable "worker_max" {
+  type        = number
+  description = "Maximum number of worker nodes"
+}
+
 variable "cluster_server_group" {
   type        = string
   description = "The cluster server group to place worker nodes in"
@@ -41,21 +51,6 @@ variable "apiserver_fqdn" {
 variable "apiserver_service_port" {
   type        = string
   description = "Apiserver service port number"
-}
-
-variable "cloud_config" {
-  type        = string
-  description = "Injected common cloud configuration script"
-}
-
-variable "install_script" {
-  type        = string
-  description = "Injected common install script"
-}
-
-variable "kubeadm_config_script" {
-  type        = string
-  description = "Injected kubeadm config script"
 }
 
 variable "ca_cert_pem" {

@@ -16,36 +16,66 @@ resource "random_string" "token_prefix" {
   upper   = false
 }
 
+resource "brightbox_server_group" "k8s_worker_group" {
+  name        = "${var.worker_name}.${var.internal_cluster_fqdn}"
+  description = "${var.worker_min}:${var.worker_max}"
+}
+
+resource "null_resource" "k8s_worker_token_manager" {
+  depends_on = [var.apiserver_ready]
+  count      = var.worker_count
+
+  connection {
+    user = var.bastion_user
+    host = var.bastion
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "kubeadm token create ${random_string.token_prefix[count.index].result}.${random_string.token_suffix[count.index].result}",
+    ]
+  }
+}
+
 resource "brightbox_server" "k8s_worker" {
   depends_on = [
-    var.cluster_ready
+    var.cluster_ready,
+    null_resource.k8s_worker_token_manager,
   ]
   count = var.worker_count
 
   name      = "${var.worker_name}-${count.index}.${var.internal_cluster_fqdn}"
   image     = data.brightbox_image.k8s_worker.id
   type      = var.worker_type
-  user_data = var.cloud_config
+  user_data = templatefile(
+        "${local.template_path}/install-worker-userdata",
+        {
+          kubernetes_release = var.kubernetes_release
+          boot_token         = "${random_string.token_prefix[count.index].result}.${random_string.token_suffix[count.index].result}",
+          fqdn               = var.apiserver_fqdn
+          service_port       = var.apiserver_service_port
+	  certificate_authority_pem = var.ca_cert_pem
+        }
+      )
   zone      = "${var.region}-${var.worker_zone == "" ? (count.index % 2 == 0 ? "a" : "b") : var.worker_zone}"
 
-  server_groups = [var.cluster_server_group]
+  server_groups = [var.cluster_server_group, brightbox_server_group.k8s_worker_group.id]
 
   lifecycle {
     ignore_changes = [
       image,
       type,
-      server_groups,
     ]
     create_before_destroy = true
   }
 
 }
 
-resource "null_resource" "k8s_worker" {
+resource "null_resource" "k8s_worker_drain" {
   depends_on = [
     var.apiserver_ready
   ]
-  count = var.worker_count
+  count = length(brightbox_server.k8s_worker)
   triggers = {
     worker_id = brightbox_server.k8s_worker[count.index].id
   }
@@ -56,11 +86,6 @@ resource "null_resource" "k8s_worker" {
     type         = "ssh"
     bastion_host = var.bastion
     bastion_user = var.bastion_user
-  }
-
-
-  provisioner "remote-exec" {
-    inline = [var.install_script]
   }
 
   lifecycle {
@@ -83,59 +108,15 @@ resource "null_resource" "k8s_worker" {
   }
 }
 
-resource "null_resource" "k8s_worker_token_manager" {
-  depends_on = [var.apiserver_ready]
-  count      = var.worker_count
 
-  connection {
-    user = var.bastion_user
-    host = var.bastion
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "kubeadm token create ${random_string.token_prefix[count.index].result}.${random_string.token_suffix[count.index].result}",
-    ]
-  }
-}
-
-resource "null_resource" "k8s_worker_ca_certificate" {
-  depends_on = [var.apiserver_ready]
-
-  count = var.worker_count
-
-  triggers = {
-    worker_id   = brightbox_server.k8s_worker[count.index].id
-    cert_change = var.ca_cert_pem
-  }
-
-  connection {
-    user         = brightbox_server.k8s_worker[count.index].username
-    host         = brightbox_server.k8s_worker[count.index].hostname
-    type         = "ssh"
-    bastion_host = var.bastion
-    bastion_user = var.bastion_user
-  }
-
-  # Just the public key, so it can be hashed on the server
-  provisioner "file" {
-    content     = var.ca_cert_pem
-    destination = "ca.crt"
-  }
-
-}
-
-
-resource "null_resource" "k8s_worker_configure" {
+resource "null_resource" "k8s_worker_upgrade" {
 
   depends_on = [
-    null_resource.k8s_worker_ca_certificate,
     null_resource.k8s_worker_token_manager,
-    null_resource.k8s_worker,
     var.apiserver_ready,
   ]
 
-  count = var.worker_count
+  count = length(brightbox_server.k8s_worker)
 
   triggers = {
     worker_id      = brightbox_server.k8s_worker[count.index].id
@@ -144,8 +125,7 @@ resource "null_resource" "k8s_worker_configure" {
     suffix         = random_string.token_suffix[count.index].result
     fqdn           = var.apiserver_fqdn
     service_port   = var.apiserver_service_port
-    kubeadm_script = var.kubeadm_config_script
-    install_script = file("${local.template_path}/install-worker")
+    install_script = file("${local.template_path}/upgrade-worker")
     cert_change    = var.ca_cert_pem
   }
 
@@ -158,16 +138,7 @@ resource "null_resource" "k8s_worker_configure" {
 
   provisioner "remote-exec" {
     inline = [
-      var.kubeadm_config_script,
-      templatefile(
-        "${local.template_path}/install-worker",
-        {
-          kubernetes_release = var.kubernetes_release
-          boot_token         = "${random_string.token_prefix[count.index].result}.${random_string.token_suffix[count.index].result}",
-          fqdn               = var.apiserver_fqdn
-          service_port       = var.apiserver_service_port
-        }
-      ),
+      file("${local.template_path}/upgrade-worker"),
     ]
   }
 }

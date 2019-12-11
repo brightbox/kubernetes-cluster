@@ -6,6 +6,8 @@ module "k8s_worker" {
 
   #Variables
   worker_count           = var.worker_count
+  worker_min             = min(var.worker_min, var.worker_count)
+  worker_max             = max(var.worker_max, var.worker_count)
   worker_type            = var.worker_type
   image_desc             = var.image_desc
   region                 = var.region
@@ -22,9 +24,6 @@ module "k8s_worker" {
   bastion_user          = module.k8s_master.bastion_user
   apiserver_fqdn        = module.k8s_master.apiserver
   ca_cert_pem           = tls_self_signed_cert.k8s_ca.cert_pem
-  install_script        = local.install_provisioner_script
-  cloud_config          = local.cloud_config
-  kubeadm_config_script = module.k8s_master.kubeadm_config
 }
 
 module "k8s_storage" {
@@ -35,6 +34,8 @@ module "k8s_storage" {
 
   #Variables
   worker_count           = var.storage_count
+  worker_min             = min(var.storage_min, var.storage_count)
+  worker_max             = max(var.storage_max, var.storage_count)
   worker_type            = var.storage_type
   image_desc             = var.image_desc
   region                 = var.region
@@ -51,8 +52,5 @@ module "k8s_storage" {
   bastion_user          = module.k8s_master.bastion_user
   apiserver_fqdn        = module.k8s_master.apiserver
   ca_cert_pem           = tls_self_signed_cert.k8s_ca.cert_pem
-  install_script        = local.install_provisioner_script
-  cloud_config          = local.cloud_config
-  kubeadm_config_script = module.k8s_master.kubeadm_config
 }
 

@@ -22,7 +22,5 @@ module "k8s_master" {
   cluster_firewall_policy = module.k8s_cluster.firewall_policy_id
   ca_cert_pem             = tls_self_signed_cert.k8s_ca.cert_pem
   ca_private_key_pem      = tls_private_key.k8s_ca.private_key_pem
-  install_script          = local.install_provisioner_script
-  cloud_config            = local.cloud_config
 }
 

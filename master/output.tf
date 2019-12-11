@@ -13,10 +13,10 @@ output "bastion_user" {
   description = "Logon ID on Bastion Host"
 }
 
-output "kubeadm_config" {
-  value       = local.kubeadm_config_script
-  description = "Cluster kubeadm configuration manifest"
-}
+#output "kubeadm_config" {
+#  value       = local.kubeadm_config_script
+#  description = "Cluster kubeadm configuration manifest"
+#}
 
 output "apiserver_ready" {
   value       = local.masters_configured

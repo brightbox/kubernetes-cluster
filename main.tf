@@ -8,14 +8,9 @@ locals {
   cluster_cidr     = "192.168.0.0/16"
   cluster_fqdn     = "${var.cluster_name}.${var.cluster_domainname}"
   service_port     = "6443"
-  cloud_config     = file("${local.template_path}/cloud-config.yml")
   worker_node_ids  = module.k8s_worker.servers[*].id
   storage_node_ids = module.k8s_storage.servers[*].id
-  install_provisioner_script = templatefile(
-    "${local.template_path}/install-kube",
-    { kubernetes_release = var.kubernetes_release }
-  )
-  worker_label_script = <<EOT
+  worker_label_script  = <<EOT
 %{if var.worker_count != 0~}
       kubectl label --overwrite ${join(" ", formatlist("node/%s", local.worker_node_ids))} 'node-role.kubernetes.io/worker=' 'node-role.kubernetes.io/storage-'
 %{~endif}

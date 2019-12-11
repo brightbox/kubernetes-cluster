@@ -61,6 +61,18 @@ variable "worker_count" {
   default     = 1
 }
 
+variable "worker_min" {
+  type        = number
+  description = "Minimum number of worker nodes in cluster"
+  default     = 0
+}
+
+variable "worker_max" {
+  type        = number
+  description = "Maximum number of worker nodes in cluster"
+  default     = 0
+}
+
 variable "worker_type" {
   type        = string
   description = "Type of server to use as k8s worker node"
@@ -94,6 +106,18 @@ variable "worker_cloudip_count" {
 variable "storage_count" {
   type        = number
   description = "Number of storage nodes in cluster"
+  default     = 0
+}
+
+variable "storage_min" {
+  type        = number
+  description = "Minimum number of storage nodes in cluster"
+  default     = 0
+}
+
+variable "storage_max" {
+  type        = number
+  description = "Maximum number of storage nodes in cluster"
   default     = 0
 }
 

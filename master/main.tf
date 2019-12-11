@@ -1,5 +1,5 @@
 locals {
-  local_host = "127.0.0.1"
+  local_host    = "127.0.0.1"
   template_path = "${path.module}/templates"
   cluster_fqdn  = "${var.cluster_name}.${var.cluster_domainname}"
   boot_token    = "${random_string.token_prefix.result}.${random_string.token_suffix.result}"
@@ -10,6 +10,11 @@ locals {
   bastion       = local.lb_count == 1 ? brightbox_cloudip.bastion[0].fqdn : local.public_fqdn
   bastion_user  = brightbox_server.k8s_master[0].username
   api_target    = local.lb_count == 1 ? brightbox_load_balancer.k8s_master[0].id : brightbox_server.k8s_master[0].interface
+  install_script = templatefile(
+    "${local.template_path}/install-kube",
+    { kubernetes_release = var.kubernetes_release }
+  )
+  cloud_config     = file("${local.template_path}/cloud-config.yml")
 }
 
 resource "brightbox_cloudip" "k8s_master" {
@@ -84,7 +89,7 @@ resource "brightbox_server" "k8s_master" {
   name      = "k8s-master-${count.index}.${local.cluster_fqdn}"
   image     = data.brightbox_image.k8s_master.id
   type      = var.master_type
-  user_data = var.cloud_config
+  user_data = local.cloud_config
   zone      = "${var.region}-${var.master_zone == "" ? (count.index % 2 == 0 ? "a" : "b") : var.master_zone}"
 
   server_groups = [var.cluster_server_group]
@@ -124,7 +129,7 @@ resource "null_resource" "k8s_master" {
   # Generic provisioner
   provisioner "remote-exec" {
     inline = [
-      var.install_script
+      local.install_script
     ]
   }
 
@@ -201,7 +206,7 @@ resource "null_resource" "k8s_master_mirrors" {
   # Generic provisioner
   provisioner "remote-exec" {
     inline = [
-      var.install_script
+      local.install_script
     ]
   }
 
@@ -288,7 +293,7 @@ locals {
     controller_client_secret = brightbox_api_client.controller_client.secret,
     apiurl                   = "https://api.${var.region}.brightbox.com",
     service_port             = var.apiserver_service_port,
-    local_host = local.local_host
+    local_host               = local.local_host
     }
   )
 

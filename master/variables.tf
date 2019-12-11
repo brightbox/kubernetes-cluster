@@ -59,16 +59,6 @@ variable "apiserver_service_port" {
   description = "Apiserver service port number"
 }
 
-variable "cloud_config" {
-  type        = string
-  description = "Injected common cloud configuration script"
-}
-
-variable "install_script" {
-  type        = string
-  description = "Injected common install script"
-}
-
 variable "ca_cert_pem" {
   type        = string
   description = "PEM format certificate to use as CA on masters"
