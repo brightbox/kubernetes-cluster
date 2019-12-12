@@ -186,17 +186,26 @@ upgrade() {
         echo "Kubeadm installed master detected - checking for upgrade"
         sudo apt-get -qq update -y
         sudo apt-get -qq install debconf-utils
-        echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
-        sudo apt-get -qq install kubeadm=${kubernetes_release}-00
-        if sudo kubeadm upgrade plan --config $HOME/install/kubeadm.conf | egrep '^\s*kubeadm upgrade apply'
-        then
-                retry 5 sudo kubeadm upgrade apply -y --config $HOME/install/kubeadm.conf
-                sudo apt-get -qq install \
-                        kubectl=${kubernetes_release}-00 \
-                        kubelet=${kubernetes_release}-00
-        else
-                echo "Already at version ${kubernetes_release} or greater - skipping"
-        fi
+	echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
+	echo "Upgrading kubeadm"
+	sudo apt-mark unhold kubeadm
+	if ! sudo apt-get -qq -y install kubeadm=${kubernetes_release}-00
+	then
+		sudo apt-mark hold kubeadm
+		echo "Failed to install kubeadm at version ${kubernetes_release}-00"
+		echo "Version installed is at $(dpkg-query --showformat='$${Version}' --show kubeadm)"
+		exit 2
+	fi
+	sudo apt-mark hold kubeadm
+	echo "Upgrading control plane mirror"
+	retry 5 sudo kubeadm upgrade node
+	echo "Upgrading kubelet"
+	sudo apt-mark unhold kubelet kubectl
+	retry 5 sudo apt-get -qq -y install \
+		kubectl=${kubernetes_release}-00 \
+		kubelet=${kubernetes_release}-00
+	sudo apt-mark hold kubelet kubectl
+	retry 5 sudo systemctl restart kubelet
 }
 
 if [ "${kubernetes_release}" \< "1.15" ]; then
@@ -204,7 +213,7 @@ if [ "${kubernetes_release}" \< "1.15" ]; then
 	sleep 2
 	exit 1
 fi
-if sudo kubeadm init phase preflight --config install/kubeadm.conf 2>&1 | grep -q "ERROR Port-6443"
+if ss -lnt | grep -q :6443
 then
         upgrade
 else

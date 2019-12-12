@@ -2,6 +2,7 @@
 
 set -e
 
+
 install_cert() {
         local source_prefix=$${1}
         local dest_prefix=$${2:-$${1}}
@@ -366,15 +367,27 @@ upgrade() {
         #sudo systemctl restart docker
         echo "Kubeadm installed master detected - checking for upgrade"
         sudo apt-get -qq update -y
-        sudo apt-get -qq install debconf-utils
+        sudo apt-get -qq install -y  debconf-utils
         echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
-        sudo apt-get -qq install kubeadm=${kubernetes_release}-00
+	sudo apt-mark unhold kubeadm
+        if ! sudo apt-get -qq install -y kubeadm=${kubernetes_release}-00
+	then
+		sudo apt-mark hold kubeadm
+		echo "Failed to install kubeadm at version ${kubernetes_release}-00"
+		echo "Version installed is at $(dpkg-query --showformat='$${Version}' --show kubeadm)"
+		return 2
+	fi
+	sudo apt-mark hold kubeadm
         if sudo kubeadm upgrade plan --config $HOME/install/kubeadm.conf | egrep -q '^\s*kubeadm upgrade apply'
         then
                 retry 5 sudo kubeadm upgrade apply -y --config $HOME/install/kubeadm.conf
-                sudo apt-get -qq install \
-                        kubectl=${kubernetes_release}-00 \
-                        kubelet=${kubernetes_release}-00
+		echo "Upgrading kubelet"
+		sudo apt-mark unhold kubelet kubectl
+		retry 5 sudo apt-get -qq -y install \
+			kubectl=${kubernetes_release}-00 \
+			kubelet=${kubernetes_release}-00
+		sudo apt-mark hold kubelet kubectl
+		retry 5 sudo systemctl restart kubelet
         else
                 echo "Already at version ${kubernetes_release} or greater - skipping"
         fi

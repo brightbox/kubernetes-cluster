@@ -19,11 +19,11 @@ module "k8s_worker" {
   worker_zone            = var.worker_zone
 
   #Injections
-  cluster_server_group  = module.k8s_cluster.group_id
-  bastion               = module.k8s_master.bastion
-  bastion_user          = module.k8s_master.bastion_user
-  apiserver_fqdn        = module.k8s_master.apiserver
-  ca_cert_pem           = tls_self_signed_cert.k8s_ca.cert_pem
+  cluster_server_group = module.k8s_cluster.group_id
+  bastion              = module.k8s_master.bastion
+  bastion_user         = module.k8s_master.bastion_user
+  apiserver_fqdn       = module.k8s_master.apiserver
+  ca_cert_pem          = tls_self_signed_cert.k8s_ca.cert_pem
 }
 
 module "k8s_storage" {
@@ -47,10 +47,10 @@ module "k8s_storage" {
   worker_zone            = var.storage_zone
 
   #Injections
-  cluster_server_group  = module.k8s_cluster.group_id
-  bastion               = module.k8s_master.bastion
-  bastion_user          = module.k8s_master.bastion_user
-  apiserver_fqdn        = module.k8s_master.apiserver
-  ca_cert_pem           = tls_self_signed_cert.k8s_ca.cert_pem
+  cluster_server_group = module.k8s_cluster.group_id
+  bastion              = module.k8s_master.bastion
+  bastion_user         = module.k8s_master.bastion_user
+  apiserver_fqdn       = module.k8s_master.apiserver
+  ca_cert_pem          = tls_self_signed_cert.k8s_ca.cert_pem
 }
 

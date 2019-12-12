@@ -1,5 +1,9 @@
 locals {
   template_path = "${path.module}/templates"
+  upgrade_script = templatefile(
+    "${local.template_path}/upgrade-worker",
+    { kubernetes_release = var.kubernetes_release }
+  )
 }
 
 resource "random_string" "token_suffix" {
@@ -44,20 +48,20 @@ resource "brightbox_server" "k8s_worker" {
   ]
   count = var.worker_count
 
-  name      = "${var.worker_name}-${count.index}.${var.internal_cluster_fqdn}"
-  image     = data.brightbox_image.k8s_worker.id
-  type      = var.worker_type
+  name  = "${var.worker_name}-${count.index}.${var.internal_cluster_fqdn}"
+  image = data.brightbox_image.k8s_worker.id
+  type  = var.worker_type
   user_data = templatefile(
-        "${local.template_path}/install-worker-userdata",
-        {
-          kubernetes_release = var.kubernetes_release
-          boot_token         = "${random_string.token_prefix[count.index].result}.${random_string.token_suffix[count.index].result}",
-          fqdn               = var.apiserver_fqdn
-          service_port       = var.apiserver_service_port
-	  certificate_authority_pem = var.ca_cert_pem
-        }
-      )
-  zone      = "${var.region}-${var.worker_zone == "" ? (count.index % 2 == 0 ? "a" : "b") : var.worker_zone}"
+    "${local.template_path}/install-worker-userdata",
+    {
+      kubernetes_release        = var.kubernetes_release
+      boot_token                = "${random_string.token_prefix[count.index].result}.${random_string.token_suffix[count.index].result}",
+      fqdn                      = var.apiserver_fqdn
+      service_port              = var.apiserver_service_port
+      certificate_authority_pem = var.ca_cert_pem
+    }
+  )
+  zone = "${var.region}-${var.worker_zone == "" ? (count.index % 2 == 0 ? "a" : "b") : var.worker_zone}"
 
   server_groups = [var.cluster_server_group, brightbox_server_group.k8s_worker_group.id]
 
@@ -138,7 +142,7 @@ resource "null_resource" "k8s_worker_upgrade" {
 
   provisioner "remote-exec" {
     inline = [
-      file("${local.template_path}/upgrade-worker"),
+      local.upgrade_script
     ]
   }
 }

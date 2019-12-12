@@ -58,11 +58,12 @@ sudo apt-get -qq install \
 	kubeadm=${kubernetes_release}-00 \
         kubectl=${kubernetes_release}-00 \
 	kubelet=${kubernetes_release}-00
+sudo apt-mark hold kubelet kubeadm kubectl
 
 # Required because kubeadm doesn't propagate the nodeRegistration flags properly
 # https://github.com/kubernetes/kubeadm/issues/1021
 cat <<EOF | sudo tee /etc/default/kubelet
-KUBELET_EXTRA_ARGS=--cloud-provider=external
+KUBELET_EXTRA_ARGS=--cloud-provider=external --cgroup-driver=systemd
 EOF
 
 echo "Installing bash completion"

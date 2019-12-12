@@ -14,7 +14,7 @@ locals {
     "${local.template_path}/install-kube",
     { kubernetes_release = var.kubernetes_release }
   )
-  cloud_config     = file("${local.template_path}/cloud-config.yml")
+  cloud_config = file("${local.template_path}/cloud-config.yml")
 }
 
 resource "brightbox_cloudip" "k8s_master" {
