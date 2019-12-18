@@ -25,12 +25,12 @@ newer_cert() {
 
         for word in $${target_suffix} key
         do
-		if sudo test $${source_prefix}.$${word} -nt $${pki_dir}/$${dest_prefix}.$${word}
-		then
-			return 0
-		fi
+                if sudo test $${source_prefix}.$${word} -nt $${pki_dir}/$${dest_prefix}.$${word}
+                then
+                        return 0
+                fi
         done
-	return 1
+        return 1
 }
 
 
@@ -63,40 +63,42 @@ install_ca() {
 }
 
 install() {
-	install_ca
+        install_ca
 
         echo "Running kubeadm init"
         sudo kubeadm init --config $HOME/install/kubeadm.conf
 
+        ensure_certs_in_kubelet_config
+        retry 5 sudo systemctl restart kubelet
         ensure_admin_config
         ensure_ancillary_items
 }
 
 ensure_updated_ca() {
-	if newer_cert ca
-	then
-		install_ca
-		update_cert_configs
-		echo "CA CERTS UPDATED - NODES NEED RESTARTING"
-	fi
+        if newer_cert ca
+        then
+                install_ca
+                update_cert_configs
+                echo "CA CERTS UPDATED - NODES NEED RESTARTING"
+        fi
 }
 
 update_cert_configs() {
-	sudo mv /etc/kubernetes/*.conf /tmp
-	sudo kubeadm init phase kubeconfig all --config $HOME/install/kubeadm.conf
-	sudo kubeadm alpha certs renew all --config $HOME/install/kubeadm.conf
-	sudo kubeadm init phase bootstrap-token --config $HOME/install/kubeadm.conf
-	sudo kubeadm init phase upload-config all --config $HOME/install/kubeadm.conf
+        sudo mv /etc/kubernetes/*.conf /tmp
+        sudo kubeadm init phase kubeconfig all --config $HOME/install/kubeadm.conf
+        sudo kubeadm alpha certs renew all --config $HOME/install/kubeadm.conf
+        sudo kubeadm init phase bootstrap-token --config $HOME/install/kubeadm.conf
+        sudo kubeadm init phase upload-config all --config $HOME/install/kubeadm.conf
 }
 
 ensure_admin_config() {
-	if [ -e /etc/kubernetes/admin.conf ]
-	then
-		echo "Installing admin config"
-		mkdir -p $HOME/.kube
-		sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
-		sudo chown $(id -u):$(id -g) $HOME/.kube/config
-	fi
+        if [ -e /etc/kubernetes/admin.conf ]
+        then
+                echo "Installing admin config"
+                mkdir -p $HOME/.kube
+                sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
+                sudo chown $(id -u):$(id -g) $HOME/.kube/config
+        fi
 
         echo "Installing client cert generator"
         cat <<"CLIENTSCRIPT" | sudo tee /usr/local/bin/generate-client-cert.sh
@@ -163,10 +165,15 @@ CLIENTSCRIPT
         sudo chmod 755 /usr/local/bin/generate-client-cert.sh
 }
 
-controller_key_name=brightbox-cloud-controller
+controller_key_name=brightbox-credentials
 apiurl_b64=$(echo -n ${apiurl} | base64)
 controller_client_b64=$(echo -n ${controller_client} | base64)
 controller_client_secret_b64=$(echo -n ${controller_client_secret} | base64)
+boot_token_b64=$(echo -n ${boot_token} | base64)
+ca_hash_b64=$(openssl x509 -noout -pubkey <<CA |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1 | tr -d '\n' | base64 --wrap=0
+${certificate_authority_pem}
+CA
+)
 
 ensure_ancillary_items() {
         echo "Patching kube-proxy scheduling tolerations"
@@ -180,9 +187,11 @@ ensure_ancillary_items() {
 ---
 apiVersion: v1
 data:
-  apiurl: $${apiurl_b64}
-  controller-client: $${controller_client_b64}
-  controller-client-secret: $${controller_client_secret_b64}
+  BRIGHTBOX_API_URL: $${apiurl_b64}
+  BRIGHTBOX_CLIENT: $${controller_client_b64}
+  BRIGHTBOX_CLIENT_SECRET: $${controller_client_secret_b64}
+  BRIGHTBOX_KUBE_BOOT_TOKEN: $${boot_token_b64}
+  BRIGHTBOX_KUBE_CA_HASH: $${ca_hash_b64}
 kind: Secret
 metadata:
   name: $${controller_key_name}
@@ -297,26 +306,14 @@ spec:
           requests:
             cpu: 100m
             memory: 50Mi
+        envFrom:
+        - secretRef:
+            name: $${controller_key_name}
         env:
           - name: KUBERNETES_SERVICE_HOST
             value: "${public_ip}"
           - name: KUBERNETES_SERVICE_PORT
             value: "${service_port}"
-          - name: BRIGHTBOX_CLIENT
-            valueFrom:
-              secretKeyRef:
-                name: $${controller_key_name}
-                key: controller-client
-          - name: BRIGHTBOX_CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: $${controller_key_name}
-                key: controller-client-secret
-          - name: BRIGHTBOX_API_URL
-            valueFrom:
-              secretKeyRef:
-                name: $${controller_key_name}
-                key: apiurl
         volumeMounts:
         - mountPath: /etc/kubernetes/cloud-controller.conf
           name: cloud-controller-conf
@@ -333,7 +330,15 @@ EOF
 
         echo "Installing Calico network controllers"
         retry 5 kubectl apply -f \
-	https://docs.projectcalico.org/v${calico_release}/manifests/calico.yaml
+        https://docs.projectcalico.org/v${calico_release}/manifests/calico.yaml
+}
+
+ensure_certs_in_kubelet_config() {
+        if sudo test -f /var/lib/kubelet/pki/kubelet-client-current.pem
+        then
+                sudo sed -i 's/client-certificate-data: .*$/client-certificate: \/var\/lib\/kubelet\/pki\/kubelet-client-current.pem/
+                        s/client-key-data: .*$/client-key: \/var\/lib\/kubelet\/pki\/kubelet-client-current.pem/' /etc/kubernetes/kubelet.conf
+        fi
 }
 
 ensure_docker_settings() {
@@ -357,37 +362,38 @@ EOF
 }
 
 upgrade() {
-	ensure_updated_ca
+        ensure_updated_ca
 
-	if [ -f /var/run/docker.sock ]
-	then
-		ensure_docker_settings
-	fi
+        if [ -f /var/run/docker.sock ]
+        then
+                ensure_docker_settings
+        fi
         #echo "Restarting docker service to ensure correct cgroup"
         #sudo systemctl restart docker
         echo "Kubeadm installed master detected - checking for upgrade"
         sudo apt-get -qq update -y
         sudo apt-get -qq install -y  debconf-utils
         echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
-	sudo apt-mark unhold kubeadm
-        if ! sudo apt-get -qq install -y kubeadm=${kubernetes_release}-00
-	then
-		sudo apt-mark hold kubeadm
-		echo "Failed to install kubeadm at version ${kubernetes_release}-00"
-		echo "Version installed is at $(dpkg-query --showformat='$${Version}' --show kubeadm)"
-		return 2
-	fi
-	sudo apt-mark hold kubeadm
+        sudo apt-mark unhold kubeadm
+        if ! retry 5 sudo apt-get -qq install -y kubeadm=${kubernetes_release}-00
+        then
+                sudo apt-mark hold kubeadm
+                echo "Failed to install kubeadm at version ${kubernetes_release}-00"
+                echo "Version installed is at $(dpkg-query --showformat='$${Version}' --show kubeadm)"
+                return 2
+        fi
+        sudo apt-mark hold kubeadm
         if sudo kubeadm upgrade plan --config $HOME/install/kubeadm.conf | egrep -q '^\s*kubeadm upgrade apply'
         then
                 retry 5 sudo kubeadm upgrade apply -y --config $HOME/install/kubeadm.conf
-		echo "Upgrading kubelet"
-		sudo apt-mark unhold kubelet kubectl
-		retry 5 sudo apt-get -qq -y install \
-			kubectl=${kubernetes_release}-00 \
-			kubelet=${kubernetes_release}-00
-		sudo apt-mark hold kubelet kubectl
-		retry 5 sudo systemctl restart kubelet
+                echo "Upgrading kubelet"
+                sudo apt-mark unhold kubelet kubectl
+                retry 5 sudo apt-get -qq -y install \
+                        kubectl=${kubernetes_release}-00 \
+                        kubelet=${kubernetes_release}-00
+                sudo apt-mark hold kubelet kubectl
+                ensure_certs_in_kubelet_config
+                retry 5 sudo systemctl restart kubelet
         else
                 echo "Already at version ${kubernetes_release} or greater - skipping"
         fi

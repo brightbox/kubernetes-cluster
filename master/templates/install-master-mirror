@@ -189,7 +189,7 @@ upgrade() {
 	echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
 	echo "Upgrading kubeadm"
 	sudo apt-mark unhold kubeadm
-	if ! sudo apt-get -qq -y install kubeadm=${kubernetes_release}-00
+	if ! retry 5 sudo apt-get -qq -y install kubeadm=${kubernetes_release}-00
 	then
 		sudo apt-mark hold kubeadm
 		echo "Failed to install kubeadm at version ${kubernetes_release}-00"
@@ -198,7 +198,7 @@ upgrade() {
 	fi
 	sudo apt-mark hold kubeadm
 	echo "Upgrading control plane mirror"
-	retry 5 sudo kubeadm upgrade node
+	retry 5 sudo kubeadm upgrade node --certificate-renewal
 	echo "Upgrading kubelet"
 	sudo apt-mark unhold kubelet kubectl
 	retry 5 sudo apt-get -qq -y install \

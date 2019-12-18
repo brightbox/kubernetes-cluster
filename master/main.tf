@@ -157,6 +157,7 @@ resource "null_resource" "k8s_master_configure" {
     cert_change    = var.ca_cert_pem
     master_script  = local.master_provisioner_script
     kubeadm_script = local.kubeadm_config_script
+    cert_change    = var.ca_cert_pem
   }
 
   connection {
@@ -214,6 +215,7 @@ resource "null_resource" "k8s_master_mirrors" {
 
 resource "null_resource" "k8s_master_mirrors_configure" {
   depends_on = [
+    null_resource.k8s_master_configure,
     null_resource.k8s_master_mirrors,
   ]
 
@@ -252,6 +254,7 @@ resource "null_resource" "k8s_token_manager" {
     boot_token   = local.boot_token
     cert_key     = random_id.master_certificate_key.hex
     master_count = var.master_count
+    ttl          = "ttl 0"
   }
 
   connection {
@@ -262,7 +265,7 @@ resource "null_resource" "k8s_token_manager" {
   provisioner "remote-exec" {
     inline = [
       "kubeadm token delete ${local.boot_token}",
-      "kubeadm token create ${local.boot_token}",
+      "kubeadm token create ${local.boot_token} --ttl 0 --description 'Cluster autoscaling token'",
       "[ '${var.kubernetes_release}' \\< '1.15' ] || sudo kubeadm init phase upload-certs --upload-certs --config $${HOME}/install/kubeadm.conf"
     ]
   }
@@ -283,17 +286,19 @@ resource "brightbox_api_client" "controller_client" {
 locals {
 
   master_provisioner_script = templatefile("${local.template_path}/install-master", {
-    kubernetes_release       = var.kubernetes_release,
-    calico_release           = var.calico_release,
-    cluster_name             = var.cluster_name,
-    public_ip                = local.public_ip,
-    public_fqdn              = local.public_fqdn,
-    service_cluster_ip_range = var.service_cidr,
-    controller_client        = brightbox_api_client.controller_client.id,
-    controller_client_secret = brightbox_api_client.controller_client.secret,
-    apiurl                   = "https://api.${var.region}.brightbox.com",
-    service_port             = var.apiserver_service_port,
-    local_host               = local.local_host
+    kubernetes_release        = var.kubernetes_release,
+    calico_release            = var.calico_release,
+    cluster_name              = var.cluster_name,
+    public_ip                 = local.public_ip,
+    public_fqdn               = local.public_fqdn,
+    boot_token                = local.boot_token,
+    service_cluster_ip_range  = var.service_cidr,
+    controller_client         = brightbox_api_client.controller_client.id,
+    controller_client_secret  = brightbox_api_client.controller_client.secret,
+    apiurl                    = "https://api.${var.region}.brightbox.com",
+    service_port              = var.apiserver_service_port,
+    local_host                = local.local_host
+    certificate_authority_pem = var.ca_cert_pem
     }
   )
 

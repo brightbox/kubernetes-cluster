@@ -129,10 +129,9 @@ do
 done
 
 echo "Joining cluster"
-discovery_ca_cert_hash=$(openssl x509 -noout -pubkey <<CA |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1
+discovery_ca_cert_hash=$(openssl x509 -noout -pubkey <<CA |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1 | tr -d '\n'
 ${certificate_authority_pem}
 CA
 )
-
 
 retry 5 kubeadm join ${fqdn}:${service_port} --token ${boot_token} --discovery-token-ca-cert-hash sha256:$${discovery_ca_cert_hash}
