@@ -22,3 +22,8 @@ output "apiserver_ready" {
   value       = local.masters_configured
   description = "Resource pre-requisite that signals the apiserver is ready"
 }
+
+output "boot_token" {
+  value       = local.boot_token
+  description = "Shared secret used by workers to connect to the control plane"
+}

@@ -24,6 +24,7 @@ module "k8s_worker" {
   bastion_user         = module.k8s_master.bastion_user
   apiserver_fqdn       = module.k8s_master.apiserver
   ca_cert_pem          = tls_self_signed_cert.k8s_ca.cert_pem
+  boot_token           = module.k8s_master.boot_token
 }
 
 module "k8s_storage" {
@@ -52,5 +53,6 @@ module "k8s_storage" {
   bastion_user         = module.k8s_master.bastion_user
   apiserver_fqdn       = module.k8s_master.apiserver
   ca_cert_pem          = tls_self_signed_cert.k8s_ca.cert_pem
+  boot_token           = module.k8s_master.boot_token
 }
 

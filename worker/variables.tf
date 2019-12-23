@@ -1,3 +1,8 @@
+variable "boot_token" {
+  type        = string
+  description = "The shared secret used to connect to the cluster control plane"
+}
+
 variable "region" {
   type        = string
   description = "Brightbox region to connect to"
