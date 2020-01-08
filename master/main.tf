@@ -176,7 +176,7 @@ resource "null_resource" "k8s_master_configure" {
 
 resource "null_resource" "k8s_master_mirrors" {
   depends_on = [
-    null_resource.k8s_token_manager,
+    null_resource.k8s_master_configure,
   ]
 
   count = max(0, length(brightbox_server.k8s_master) - 1)
@@ -247,30 +247,6 @@ resource "null_resource" "k8s_master_mirrors_configure" {
 
 }
 
-resource "null_resource" "k8s_token_manager" {
-  depends_on = [null_resource.k8s_master_configure]
-
-  triggers = {
-    boot_token   = local.boot_token
-    cert_key     = random_id.master_certificate_key.hex
-    master_count = var.master_count
-    ttl          = "ttl 0"
-  }
-
-  connection {
-    user = local.bastion_user
-    host = local.bastion
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "kubeadm token delete ${local.boot_token}",
-      "kubeadm token create ${local.boot_token} --ttl 0 --description 'Cluster autoscaling token'",
-      "[ '${var.kubernetes_release}' \\< '1.15' ] || sudo kubeadm init phase upload-certs --upload-certs --config $${HOME}/install/kubeadm.conf"
-    ]
-  }
-}
-
 data "brightbox_image" "k8s_master" {
   name        = var.image_desc
   arch        = "x86_64"
@@ -298,7 +274,6 @@ locals {
     apiurl                    = "https://api.${var.region}.brightbox.com",
     service_port              = var.apiserver_service_port,
     local_host                = local.local_host
-    certificate_authority_pem = var.ca_cert_pem
     }
   )
 
@@ -336,7 +311,7 @@ locals {
     }
   )
 
-  masters_configured = concat([null_resource.k8s_token_manager.id, null_resource.k8s_master_configure.id], null_resource.k8s_master_mirrors_configure[*].id)
+  masters_configured = concat([null_resource.k8s_master_configure.id], null_resource.k8s_master_mirrors_configure[*].id)
 
 }
 

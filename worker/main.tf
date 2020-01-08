@@ -76,7 +76,6 @@ resource "null_resource" "k8s_worker_drain" {
 
     inline = [
       "kubectl drain --ignore-daemonsets --timeout=${var.worker_drain_timeout} ${brightbox_server.k8s_worker[count.index].id}",
-      "kubectl delete node ${brightbox_server.k8s_worker[count.index].id} || true",
     ]
   }
 }

@@ -169,11 +169,7 @@ controller_key_name=brightbox-credentials
 apiurl_b64=$(echo -n ${apiurl} | base64)
 controller_client_b64=$(echo -n ${controller_client} | base64)
 controller_client_secret_b64=$(echo -n ${controller_client_secret} | base64)
-boot_token_b64=$(echo -n ${boot_token} | base64)
-ca_hash_b64=$(openssl x509 -noout -pubkey <<CA |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1 | tr -d '\n' | base64 --wrap=0
-${certificate_authority_pem}
-CA
-)
+kubernetes_release_b64=$(echo -n ${kubernetes_release} | base64)
 
 ensure_ancillary_items() {
         echo "Patching kube-proxy scheduling tolerations"
@@ -181,6 +177,10 @@ ensure_ancillary_items() {
         then
                 echo "Patch already applied - skipping"
         fi
+
+	echo "Creating boot token"
+        kubeadm token delete "${boot_token}" || true
+	join_command=$(kubeadm token create "${boot_token}" --ttl 0 --description 'Cluster autoscaling token' --print-join-command 2>/dev/null | tr -d '\n\r' | base64 --wrap=0)
 
         echo "Requesting Brightbox cloud controller activation"
         cat <<EOF > $HOME/install/cloud-controller.yml
@@ -190,8 +190,8 @@ data:
   BRIGHTBOX_API_URL: $${apiurl_b64}
   BRIGHTBOX_CLIENT: $${controller_client_b64}
   BRIGHTBOX_CLIENT_SECRET: $${controller_client_secret_b64}
-  BRIGHTBOX_KUBE_BOOT_TOKEN: $${boot_token_b64}
-  BRIGHTBOX_KUBE_CA_HASH: $${ca_hash_b64}
+  BRIGHTBOX_KUBE_JOIN_COMMAND: $${join_command}
+  BRIGHTBOX_KUBE_VERSION: $${kubernetes_release_b64}
 kind: Secret
 metadata:
   name: $${controller_key_name}

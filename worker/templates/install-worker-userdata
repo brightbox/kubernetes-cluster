@@ -1,4 +1,11 @@
 #!/bin/bash
+# Set script parameters here
+discovery_ca_cert_hash=$(openssl x509 -noout -pubkey <<CA |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1 | tr -d '\n'
+${certificate_authority_pem}
+CA
+)
+k8s_version="${kubernetes_release}"
+kubeadm_join_command="kubeadm join ${fqdn}:${service_port} --token ${boot_token} --discovery-token-ca-cert-hash sha256:$${discovery_ca_cert_hash}"
 
 set -e
 
@@ -71,9 +78,9 @@ apt-get -qq -y install \
 	debconf-utils \
 	containerd \
 	glusterfs-client \
-	kubeadm=${kubernetes_release}-00 \
-	kubectl=${kubernetes_release}-00 \
-	kubelet=${kubernetes_release}-00
+	kubeadm=$${k8s_version}-00 \
+	kubectl=$${k8s_version}-00 \
+	kubelet=$${k8s_version}-00
 
 apt-mark hold kubelet kubeadm kubectl
 
@@ -122,16 +129,6 @@ systemctl try-restart systemd-timesyncd
 
 retry 5 systemctl enable iscsid
 retry 5 systemctl start iscsid
-echo "Loading IPVS modules"
-for word in ip_vs_wrr ip_vs_sh ip_vs ip_vs_rr nf_conntrack_ipv4 br_netfilter
-do
-	modprobe -- $${word}
-done
 
 echo "Joining cluster"
-discovery_ca_cert_hash=$(openssl x509 -noout -pubkey <<CA |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1 | tr -d '\n'
-${certificate_authority_pem}
-CA
-)
-
-retry 5 kubeadm join ${fqdn}:${service_port} --token ${boot_token} --discovery-token-ca-cert-hash sha256:$${discovery_ca_cert_hash}
+retry 5 $${kubeadm_join_command}
