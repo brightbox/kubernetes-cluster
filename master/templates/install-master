@@ -169,7 +169,7 @@ controller_client_secret_b64=$(echo -n ${controller_client_secret} | base64)
 
 ensure_ancillary_items() {
         echo "Patching kube-proxy scheduling tolerations"
-        if ! kubectl -n kube-system patch ds kube-proxy -p='{ "spec": { "template": { "spec": { "tolerations": [ { "key": "CriticalAddonsOnly", "operator": "Exists" }, { "effect": "NoSchedule", "key": "node-role.kubernetes.io/master" } ] } } } }'
+        if ! kubectl -n kube-system patch ds kube-proxy -p='{ "spec": { "template": { "metadata": { "annotations": { "scheduler.alpha.kubernetes.io/critical-pod": "" } }, "spec": { "priorityClassName": "system-node-critical", "tolerations": [{ "key": "CriticalAddonsOnly", "operator": "Exists" }, { "operator": "Exists" }] } } } }'
         then
                 echo "Patch already applied - skipping"
         fi
