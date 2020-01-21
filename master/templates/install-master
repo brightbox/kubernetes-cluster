@@ -383,9 +383,10 @@ upgrade() {
                 return 2
         fi
         sudo apt-mark hold kubeadm
-        if sudo kubeadm upgrade plan --config $HOME/install/kubeadm.conf | egrep -q '^\s*kubeadm upgrade apply'
-        then
-                retry 5 sudo kubeadm upgrade apply -y --config $HOME/install/kubeadm.conf
+	plan=$(sudo kubeadm upgrade plan ${kubernetes_release})
+	case "$${plan}" in
+	*"kubeadm upgrade apply"*)
+                retry 5 sudo kubeadm upgrade apply -y ${kubernetes_release}
                 echo "Upgrading kubelet"
                 sudo apt-mark unhold kubelet kubectl
                 retry 5 sudo apt-get -qq -y install \
@@ -394,9 +395,16 @@ upgrade() {
                 sudo apt-mark hold kubelet kubectl
                 ensure_certs_in_kubelet_config
                 retry 5 sudo systemctl restart kubelet
-        else
-                echo "Already at version ${kubernetes_release} or greater - skipping"
-        fi
+		;;
+	*up-to-date*)
+		echo "Already at version ${kubernetes_release} or greater - skipping"
+		;;
+	*)
+		echo "Unexpected plan response"
+		echo $${plan}
+		return 1
+		;;
+	esac
         ensure_admin_config
         ensure_ancillary_items
 }
