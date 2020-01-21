@@ -14,6 +14,7 @@ resource "brightbox_server_group" "k8s_worker_group" {
 resource "brightbox_server" "k8s_worker" {
   depends_on = [
     var.cluster_ready,
+    var.apiserver_ready,
   ]
   count = var.worker_count
 
@@ -42,29 +43,6 @@ resource "brightbox_server" "k8s_worker" {
     create_before_destroy = true
   }
 
-}
-
-resource "null_resource" "k8s_worker_drain" {
-  depends_on = [
-    var.apiserver_ready
-  ]
-  count = length(brightbox_server.k8s_worker)
-  triggers = {
-    worker_id = brightbox_server.k8s_worker[count.index].id
-  }
-
-  connection {
-    host         = brightbox_server.k8s_worker[count.index].hostname
-    user         = brightbox_server.k8s_worker[count.index].username
-    type         = "ssh"
-    bastion_host = var.bastion
-    bastion_user = var.bastion_user
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-
   provisioner "remote-exec" {
     when = destroy
 
@@ -75,11 +53,11 @@ resource "null_resource" "k8s_worker_drain" {
     }
 
     inline = [
-      "kubectl drain --ignore-daemonsets --timeout=${var.worker_drain_timeout} ${brightbox_server.k8s_worker[count.index].id}",
+      "kubectl drain --ignore-daemonsets --timeout=${var.worker_drain_timeout} ${self.id}",
     ]
   }
-}
 
+}
 
 resource "null_resource" "k8s_worker_upgrade" {
 
