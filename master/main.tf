@@ -30,7 +30,7 @@ resource "brightbox_cloudip" "k8s_master" {
 
   provisioner "local-exec" {
     when    = destroy
-    command = "ssh-keygen -R ${brightbox_cloudip.k8s_master.fqdn}; ssh-keygen -R ${brightbox_cloudip.k8s_master.public_ip}"
+    command = "ssh-keygen -R ${self.fqdn}; ssh-keygen -R ${self.public_ip}"
   }
 }
 
@@ -66,7 +66,7 @@ resource "brightbox_cloudip" "bastion" {
   target = brightbox_server.k8s_master[0].interface
   provisioner "local-exec" {
     when    = destroy
-    command = "ssh-keygen -R ${brightbox_cloudip.bastion[count.index].fqdn}; ssh-keygen -R ${brightbox_cloudip.bastion[count.index].public_ip}"
+    command = "ssh-keygen -R ${self[count.index].fqdn}; ssh-keygen -R ${self[count.index].public_ip}"
   }
 
 }
