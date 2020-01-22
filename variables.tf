@@ -1,8 +1,12 @@
+# Brightbox Cloud Region
+
 variable "region" {
   type        = string
   description = "Brightbox region to connect to"
   default     = "gb1"
 }
+
+# Brightbox Account Details
 
 variable "username" {
   type        = string
@@ -31,6 +35,28 @@ variable "apisecret" {
   default     = "uogoelzgt0nwawb"
 }
 
+# Cluster Details
+
+variable "cluster_domainname" {
+  type        = string
+  description = "internal domain name of the Kubernetes Cluster"
+  default     = "cluster.local"
+}
+
+variable "cluster_name" {
+  type        = string
+  description = "name of this Kubernetes Cluster - used to mark server descriptions"
+  default     = "kubernetes"
+}
+
+variable "management_source" {
+  description = "CIDR of any external management workstations"
+  type        = list
+  default     = ["0.0.0.0/32"]
+}
+
+# Masters
+
 variable "master_count" {
   type        = number
   description = "Number of master servers in cluster"
@@ -43,17 +69,7 @@ variable "master_type" {
   default     = "2gb.ssd"
 }
 
-variable "management_source" {
-  description = "CIDR of any external management workstations"
-  type        = list
-  default     = ["0.0.0.0/32"]
-}
-
-variable "image_desc" {
-  type        = string
-  description = "Image pattern to use to select boot image"
-  default     = "^ubuntu-bionic.*server$"
-}
+# Worker Nodes
 
 variable "worker_count" {
   type        = number
@@ -103,6 +119,8 @@ variable "worker_cloudip_count" {
   default     = 0
 }
 
+# Storage Nodes
+
 variable "storage_count" {
   type        = number
   description = "Number of storage nodes in cluster"
@@ -139,19 +157,6 @@ variable "storage_zone" {
   default     = ""
 }
 
-
-variable "cluster_domainname" {
-  type        = string
-  description = "internal domain name of the Kubernetes Cluster"
-  default     = "cluster.local"
-}
-
-variable "cluster_name" {
-  type        = string
-  description = "name of this Kubernetes Cluster - used to mark server descriptions"
-  default     = "kubernetes"
-}
-
 # Releases
 
 variable "kubernetes_release" {
@@ -164,4 +169,12 @@ variable "calico_release" {
   type        = string
   description = "Version of Calico plugin to install"
   default     = "3.10"
+}
+
+# Boot image search string
+
+variable "image_desc" {
+  type        = string
+  description = "Image pattern to use to select boot image"
+  default     = "^ubuntu-bionic.*server$"
 }
