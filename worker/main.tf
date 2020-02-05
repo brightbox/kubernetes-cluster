@@ -39,6 +39,7 @@ resource "brightbox_server" "k8s_worker" {
     ignore_changes = [
       image,
       type,
+      server_groups,
     ]
     create_before_destroy = true
   }
