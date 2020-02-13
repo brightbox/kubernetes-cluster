@@ -80,7 +80,7 @@ variable "worker_count" {
 variable "worker_min" {
   type        = number
   description = "Minimum number of worker nodes in cluster"
-  default     = 0
+  default     = 999
 }
 
 variable "worker_max" {
@@ -130,7 +130,7 @@ variable "storage_count" {
 variable "storage_min" {
   type        = number
   description = "Minimum number of storage nodes in cluster"
-  default     = 0
+  default     = 999
 }
 
 variable "storage_max" {
