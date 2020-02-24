@@ -25,11 +25,6 @@ variable "worker_type" {
 
 variable "worker_count" {
   type        = number
-  description = "Number of worker nodes"
-}
-
-variable "worker_min" {
-  type        = number
   description = "Minimum number of worker nodes"
 }
 

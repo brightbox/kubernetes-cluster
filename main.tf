@@ -20,6 +20,10 @@ EOT
       kubectl label --overwrite ${join(" ", formatlist("node/%s", local.storage_node_ids))} 'node-role.kubernetes.io/storage=' 'node-role.kubernetes.io/worker-'
 %{~endif}
 EOT
+  disable_scale_down_script = <<EOT
+      kubectl annotate --overwrite -l node-role.kubernetes.io/worker nodes cluster-autoscaler.kubernetes.io/scale-down-disabled=true
+      kubectl annotate --overwrite -l node-role.kubernetes.io/storage nodes cluster-autoscaler.kubernetes.io/scale-down-disabled=true
+EOT
 }
 
 provider "brightbox" {
@@ -74,6 +78,7 @@ resource "null_resource" "label_nodes" {
   triggers = {
     worker_script  = local.worker_label_script
     storage_script = local.storage_label_script
+    disable_script = local.disable_scale_down_script
   }
 
   connection {
@@ -85,6 +90,7 @@ resource "null_resource" "label_nodes" {
     inline = [
       local.worker_label_script,
       local.storage_label_script,
+      local.disable_scale_down_script,
     ]
   }
 

@@ -73,14 +73,8 @@ variable "master_type" {
 
 variable "worker_count" {
   type        = number
-  description = "Number of worker nodes in cluster"
-  default     = 1
-}
-
-variable "worker_min" {
-  type        = number
   description = "Minimum number of worker nodes in cluster"
-  default     = 999
+  default     = 1
 }
 
 variable "worker_max" {
@@ -123,14 +117,8 @@ variable "worker_cloudip_count" {
 
 variable "storage_count" {
   type        = number
-  description = "Number of storage nodes in cluster"
-  default     = 0
-}
-
-variable "storage_min" {
-  type        = number
   description = "Minimum number of storage nodes in cluster"
-  default     = 999
+  default     = 0
 }
 
 variable "storage_max" {

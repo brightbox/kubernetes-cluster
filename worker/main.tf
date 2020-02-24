@@ -8,7 +8,7 @@ locals {
 
 resource "brightbox_server_group" "k8s_worker_group" {
   name        = "${var.worker_name}.${var.internal_cluster_fqdn}"
-  description = "${var.worker_min}:${var.worker_max}"
+  description = "${var.worker_count}:${var.worker_max}"
 }
 
 resource "brightbox_server" "k8s_worker" {
