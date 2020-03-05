@@ -1,0 +1,38 @@
+#!/bin/bash
+
+die() { echo "$*" ; exit 1 ; }
+
+# name of PV dir on disk (/mnt/disks/$pvname)
+pvname=$1
+
+[ -z $pvname ] && die "provide a name for the pv"
+
+pvexport=/srv/export/$pvname
+pvmount=/mnt/disks/$pvname
+
+which kubelet || die "doesn't look like a kubernetes node, exiting"
+
+test -e $pvexport && die "$pvexport already exists, exiting"
+test -e $pvmount && die "$pvmount already exists, exiting"
+
+unitname=$(systemd-escape -p --suffix=mount "${pvmount}")
+
+mkdir -p $pvexport
+mkdir -p $pvmount
+
+cat > /etc/systemd/system/${unitname} <<EOF
+[Unit]
+Before=local-fs.target
+
+[Mount]
+Where=${pvmount}
+What=${pvexport}
+Type=none
+Options=bind
+
+[Install]
+WantedBy=local-fs.target
+EOF
+
+systemctl enable $unitname
+systemctl start $unitname
