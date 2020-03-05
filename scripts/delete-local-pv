@@ -1,0 +1,22 @@
+#!/bin/bash
+
+die() { echo "$*" ; exit 1 ; }
+
+# name of PV dir on disk (/mnt/disks/$pvname)
+pvname=$1
+
+[ -z $pvname ] && die "provide the name of the pv"
+
+pvexport=/srv/export/$pvname
+pvmount=/mnt/disks/$pvname
+
+which kubelet>/dev/null || die "doesn't look like a kubernetes node, exiting"
+
+test -d $pvexport || die "$pvexport doesn't exist, exiting"
+
+unitname=$(systemd-escape -p --suffix=mount "${pvmount}")
+
+systemctl stop $unitname || die "couldn't unmount $pvexport, exiting"
+systemctl disable $unitname
+rmdir $pvmount
+rmdir $pvexport || die "$pvexport wasn't empty"
