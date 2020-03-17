@@ -71,6 +71,11 @@ variable "master_type" {
 
 # Worker Nodes
 
+variable "worker_root_size" {
+  type        = number
+  description = "The size of the root partition on worker nodes"
+  default     = 0
+}
 variable "worker_count" {
   type        = number
   description = "Minimum number of worker nodes in cluster"
@@ -114,6 +119,12 @@ variable "worker_cloudip_count" {
 }
 
 # Storage Nodes
+
+variable "storage_root_size" {
+  type        = number
+  description = "The size of the root partition on worker nodes"
+  default     = 0
+}
 
 variable "storage_count" {
   type        = number

@@ -5,6 +5,7 @@ module "k8s_worker" {
   cluster_ready   = module.k8s_cluster
 
   #Variables
+  root_size              = var.worker_root_size
   worker_count           = var.worker_count
   worker_max             = max(var.worker_max, var.worker_count)
   worker_type            = var.worker_type
@@ -33,6 +34,7 @@ module "k8s_storage" {
   cluster_ready   = module.k8s_cluster
 
   #Variables
+  root_size              = var.storage_root_size
   worker_count           = var.storage_count
   worker_max             = max(var.storage_max, var.storage_count)
   worker_type            = var.storage_type

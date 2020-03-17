@@ -4,23 +4,6 @@ locals {
     "${local.template_path}/upgrade-worker",
     { kubernetes_release = var.kubernetes_release }
   )
-}
-
-resource "brightbox_server_group" "k8s_worker_group" {
-  name        = "${var.worker_name}.${var.internal_cluster_fqdn}"
-  description = "${var.worker_count}:${var.worker_max}"
-}
-
-resource "brightbox_server" "k8s_worker" {
-  depends_on = [
-    var.cluster_ready,
-    var.apiserver_ready,
-  ]
-  count = var.worker_count
-
-  name  = "${var.worker_name}-${count.index}.${var.internal_cluster_fqdn}"
-  image = data.brightbox_image.k8s_worker.id
-  type  = var.worker_type
   user_data = templatefile(
     "${local.template_path}/install-worker-userdata",
     {
@@ -31,7 +14,45 @@ resource "brightbox_server" "k8s_worker" {
       certificate_authority_pem = var.ca_cert_pem
     }
   )
-  zone = "${var.region}-${var.worker_zone == "" ? (count.index % 2 == 0 ? "a" : "b") : var.worker_zone}"
+}
+
+resource "brightbox_server_group" "k8s_worker_group" {
+  name        = "${var.worker_name}.${var.internal_cluster_fqdn}"
+  description = "${var.worker_count}:${var.worker_max}"
+}
+
+data "template_cloudinit_config" "worker_userdata" {
+  gzip          = false
+  base64_encode = false
+  part {
+    content_type = "text/cloud-config"
+    content      = <<EOT
+#cloud-config
+%{if var.root_size != 0~}
+bootcmd:
+  - [cloud-init-per, once, addpartition, sgdisk, /dev/vda, "-e", "-n=0:${var.root_size}G:0"]
+%{~endif}
+EOT
+  }
+
+  part {
+    content_type = "text/x-shellscript"
+    content      = local.user_data
+  }
+}
+
+resource "brightbox_server" "k8s_worker" {
+  depends_on = [
+    var.cluster_ready,
+    var.apiserver_ready,
+  ]
+  count = var.worker_count
+
+  name      = "${var.worker_name}-${count.index}.${var.internal_cluster_fqdn}"
+  image     = data.brightbox_image.k8s_worker.id
+  type      = var.worker_type
+  zone      = "${var.region}-${var.worker_zone == "" ? (count.index % 2 == 0 ? "a" : "b") : var.worker_zone}"
+  user_data = data.template_cloudinit_config.worker_userdata.rendered
 
   server_groups = [var.cluster_server_group, brightbox_server_group.k8s_worker_group.id]
 
