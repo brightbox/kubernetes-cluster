@@ -6,7 +6,14 @@ require 'json'
 # this script. Move there so the call to terraform works from anywhere
 Dir.chdir File.join(__dir__, '..')
 
-terraform_state = JSON.parse(`terraform state pull`)
+state_read = `terraform state pull`
+
+terraform_state = if state_read.empty?
+                    puts '{}'
+                    exit 0
+                  else
+                    JSON.parse(`terraform state pull`)
+                  end
 
 cloudips = terraform_state['resources']
            .select { |x| x['type'] == 'brightbox_cloudip' }
