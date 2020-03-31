@@ -21,16 +21,26 @@ cloudips = terraform_state['resources']
   hsh[resource['name']] = resource['instances'].first
 end
 
-bastion = cloudips['bastion'] || cloudips['k8s_master']
+bastion = cloudips['bastion'] || cloudips['k8s_master'] || {}
+bastion_fqdn = (bastion['attributes'] || {})['fqdn']
 
 servers = terraform_state['resources'].select do |resource|
   resource['type'] == 'brightbox_server'
 end
 
-terraform_output = terraform_state['outputs']
+terraform_output = terraform_state['outputs'] || {}
 
-def create_host_groups(resources, bastion_host)
-  resources.each_with_object({}) do |resource, hsh|
+def blank_inventory
+  {
+    'k8s_master' => { 'hosts' => [] },
+    'k8s_worker' => { 'hosts' => [] },
+    'k8s_storage' => { 'hosts' => [] },
+    '_meta' => { 'hostvars' => {} }
+  }
+end
+
+def create_host_groups(initial_hash, resources, bastion_host)
+  resources.each_with_object(initial_hash) do |resource, hsh|
     group = resource['module'].delete_prefix('module.')
     hsh[group] = create_group_details(resource['instances'], bastion_host)
   end
@@ -57,7 +67,7 @@ def create_host_list(instances)
 end
 
 def create_hostvars(resources)
-  hosts = resources.map { |resource| resource['instances'] }.reduce(&:+)
+  hosts = resources.map { |resource| resource['instances'] }.reduce(&:+) || {}
   hosts.each_with_object({}) do |host, hsh|
     hsh[host['attributes']['id']] = {
       'ansible_user' => host['attributes']['username'],
@@ -67,12 +77,18 @@ def create_hostvars(resources)
 end
 
 def create_k8sclustervars(output)
-  { 'supplementary_addresses_in_ssl_keys' => [output['apiserver']['value']] }
+  { 'supplementary_addresses_in_ssl_keys' => [
+    (output['apiserver'] || {})['value']
+  ] }
 end
 
-output = create_host_groups(servers, bastion['attributes']['fqdn'])
-output['_meta'] = { 'hostvars' => create_hostvars(servers) }
-output['k8s-cluster'] = { 'vars' => create_k8sclustervars(terraform_output) }
+output = create_host_groups(blank_inventory, servers, bastion_fqdn)
+output['_meta']['hostvars'] = create_hostvars(servers) unless servers.empty?
+unless terraform_output.empty?
+  output['k8s-cluster'] = {
+    'vars' => create_k8sclustervars(terraform_output)
+  }
+end
 
 case ARGV.first
 when '--host'
