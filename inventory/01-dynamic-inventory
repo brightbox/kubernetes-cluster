@@ -27,6 +27,8 @@ servers = terraform_state['resources'].select do |resource|
   resource['type'] == 'brightbox_server'
 end
 
+terraform_output = terraform_state['outputs']
+
 def create_host_groups(resources, bastion_host)
   resources.each_with_object({}) do |resource, hsh|
     group = resource['module'].delete_prefix('module.')
@@ -64,8 +66,13 @@ def create_hostvars(resources)
   end
 end
 
+def create_k8sclustervars(output)
+  { 'supplementary_addresses_in_ssl_keys' => [output['apiserver']['value']] }
+end
+
 output = create_host_groups(servers, bastion['attributes']['fqdn'])
 output['_meta'] = { 'hostvars' => create_hostvars(servers) }
+output['k8s-cluster'] = { 'vars' => create_k8sclustervars(terraform_output) }
 
 case ARGV.first
 when '--host'
