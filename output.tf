@@ -1,4 +1,4 @@
-output "master" {
+output "apiserver" {
   value = module.k8s_master.apiserver
 }
 

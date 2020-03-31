@@ -7,4 +7,3 @@ output "firewall_policy_id" {
   value       = brightbox_firewall_policy.k8s.id
   description = "Firewal Policy for the Cluster"
 }
-

@@ -13,17 +13,7 @@ output "bastion_user" {
   description = "Logon ID on Bastion Host"
 }
 
-#output "kubeadm_config" {
-#  value       = local.kubeadm_config_script
-#  description = "Cluster kubeadm configuration manifest"
-#}
-
-output "apiserver_ready" {
-  value       = local.masters_configured
-  description = "Resource pre-requisite that signals the apiserver is ready"
-}
-
-output "boot_token" {
-  value       = local.boot_token
-  description = "Shared secret used by workers to connect to the control plane"
+output "servers" {
+  value       = brightbox_server.k8s_master
+  description = "List of this modules brightbox servers"
 }

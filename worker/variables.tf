@@ -1,21 +1,16 @@
-variable "boot_token" {
-  type        = string
-  description = "The shared secret used to connect to the cluster control plane"
-}
-
 variable "region" {
   type        = string
   description = "Brightbox region to connect to"
 }
 
-variable "kubernetes_release" {
-  type        = string
-  description = "Version of Kubernetes to install"
-}
-
 variable "root_size" {
   type        = number
   description = "The size of the worker root partition in GiB (0 for full size)"
+}
+
+variable "internal_cluster_fqdn" {
+  type        = string
+  description = "Internal Cluster domain name"
 }
 
 variable "image_desc" {
@@ -43,26 +38,6 @@ variable "cluster_server_group" {
   description = "The cluster server group to place worker nodes in"
 }
 
-variable "internal_cluster_fqdn" {
-  type        = string
-  description = "Internal Cluster domain name"
-}
-
-variable "apiserver_fqdn" {
-  type        = string
-  description = "ApiServer domain name"
-}
-
-variable "apiserver_service_port" {
-  type        = string
-  description = "Apiserver service port number"
-}
-
-variable "ca_cert_pem" {
-  type        = string
-  description = "PEM format certificate to use as CA on workers"
-}
-
 variable "bastion" {
   type        = string
   description = "Publicly accessible host to use to configure workers from"
@@ -71,20 +46,6 @@ variable "bastion" {
 variable "bastion_user" {
   type        = string
   description = "Logon ID on Bastion Host"
-}
-
-variable "worker_drain_timeout" {
-  type        = string
-  description = "How long to wait for worker to drain pods as a kubeadm time spec"
-}
-
-variable "apiserver_ready" {
-  type        = list(string)
-  description = "resource that indicates the apiserver is ready to receive instructions"
-}
-
-variable "cluster_ready" {
-  description = "resource that indicates the cluster containers are ready "
 }
 
 variable "worker_name" {
@@ -97,4 +58,8 @@ variable "worker_zone" {
   type        = string
   description = "The zone the workers are to be built in: 'a' or 'b'. Default is to spread between the zones"
   default     = ""
+}
+
+variable "cluster_ready" {
+  description = "resource that indicates the cluster containers are ready "
 }

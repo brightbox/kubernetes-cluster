@@ -3,14 +3,9 @@ variable "region" {
   description = "Brightbox region to connect to"
 }
 
-variable "kubernetes_release" {
+variable "internal_cluster_fqdn" {
   type        = string
-  description = "Version of Kubernetes to install"
-}
-
-variable "calico_release" {
-  type        = string
-  description = "Version of Calico to install"
+  description = "Internal Cluster domain name"
 }
 
 variable "image_desc" {
@@ -44,41 +39,12 @@ variable "cluster_firewall_policy" {
   description = "The cluster firewall policy to place load balancer rules in"
 }
 
-variable "cluster_name" {
-  type        = string
-  description = "Internal Cluster name"
-}
-
-variable "cluster_domainname" {
-  type        = string
-  description = "Internal Cluster domain name"
-}
-
 variable "apiserver_service_port" {
   type        = string
   description = "Apiserver service port number"
-}
-
-variable "ca_cert_pem" {
-  type        = string
-  description = "PEM format certificate to use as CA on masters"
-}
-
-variable "ca_private_key_pem" {
-  type        = string
-  description = "PEM format certificate to use as CA private key on masters"
 }
 
 variable "cluster_ready" {
   description = "resource that indicates the cluster containers are ready "
 }
 
-variable "cluster_cidr" {
-  type        = string
-  description = "CIDR to assign to the cluster overlay network"
-}
-
-variable "service_cidr" {
-  type        = string
-  description = "CIDR to assign to the service overlay network"
-}
