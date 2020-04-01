@@ -37,3 +37,8 @@ provider "tls" {
 provider "template" {
   version = "~> 2.1"
 }
+
+resource "brightbox_api_client" "controller_client" {
+  name              = "Cloud Controller ${local.cluster_fqdn}"
+  permissions_group = "full"
+}

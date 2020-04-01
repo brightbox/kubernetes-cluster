@@ -134,8 +134,4 @@ data "brightbox_image" "k8s_master" {
   most_recent = true
 }
 
-resource "brightbox_api_client" "controller_client" {
-  name              = "Cloud Controller ${var.internal_cluster_fqdn}"
-  permissions_group = "full"
-}
 

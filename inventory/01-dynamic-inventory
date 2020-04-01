@@ -29,6 +29,7 @@ servers = terraform_state['resources'].select do |resource|
 end
 
 terraform_output = terraform_state['outputs'] || {}
+terraform_output.default = {}
 
 def blank_inventory
   {
@@ -77,9 +78,14 @@ def create_hostvars(resources)
 end
 
 def create_k8sclustervars(output)
-  { 'supplementary_addresses_in_ssl_keys' => [
-    (output['apiserver'] || {})['value']
-  ] }
+  {
+    'supplementary_addresses_in_ssl_keys' =>
+    [output['apiserver']['value']],
+    'external_brightbox_apiurl' => output['apiurl']['value'],
+    'external_brightbox_apiclient' => output['controller_client']['value'],
+    'external_brightbox_apisecret' =>
+       output['controller_client_secret']['value']
+  }
 end
 
 output = create_host_groups(blank_inventory, servers, bastion_fqdn)
