@@ -22,3 +22,7 @@ output "group_fqdn" {
   value = "${module.k8s_cluster.group_id}.${local.region_suffix}"
 }
 
+output "cluster_fqdn" {
+  value = local.cluster_fqdn
+}
+

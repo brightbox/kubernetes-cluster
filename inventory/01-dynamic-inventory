@@ -84,7 +84,8 @@ def create_k8sclustervars(output)
     'external_brightbox_apiurl' => output['apiurl']['value'],
     'external_brightbox_apiclient' => output['controller_client']['value'],
     'external_brightbox_apisecret' =>
-       output['controller_client_secret']['value']
+       output['controller_client_secret']['value'],
+    'cluster_name' => output['cluster_fqdn']['value']
   }
 end
 
