@@ -1,6 +1,5 @@
 locals {
   local_host    = "127.0.0.1"
-  template_path = "${path.module}/templates"
   public_ip     = brightbox_cloudip.k8s_master.public_ip
   public_rdns   = brightbox_cloudip.k8s_master.reverse_dns
   public_fqdn   = brightbox_cloudip.k8s_master.fqdn
@@ -9,7 +8,6 @@ locals {
   bastion_ip    = local.lb_count == 1 ? brightbox_cloudip.bastion[0].public_ip : local.public_ip
   bastion_user  = brightbox_server.k8s_master[0].username
   api_target    = local.lb_count == 1 ? brightbox_load_balancer.k8s_master[0].id : brightbox_server.k8s_master[0].interface
-  cloud_config  = file("${local.template_path}/cloud-config.yml")
 }
 
 resource "brightbox_cloudip" "k8s_master" {
@@ -86,7 +84,6 @@ resource "brightbox_server" "k8s_master" {
   name      = "k8s-master-${count.index}.${var.internal_cluster_fqdn}"
   image     = data.brightbox_image.k8s_master.id
   type      = var.master_type
-  user_data = local.cloud_config
   zone      = "${var.region}-${var.master_zone == "" ? (count.index % 2 == 0 ? "a" : "b") : var.master_zone}"
 
   server_groups = [var.cluster_server_group]
