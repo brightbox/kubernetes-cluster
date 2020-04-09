@@ -198,7 +198,7 @@ upgrade() {
 	fi
 	sudo apt-mark hold kubeadm
 	echo "Upgrading control plane mirror"
-	retry 5 sudo kubeadm upgrade node --certificate-renewal
+    retry 5 sudo kubeadm upgrade apply -y ${kubernetes_release}
 	echo "Upgrading kubelet"
 	sudo apt-mark unhold kubelet kubectl
 	retry 5 sudo apt-get -qq -y install \

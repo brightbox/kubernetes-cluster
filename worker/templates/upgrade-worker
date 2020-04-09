@@ -67,7 +67,7 @@ fi
 sudo apt-mark hold kubeadm
 echo "Upgrading worker node"
 case ${kubernetes_release} in
-	1.1[7].*)
+	1.1[78].*)
 		retry 5 sudo kubeadm upgrade node
 		;;
 	1.1[56].*)
@@ -76,6 +76,10 @@ case ${kubernetes_release} in
 	1.14.*)
 		retry 5 sudo kubeadm upgrade node config --kubelet-version=${kubernetes_release}
 		;;
+    *)
+        echo "Unsupported verion ${kubernetes_release}"
+        exit 1
+        ;;
 esac
 echo "Upgrading kubelet"
 sudo apt-mark unhold kubelet kubectl
