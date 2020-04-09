@@ -161,13 +161,13 @@ variable "storage_zone" {
 variable "kubernetes_release" {
   type        = string
   description = "Version of Kubernetes to install"
-  default     = "1.16.3"
+  default     = "1.18.1"
 }
 
 variable "calico_release" {
   type        = string
   description = "Version of Calico plugin to install"
-  default     = "3.10"
+  default     = "3.13"
 }
 
 # Boot image search string
