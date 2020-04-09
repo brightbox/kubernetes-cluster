@@ -1,0 +1,3 @@
+#!/bin/sh
+
+kubectl get services -o=jsonpath='{range .items[?(.spec.type=="LoadBalancer")]}{"service/"}{.metadata.name}{" "}{end}' | xargs -r kubectl delete --now
