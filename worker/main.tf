@@ -65,19 +65,19 @@ resource "brightbox_server" "k8s_worker" {
     create_before_destroy = true
   }
 
-  provisioner "remote-exec" {
-    when = destroy
+  #provisioner "remote-exec" {
+  # when = destroy
 
-    connection {
-      type = "ssh"
-      user = var.bastion_user
-      host = var.bastion
-    }
+  # connection {
+  #   type = "ssh"
+  #   user = var.bastion_user
+  #   host = var.bastion
+  # }
 
-    inline = [
-      "kubectl drain --ignore-daemonsets --timeout=${var.worker_drain_timeout} ${self.id}",
-    ]
-  }
+  # inline = [
+  #   "kubectl drain --ignore-daemonsets --timeout=${var.worker_drain_timeout} ${self.id}",
+  # ]
+  #
 
 }
 

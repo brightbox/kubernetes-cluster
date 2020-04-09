@@ -133,16 +133,16 @@ resource "null_resource" "k8s_master" {
     ]
   }
 
-  provisioner "remote-exec" {
-    when = destroy
-
-    # The sleep 10 is a hack to workaround the lack of wait on the delete
-    # command
-    inline = [
-      "kubectl get services -o=jsonpath='{range .items[?(.spec.type==\"LoadBalancer\")]}{\"service/\"}{.metadata.name}{\" \"}{end}' | xargs -r kubectl delete",
-      "sleep 10",
-    ]
-  }
+  #  provisioner "remote-exec" {
+  #  when = destroy
+  #
+  #  # The sleep 10 is a hack to workaround the lack of wait on the delete
+  #  # command
+  #  inline = [
+  #    "kubectl get services -o=jsonpath='{range .items[?(.spec.type==\"LoadBalancer\")]}{\"service/\"}{.metadata.name}{\" \"}{end}' | xargs -r kubectl delete",
+  #    "sleep 10",
+  #  ]
+  #}
 }
 
 resource "null_resource" "k8s_master_configure" {
