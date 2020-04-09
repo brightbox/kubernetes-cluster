@@ -1,0 +1,107 @@
+#!/usr/bin/env ruby
+
+require 'json'
+
+# The Terraform state file is either remote or in the directory above
+# this script. Move there so the call to terraform works from anywhere
+Dir.chdir File.join(__dir__, '..')
+
+state_read = `terraform state pull`
+
+terraform_state = if state_read.empty?
+                    puts '{}'
+                    exit 0
+                  else
+                    JSON.parse(`terraform state pull`)
+                  end
+
+cloudips = terraform_state['resources']
+           .select { |x| x['type'] == 'brightbox_cloudip' }
+           .each_with_object({}) do |resource, hsh|
+  hsh[resource['name']] = resource['instances'].first
+end
+
+bastion = cloudips['bastion'] || cloudips['k8s_master'] || {}
+bastion_fqdn = (bastion['attributes'] || {})['fqdn']
+
+servers = terraform_state['resources'].select do |resource|
+  resource['type'] == 'brightbox_server'
+end
+
+terraform_output = terraform_state['outputs'] || {}
+terraform_output.default = {}
+
+def blank_inventory
+  {
+    'k8s_master' => { 'hosts' => [] },
+    'k8s_worker' => { 'hosts' => [] },
+    'k8s_storage' => { 'hosts' => [] },
+    '_meta' => { 'hostvars' => {} }
+  }
+end
+
+def create_host_groups(initial_hash, resources, bastion_host)
+  resources.each_with_object(initial_hash) do |resource, hsh|
+    group = resource['module'].delete_prefix('module.')
+    hsh[group] = create_group_details(resource['instances'], bastion_host)
+  end
+end
+
+def create_group_details(instances, bastion_host)
+  username = find_common_username(instances)
+  result = { 'hosts' => create_host_list(instances) }
+  unless username.empty?
+    result['vars'] = {
+      'ansible_ssh_common_args' =>
+        %(-o ProxyCommand="ssh -W %h:%p -q #{username}@#{bastion_host}")
+    }
+  end
+  result
+end
+
+def find_common_username(instances)
+  instances.map { |server| server['attributes']['username'] }.uniq.first.to_s
+end
+
+def create_host_list(instances)
+  instances.map { |server| server['attributes']['id'] }
+end
+
+def create_hostvars(resources)
+  hosts = resources.map { |resource| resource['instances'] }.reduce(&:+) || {}
+  hosts.each_with_object({}) do |host, hsh|
+    hsh[host['attributes']['id']] = {
+      'ansible_user' => host['attributes']['username'],
+      'ansible_host' => host['attributes']['fqdn']
+    }
+  end
+end
+
+def create_k8sclustervars(output)
+  {
+    'supplementary_addresses_in_ssl_keys' =>
+    [output['apiserver']['value']],
+    'external_brightbox_apiurl' => output['apiurl']['value'],
+    'external_brightbox_apiclient' => output['controller_client']['value'],
+    'external_brightbox_apisecret' =>
+       output['controller_client_secret']['value'],
+    'cluster_name' => output['cluster_fqdn']['value']
+  }
+end
+
+output = create_host_groups(blank_inventory, servers, bastion_fqdn)
+output['_meta']['hostvars'] = create_hostvars(servers) unless servers.empty?
+unless terraform_output.empty?
+  output['k8s-cluster'] = {
+    'vars' => create_k8sclustervars(terraform_output)
+  }
+end
+
+case ARGV.first
+when '--host'
+  puts JSON.pretty_generate(output['_meta']['hostvars'][ARGV[1]] || {})
+when '--list'
+  puts JSON.pretty_generate(output)
+else
+  STDERR.puts "Usage: #{$PROGRAM_NAME} [--list] [--host HOST]"
+end
