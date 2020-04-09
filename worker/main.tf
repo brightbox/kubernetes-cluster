@@ -36,7 +36,18 @@ resource "brightbox_server" "k8s_worker" {
     create_before_destroy = true
   }
 
+  provisioner "remote-exec" {
+    connection {
+      user         = self.username
+      host         = self.hostname
+      bastion_host = var.bastion
+      bastion_user = var.bastion_user
+    }
+    inline = ["cloud-init status --wait"]
+  }
+
 }
+
 
 data "brightbox_image" "k8s_worker" {
   name        = var.image_desc

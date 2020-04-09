@@ -4,3 +4,5 @@ override.tf
 .terraform
 generated
 terraform.tfstate*
+inventory/artifacts
+inventory/credentials
