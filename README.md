@@ -200,7 +200,7 @@ GENERATED ROOT PASSWORD: 4q6eNPylWuxykirluM)urIbipoJ
 Then connect with a mysql client to the load balancer address and run a show process list
 ```
 $ mysql -v -h cip-wyre0.gb1.brightbox.com -e 'show full processlist;' -u root -p
-Enter password: 
+Enter password:
 --------------
 show full processlist
 --------------
@@ -225,7 +225,7 @@ to get the new root password.
 This time when you connect you'll see that the Host address is the address of the client you are connecting from.
 ```
 $ mysql -v -h cip-wyre0.gb1.brightbox.com -e 'show full processlist;' -u root -p
-Enter password: 
+Enter password:
 --------------
 show full processlist
 --------------
@@ -282,6 +282,26 @@ The load balancer will automatically obtain the appropriate SSL certificates and
 ## Upgrade a Cluster
 The scripts will upgrade the version of Kubernetes on an existing cluster. Change the `kubernetes_release` version number as required and run `terraform apply`. Both the master and workers will be upgraded to the new version.
 Upgrades will only work if permitted by the `kubeadm upgrade` facility. You can check before hand by logging onto your master and running [`kubeadm upgrade plan`](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-upgrade/#cmd-upgrade-plan)
-## Adding and Removing Workers
-You can add and remove workers by changing the `worker_count` variable and running `terraform apply`. You can also change the `worker_type` and even the `image_desc` and new workers will use those values. Reducing workers operates using the last in, first out principle and will only allow you to reduce workers if there is sufficient space on other workers to accommodate evicted pods. The scripts try to drain the nodes fully before deleting them, and you may need to increase `worker_drain_timeout` if your applications take a long time to shut down or migrate. The default is to wait for 120 seconds.
+## Adding Workers
+You can add by changing the `worker_count` variable
+and running `terraform apply`. You can also change the `worker_type` and
+even the `image_desc` and new workers will use those values.
 
+## Reducing workers
+Before reducing the `worker_count` variable, you will need to drain
+and remove the nodes from Kubernetes.  Reducing workers operates using
+the last in, first out principle. Run
+
+    $ terraform output
+
+and select the `worker_ids` that are at thoe bottom of their lists.
+
+Run
+
+    kubectl drain srv-abcde --ignore-daemonsets=true
+
+for each node. Then
+
+    kubectl delete nodes srv-abcde srv-edcba
+
+Finally reduce the `worker_count` variable and run `terraform apply`
