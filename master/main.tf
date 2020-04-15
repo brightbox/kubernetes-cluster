@@ -260,7 +260,10 @@ resource "null_resource" "set_host_keys" {
       user = local.bastion_user
       host = local.bastion
     }
-    inline = ["cloud-init status --wait"]
+    inline = [
+      "echo 'Waiting for base package installation to complete'",
+      "cloud-init status --wait >/dev/null"
+    ]
   }
 
   provisioner "local-exec" {
