@@ -8,6 +8,7 @@ locals {
   public_fqdn   = brightbox_cloudip.k8s_master.fqdn
   lb_count      = var.master_count > 1 ? 1 : 0
   bastion       = local.lb_count == 1 ? brightbox_cloudip.bastion[0].fqdn : local.public_fqdn
+  bastion_ip    = local.lb_count == 1 ? brightbox_cloudip.bastion[0].public_ip : local.public_ip
   bastion_user  = brightbox_server.k8s_master[0].username
   api_target    = local.lb_count == 1 ? brightbox_load_balancer.k8s_master[0].id : brightbox_server.k8s_master[0].interface
   install_script = templatefile(
@@ -245,6 +246,29 @@ resource "null_resource" "k8s_master_mirrors_configure" {
     ]
   }
 
+}
+
+resource "null_resource" "set_host_keys" {
+
+  triggers = {
+    bastion    = local.bastion
+    bastion_ip = local.bastion_ip
+  }
+
+  provisioner "remote-exec" {
+    connection {
+      user = local.bastion_user
+      host = local.bastion
+    }
+    inline = ["cloud-init status --wait"]
+  }
+
+  provisioner "local-exec" {
+    command = "ssh-keyscan -H ${local.bastion_ip} >> ~/.ssh/known_hosts"
+  }
+  provisioner "local-exec" {
+    command = "ssh-keyscan -H ${local.bastion} >> ~/.ssh/known_hosts"
+  }
 }
 
 data "brightbox_image" "k8s_master" {
