@@ -1,4 +1,4 @@
-terraform.tfvars
+local.auto.tfvars
 override.tf
 *.swp
 .terraform
