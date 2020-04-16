@@ -153,7 +153,7 @@ resource "null_resource" "k8s_master_configure" {
 
   triggers = {
     cert_key       = random_id.master_certificate_key.hex
-    master_id      = brightbox_server.k8s_master[0].id
+    master_ids     = join(",", brightbox_server.k8s_master.*.id)
     k8s_release    = var.kubernetes_release
     cert_change    = var.ca_cert_pem
     master_script  = local.master_provisioner_script

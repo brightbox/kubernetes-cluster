@@ -552,7 +552,8 @@ upgrade() {
                 retry 5 sudo systemctl restart kubelet
 		;;
 	*up-to-date*)
-		echo "Already at version ${kubernetes_release} or greater - skipping"
+		echo "Already at version ${kubernetes_release} or greater - refreshing certificates"
+        retry 5 sudo kubeadm init phase upload-certs --upload-certs --config $HOME/install/kubeadm.conf
 		;;
 	*)
 		echo "Unexpected plan response"
