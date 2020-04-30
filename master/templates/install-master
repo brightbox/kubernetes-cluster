@@ -66,7 +66,7 @@ install() {
         install_ca
 
         echo "Running kubeadm init"
-        sudo kubeadm init --config $HOME/install/kubeadm.conf
+        sudo kubeadm init --upload-certs --config $HOME/install/kubeadm.conf
 
         ensure_certs_in_kubelet_config
         retry 5 sudo systemctl restart kubelet
