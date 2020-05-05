@@ -161,7 +161,7 @@ variable "storage_zone" {
 variable "kubernetes_release" {
   type        = string
   description = "Version of Kubernetes to install"
-  default     = "1.18.1"
+  default     = "1.18.2"
 }
 
 variable "calico_release" {
