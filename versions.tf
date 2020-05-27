@@ -4,7 +4,7 @@ terraform {
 }
 
 provider "brightbox" {
-  version   = "~> 1.2"
+  version   = "~> 1.3.0"
   apiurl    = "https://api.${var.region}.brightbox.com"
   username  = var.username
   password  = var.password
