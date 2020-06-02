@@ -156,6 +156,12 @@ variable "storage_zone" {
   default     = ""
 }
 
+variable "storage_system" {
+  type        = string
+  description = "The storage system you wish to use (manual, openebs). Automatically sets up the storage partition in the correct format and location."
+  default     = "manual"
+}
+
 # Releases
 
 variable "kubernetes_release" {

@@ -82,3 +82,8 @@ variable "service_cidr" {
   type        = string
   description = "CIDR to assign to the service overlay network"
 }
+
+variable "storage_system" {
+  type        = string
+  description = "Which storage system support manifests to install"
+}

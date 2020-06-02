@@ -486,6 +486,20 @@ EOF
         echo "Installing Calico network controllers"
         retry 5 kubectl apply -f \
         https://docs.projectcalico.org/v${calico_release}/manifests/calico.yaml
+
+        case "${storage_system}" in
+            manual)
+                ;;
+            openebs)
+                echo "Installing OpenEBS storage controllers"
+                retry 5 kubectl apply -f \
+                    https://openebs.github.io/charts/openebs-operator.yaml
+                ;;
+            *) 
+                echo "Unknown storage system ${storage_system}"
+                ;;
+        esac
+
 }
 
 ensure_certs_in_kubelet_config() {

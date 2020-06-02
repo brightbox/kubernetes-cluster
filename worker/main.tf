@@ -12,6 +12,7 @@ locals {
       fqdn                      = var.apiserver_fqdn
       service_port              = var.apiserver_service_port
       certificate_authority_pem = var.ca_cert_pem
+      storage_system            = var.storage_system
     }
   )
 }

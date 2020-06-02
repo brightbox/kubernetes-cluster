@@ -46,6 +46,7 @@ module "k8s_storage" {
   worker_drain_timeout   = var.worker_drain_timeout
   worker_name            = var.storage_name
   worker_zone            = var.storage_zone
+  storage_system         = var.storage_system
 
   #Injections
   cluster_server_group = module.k8s_cluster.group_id

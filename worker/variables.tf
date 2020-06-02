@@ -98,3 +98,9 @@ variable "worker_zone" {
   description = "The zone the workers are to be built in: 'a' or 'b'. Default is to spread between the zones"
   default     = ""
 }
+
+variable "storage_system" {
+  type        = string
+  description = "Which storage system to setup"
+  default     = "manual"
+}

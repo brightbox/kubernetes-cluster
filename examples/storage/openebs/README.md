@@ -4,7 +4,13 @@
 can create both worker node local Persistent Volumes and replicated
 Persistent Volumes that are available to pods across all worker nodes.
 
-### Installation
+### Automatic Installation
+
+Set the `storage_system` variable to `openebs` to install the OpenEBS maangement system and ensure
+all the storage partitions are mounted in the correct position.
+
+
+### Manual Installation
 
 A single command will install the OpenEBS management system within its own `openebs` namespace
 
@@ -12,11 +18,23 @@ A single command will install the OpenEBS management system within its own `open
 kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml
 ```
 
-This will create the storage management system within the `openebs` namespaces. Once running
-you can create PersistentVolumeClaims to create the type of storage volume your applications require. 
+This will create the storage management system within the `openebs` namespaces.
+
+Ensure that the /var/openebs/local directory is avaiable on all the nodes you wish to use for storage.
+
+### After Installation
+
+Once running you can create PersistentVolumeClaims to create the type of storage volume your applications require. 
 
 All volume types supported by OpenEBS mount on a single container at a time using the ReadWriteOnce access mode.
 
+### Default storage class
+
+You can set a default storage class by adding an annotation. For example to use the hostpath Storage Class as default run
+
+``
+kubectl annotate sc/openebs-hostpath storageclass.kubernetes.io/is-default-class=true
+``
 ### HostPath Volumes
 
 A Hostpath local PV represents a directory path on the disk of one of the worker volumes. They are dynamically
@@ -50,7 +68,7 @@ spec:
 ```
 
 See the [OpenEBS user guide](https://docs.openebs.io/docs/next/uglocalpv.html) for more details on Local PVs and how to
-backup and restore volumes
+e ackup and restore volumes
 
 ### JIRA Volumes
 

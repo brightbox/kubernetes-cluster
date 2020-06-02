@@ -6,6 +6,8 @@ CA
 )
 k8s_version="${kubernetes_release}"
 kubeadm_join_command="kubeadm join ${fqdn}:${service_port} --token ${boot_token} --discovery-token-ca-cert-hash sha256:$${discovery_ca_cert_hash}"
+storage_system="${storage_system}"
+openebs_mount='/var/openebs/local'
 
 set -e
 
@@ -129,6 +131,22 @@ systemctl try-restart systemd-timesyncd
 
 retry 5 systemctl enable iscsid
 retry 5 systemctl start iscsid
+
+case $${storage_system} in
+    manual)
+        ;;
+    openebs)
+        echo "Setting up storage partition"
+        partprobe
+        mkfs -t ext4 /dev/vda2
+        echo "/dev/vda2 $${openebs_mount} ext4 defaults 0 0" >> /etc/fstab
+        mkdir -p "$${openebs_mount}"
+        mount "$${openebs_mount}"
+        ;;
+    *)
+        echo "Unknown storage system $${storage_system}"
+        ;;
+esac
 
 echo "Joining cluster"
 retry 5 $${kubeadm_join_command}

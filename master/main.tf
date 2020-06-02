@@ -301,6 +301,7 @@ locals {
     apiurl                   = "https://api.${var.region}.brightbox.com",
     service_port             = var.apiserver_service_port,
     local_host               = local.local_host
+    storage_system           = var.storage_system
     }
   )
 
