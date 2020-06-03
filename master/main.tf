@@ -333,7 +333,6 @@ locals {
       public_rdns            = local.public_rdns,
       public_fqdn            = local.public_fqdn,
       boot_token             = local.boot_token,
-      cluster_domainname     = var.cluster_domainname,
       master_certificate_key = random_id.master_certificate_key.hex,
       service_port           = var.apiserver_service_port,
     }

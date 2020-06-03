@@ -35,19 +35,17 @@ cat <<EOF | sudo tee /etc/cni/net.d/99-loopback.conf
     "type": "loopback"
 }
 EOF
+
 cat <<EOF | sudo tee /etc/sysctl.d/40-kubernetes.conf
 net.ipv4.ip_forward=1
 net.ipv6.conf.all.disable_ipv6=1
+net.bridge.bridge-nf-call-ip6tables=1
+net.bridge.bridge-nf-call-iptables=1
 EOF
 
 echo "Resetting sysctl"
-retry 5 sudo systemctl try-restart systemd-sysctl
-
-echo "Loading IPVS modules"
-for word in ip_vs_wrr ip_vs_sh ip_vs ip_vs_rr nf_conntrack_ipv4 br_netfilter
-do
-	sudo modprobe -- $${word}
-done
+retry 5 sudo modprobe -- br_netfilter
+retry 5 sudo sysctl --system
 
 echo "Waiting for base package installation to complete"
 cloud-init status --wait >/dev/null
@@ -60,11 +58,8 @@ sudo apt-get -qq install \
 	kubelet=${kubernetes_release}-00
 sudo apt-mark hold kubelet kubeadm kubectl
 
-# Required because kubeadm doesn't propagate the nodeRegistration flags properly
-# https://github.com/kubernetes/kubeadm/issues/1021
-cat <<EOF | sudo tee /etc/default/kubelet
-KUBELET_EXTRA_ARGS=--cloud-provider=external --cgroup-driver=systemd
-EOF
+echo "Activating kubelet bootstrap services"
+sudo systemctl enable kubelet.service
 
 echo "Installing bash completion"
 kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl >/dev/null 2>&1
@@ -107,12 +102,11 @@ runtime-endpoint: unix:///run/containerd/containerd.sock
 EOF
 fi
 
-echo "Activating kubelet bootstrap services"
-sudo systemctl enable kubelet.service
-
 echo "Making time sync run more often"
 cat <<EOF | sudo tee /etc/systemd/timesyncd.conf
 [Time]
 PollIntervalMaxSec=1024
 EOF
+
+echo "Restarting reconfigured services"
 sudo systemctl try-restart systemd-timesyncd
