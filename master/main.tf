@@ -1,5 +1,5 @@
 locals {
-  local_host    = "127.0.0.1"
+  local_host    = "::"
   template_path = "${path.module}/templates"
   cluster_fqdn  = "${var.cluster_name}.${var.cluster_domainname}"
   boot_token    = "${random_string.token_prefix.result}.${random_string.token_suffix.result}"
@@ -16,6 +16,7 @@ locals {
     { kubernetes_release = var.kubernetes_release }
   )
   cloud_config = file("${local.template_path}/cloud-config.yml")
+
 }
 
 resource "brightbox_cloudip" "k8s_master" {
@@ -146,19 +147,29 @@ resource "null_resource" "k8s_master" {
   #}
 }
 
+locals {
+  hostnames         = concat(brightbox_server.k8s_master.*.hostname, digitalocean_droplet.offsite.*.ipv4_address)
+  usernames         = concat(brightbox_server.k8s_master.*.username, [for o in digitalocean_droplet.offsite : "root"])
+  ipv6              = concat(brightbox_server.k8s_master.*.ipv6_address, digitalocean_droplet.offsite.*.ipv6_address)
+  ipv4              = concat(brightbox_server.k8s_master.*.ipv4_address_private, digitalocean_droplet.offsite.*.ipv4_address)
+  mirrors_hostnames = slice(local.hostnames, 1, length(local.hostnames))
+  mirrors_usernames = slice(local.usernames, 1, length(local.usernames))
+  mirrors_ipv6      = slice(local.ipv6, 1, length(local.ipv6))
+  mirrors_ipv4      = slice(local.ipv4, 1, length(local.ipv4))
+}
+
 resource "null_resource" "k8s_master_configure" {
   depends_on = [
     null_resource.k8s_master,
   ]
 
   triggers = {
-    cert_key       = random_id.master_certificate_key.hex
-    master_ids     = join(",", brightbox_server.k8s_master.*.id)
-    k8s_release    = var.kubernetes_release
-    cert_change    = var.ca_cert_pem
-    master_script  = local.master_provisioner_script
-    kubeadm_script = local.kubeadm_config_script
-    cert_change    = var.ca_cert_pem
+    cert_key      = random_id.master_certificate_key.hex
+    master_ids    = join(",", local.hostnames)
+    k8s_release   = var.kubernetes_release
+    cert_change   = var.ca_cert_pem
+    master_script = local.master_provisioner_script
+    cert_change   = var.ca_cert_pem
   }
 
   connection {
@@ -168,7 +179,24 @@ resource "null_resource" "k8s_master_configure" {
 
   provisioner "remote-exec" {
     inline = [
-      local.kubeadm_config_script,
+      templatefile(
+        "${local.template_path}/kubeadm-config",
+        {
+          kubernetes_release     = var.kubernetes_release,
+          cluster_name           = var.cluster_name,
+          cluster_domainname     = var.cluster_domainname,
+          service_cidr           = var.service_cidr,
+          cluster_cidr           = var.cluster_cidr,
+          advertise_ip           = local.ipv4[0]
+          public_ip              = local.public_ip,
+          public_rdns            = local.public_rdns,
+          public_fqdn            = local.public_fqdn,
+          boot_token             = local.boot_token,
+          cluster_domainname     = var.cluster_domainname,
+          master_certificate_key = random_id.master_certificate_key.hex,
+          service_port           = var.apiserver_service_port,
+        }
+      ),
       local.master_provisioner_script,
     ]
   }
@@ -180,16 +208,16 @@ resource "null_resource" "k8s_master_mirrors" {
     null_resource.k8s_master_configure,
   ]
 
-  count = max(0, length(brightbox_server.k8s_master) - 1)
+  count = length(local.mirrors_hostnames)
 
   triggers = {
-    mirror_id   = brightbox_server.k8s_master[count.index + 1].id
+    mirror_id   = local.mirrors_hostnames[count.index]
     cert_change = var.ca_cert_pem
   }
 
   connection {
-    host         = brightbox_server.k8s_master[count.index + 1].hostname
-    user         = brightbox_server.k8s_master[count.index + 1].username
+    host         = local.mirrors_hostnames[count.index]
+    user         = local.mirrors_usernames[count.index]
     type         = "ssh"
     bastion_host = local.bastion
     bastion_user = local.bastion_user
@@ -220,20 +248,19 @@ resource "null_resource" "k8s_master_mirrors_configure" {
     null_resource.k8s_master_mirrors,
   ]
 
-  count = max(0, length(brightbox_server.k8s_master) - 1)
+  count = length(local.mirrors_hostnames)
 
   triggers = {
-    cert_key       = random_id.master_certificate_key.hex
-    mirror_id      = brightbox_server.k8s_master[count.index + 1].id
-    k8s_release    = var.kubernetes_release
-    cert_change    = var.ca_cert_pem
-    master_script  = local.master_mirror_provisioner_script
-    kubeadm_script = local.kubeadm_config_script
+    cert_key      = random_id.master_certificate_key.hex
+    mirror_id     = local.mirrors_hostnames[count.index]
+    k8s_release   = var.kubernetes_release
+    cert_change   = var.ca_cert_pem
+    master_script = local.master_mirror_provisioner_script
   }
 
   connection {
-    host         = brightbox_server.k8s_master[count.index + 1].hostname
-    user         = brightbox_server.k8s_master[count.index + 1].username
+    host         = local.mirrors_hostnames[count.index]
+    user         = local.mirrors_usernames[count.index]
     type         = "ssh"
     bastion_host = local.bastion
     bastion_user = local.bastion_user
@@ -241,7 +268,24 @@ resource "null_resource" "k8s_master_mirrors_configure" {
 
   provisioner "remote-exec" {
     inline = [
-      local.kubeadm_config_script,
+      templatefile(
+        "${local.template_path}/kubeadm-config",
+        {
+          kubernetes_release     = var.kubernetes_release,
+          cluster_name           = var.cluster_name,
+          cluster_domainname     = var.cluster_domainname,
+          service_cidr           = var.service_cidr,
+          cluster_cidr           = var.cluster_cidr,
+          advertise_ip           = local.mirrors_ipv4[count.index]
+          public_ip              = local.public_ip,
+          public_rdns            = local.public_rdns,
+          public_fqdn            = local.public_fqdn,
+          boot_token             = local.boot_token,
+          cluster_domainname     = var.cluster_domainname,
+          master_certificate_key = random_id.master_certificate_key.hex,
+          service_port           = var.apiserver_service_port,
+        }
+      ),
       local.master_mirror_provisioner_script,
     ]
   }
@@ -318,23 +362,6 @@ locals {
     fqdn                     = local.public_fqdn
     master_certificate_key   = random_id.master_certificate_key.hex,
     service_port             = var.apiserver_service_port
-    }
-  )
-
-  kubeadm_config_script = templatefile(
-    "${local.template_path}/kubeadm-config",
-    {
-      kubernetes_release     = var.kubernetes_release,
-      cluster_name           = var.cluster_name,
-      cluster_domainname     = var.cluster_domainname,
-      service_cidr           = var.service_cidr,
-      cluster_cidr           = var.cluster_cidr,
-      public_ip              = local.public_ip,
-      public_rdns            = local.public_rdns,
-      public_fqdn            = local.public_fqdn,
-      boot_token             = local.boot_token,
-      master_certificate_key = random_id.master_certificate_key.hex,
-      service_port           = var.apiserver_service_port,
     }
   )
 

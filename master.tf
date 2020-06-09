@@ -16,6 +16,11 @@ module "k8s_master" {
   service_cidr           = local.service_cidr
   apiserver_service_port = local.service_port
   storage_system         = var.storage_system
+  offsite_image          = var.offsite_image
+  offsite_type           = var.offsite_type
+  offsite_region         = var.offsite_region
+  offsite_ssh_key        = var.offsite_ssh_key
+  offsite_count          = local.offsite_count
   # master_zone = "b"
 
   #Injections
@@ -24,4 +29,3 @@ module "k8s_master" {
   ca_cert_pem             = tls_self_signed_cert.k8s_ca.cert_pem
   ca_private_key_pem      = tls_private_key.k8s_ca.private_key_pem
 }
-

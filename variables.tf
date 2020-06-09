@@ -35,6 +35,7 @@ variable "apisecret" {
   default     = "uogoelzgt0nwawb"
 }
 
+
 # Cluster Details
 
 variable "cluster_domainname" {
@@ -67,6 +68,37 @@ variable "master_type" {
   type        = string
   description = "Type of server to use as k8s master node"
   default     = "2gb.ssd"
+}
+#
+# Offsite master Details
+variable "offsite_token" {
+  type        = string
+  description = "Access Token for offsite master"
+  default     = ""
+}
+
+variable "offsite_type" {
+  type        = string
+  description = "Slug ID of offset server type to use"
+  default     = "s-2vcpu-2gb"
+}
+
+variable "offsite_image" {
+  type        = string
+  description = "Search pattern to select an offsite image"
+  default     = "ubuntu-18-04-x64"
+}
+
+variable "offsite_region" {
+  type        = string
+  description = "Slug ID of offsite region to create server in"
+  default     = "lon1"
+}
+
+variable "offsite_ssh_key" {
+  type        = string
+  description = "The name tag of the SSH key to use for the offset server"
+  default     = ""
 }
 
 # Worker Nodes

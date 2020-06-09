@@ -5,7 +5,7 @@ set -e
 create_kubeadm_config() {
         echo "Installing kubeadm.conf"
         case ${kubernetes_release} in
-                1.1[5678].*)
+                1.1[678].*)
         cat <<EOF >$HOME/install/kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: InitConfiguration
@@ -16,6 +16,8 @@ bootstrapTokens:
 nodeRegistration:
   kubeletExtraArgs:
     cloud-provider: "external"
+localAPIEndpoint:
+  advertiseAddress: "${advertise_ip}"
 ---
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: ClusterConfiguration
@@ -29,8 +31,8 @@ kubernetesVersion: "v${kubernetes_release}"
 controlPlaneEndpoint: "${public_ip}:${service_port}"
 networking:
   dnsDomain: ${cluster_domainname}
-  podSubnet: ${cluster_cidr}
-  serviceSubnet: ${service_cidr}
+  podSubnet: "${cluster_cidr}"
+  serviceSubnet: "${service_cidr}"
 ---
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
@@ -39,7 +41,7 @@ cgroupDriver: systemd
 ---
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
-clusterCIDR: ${cluster_cidr}
+clusterCIDR: "${cluster_cidr}"
 ipvs:
   scheduler: lc
 mode: ipvs

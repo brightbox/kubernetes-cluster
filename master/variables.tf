@@ -87,3 +87,27 @@ variable "storage_system" {
   type        = string
   description = "Which storage system support manifests to install"
 }
+variable "offsite_type" {
+  type        = string
+  description = "ID of offsite server type to use"
+}
+
+variable "offsite_image" {
+  type        = string
+  description = "ID of offsite image to use"
+}
+
+variable "offsite_region" {
+  type        = string
+  description = "ID of offsite region to use"
+}
+
+variable "offsite_ssh_key" {
+  type        = string
+  description = "ID tag of the ssh key to use on the server"
+}
+
+variable "offsite_count" {
+  type        = number
+  description = "Number of offsite servers to create"
+}
