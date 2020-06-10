@@ -2,21 +2,6 @@
 
 set -e
 
-
-install_cert() {
-        local source_prefix=$${1}
-        local dest_prefix=$${2:-$${1}}
-        local target_suffix=$${3:-crt}
-        local pki_dir=/etc/kubernetes/pki
-
-        for word in $${target_suffix} key
-        do
-                sudo cp $${source_prefix}.$${word} $${pki_dir}/$${dest_prefix}.$${word}
-        done
-        sudo chmod 0600 $${pki_dir}/$${dest_prefix}.key
-        rm $${source_prefix}.key
-}
-
 newer_cert() {
         local source_prefix=$${1}
         local dest_prefix=$${2:-$${1}}
@@ -58,8 +43,11 @@ seconds..."
 
 install_ca() {
         echo "Installing Updated CA"
-        sudo mkdir -p /etc/kubernetes/pki/etcd
-        install_cert ca
+        local pki_dir=/etc/kubernetes/pki
+        sudo mkdir -p "$${pki_dir}/etcd"
+        sudo cp "$${HOME}/ca.crt" "$${HOME}/ca.key" "$${pki_dir}"
+        sudo chmod 0600 "$${pki_dir}/ca.key"
+        rm "$${HOME}/ca.key"
 }
 
 install() {

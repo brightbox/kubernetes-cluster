@@ -1,5 +1,32 @@
 #!/bin/bash
 
+# Set script parameters here
+discovery_ca_cert_hash=$(openssl x509 -noout -pubkey <<CA |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1 | tr -d '\n'
+${certificate_authority_pem}
+CA
+)
+k8s_version="${kubernetes_release}"
+#kubeadm_join_command="sudo kubeadm join --apiserver-advertise-address ${advertise_ip} --apiserver-bind-port ${service_port} --certificate-key ${master_certificate_key} --control-plane --discovery-token-ca-cert-hash sha256:$${discovery_ca_cert_hash} --token ${boot_token} ${fqdn}:${service_port}"
+kubeadm_join_command="sudo kubeadm join --config /tmp/kubeadm.conf"
+cat <<EOF | tee /tmp/kubeadm.conf
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: JoinConfiguration
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: "${fqdn}:${service_port}"
+    token: "${boot_token}"
+    caCertHashes:
+    - "sha256:$${discovery_ca_cert_hash}"
+nodeRegistration:
+  kubeletExtraArgs:
+    cloud-provider: "external"
+controlPlane:
+  certificateKey: "${master_certificate_key}"
+  localApiEndpoint:
+    advertiseAddress: "${advertise_ip}"
+    bindPort: ${service_port}
+EOF
+
 set -e
 
 # Retries a command on failure.
@@ -75,12 +102,8 @@ update_cert_configs() {
 }
 
 install() {
-        echo "Joining Cluster Control Plane"
-	discovery_ca_cert_hash=$(openssl x509 -in $HOME/ca.crt -noout -pubkey |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1)
-
-	retry 5 sudo kubeadm join ${fqdn}:${service_port} --token ${boot_token} --discovery-token-ca-cert-hash sha256:$${discovery_ca_cert_hash} --control-plane --certificate-key ${master_certificate_key}
-	
-
+    echo "Joining Cluster Control Plane"
+    retry 5 $${kubeadm_join_command}
 }
 
 ensure_admin_config() {
