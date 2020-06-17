@@ -13,6 +13,11 @@ variable "calico_release" {
   description = "Version of Calico to install"
 }
 
+variable "autoscaler_release" {
+  type        = string
+  description = "Version of autoscaler to install"
+}
+
 variable "image_desc" {
   type        = string
   description = "Image pattern to use to select boot image"
@@ -110,4 +115,9 @@ variable "offsite_ssh_key" {
 variable "offsite_count" {
   type        = number
   description = "Number of offsite servers to create"
+}
+
+variable "manage_autoscaler" {
+  type        = bool
+  description = "Whether to install and manage the vertical autoscaler"
 }

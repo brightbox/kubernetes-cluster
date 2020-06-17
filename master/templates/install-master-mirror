@@ -128,7 +128,7 @@ do
   GROUP="$${GROUP}/O=$${word}"
 done
 CLUSTERENDPOINT=https://${public_fqdn}:${service_port}
-CLUSTERNAME=${cluster_name}
+CLUSTERNAME=${cluster_fqdn}
 CACERT=/etc/kubernetes/pki/ca.crt
 CAKEY=/etc/kubernetes/pki/ca.key
 CLIENTCERTKEY=clients/$${USER}/$${USER}.key

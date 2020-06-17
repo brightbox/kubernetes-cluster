@@ -10,6 +10,7 @@ module "k8s_master" {
   region                 = var.region
   kubernetes_release     = var.kubernetes_release
   calico_release         = var.calico_release
+  autoscaler_release     = var.autoscaler_release
   cluster_name           = var.cluster_name
   cluster_domainname     = var.cluster_domainname
   cluster_cidr           = local.cluster_cidr
@@ -21,6 +22,8 @@ module "k8s_master" {
   offsite_region         = var.offsite_region
   offsite_ssh_key        = var.offsite_ssh_key
   offsite_count          = local.offsite_count
+  manage_autoscaler      = var.worker_max > var.worker_count || var.storage_max > var.storage_count
+
   # master_zone = "b"
 
   #Injections

@@ -200,7 +200,7 @@ resource "null_resource" "k8s_master_mirrors_configure" {
       templatefile("${local.template_path}/install-master-mirror", {
         kubernetes_release        = var.kubernetes_release,
         calico_release            = var.calico_release,
-        cluster_name              = var.cluster_name,
+        cluster_fqdn              = local.cluster_fqdn,
         public_fqdn               = local.public_fqdn,
         service_cluster_ip_range  = var.service_cidr,
         controller_client         = brightbox_api_client.controller_client.id,
@@ -261,7 +261,8 @@ locals {
   master_provisioner_script = templatefile("${local.template_path}/install-master", {
     kubernetes_release       = var.kubernetes_release,
     calico_release           = var.calico_release,
-    cluster_name             = var.cluster_name,
+    autoscaler_release       = var.autoscaler_release,
+    cluster_fqdn             = local.cluster_fqdn,
     public_ip                = local.public_ip,
     public_fqdn              = local.public_fqdn,
     boot_token               = local.boot_token,
@@ -270,8 +271,9 @@ locals {
     controller_client_secret = brightbox_api_client.controller_client.secret,
     apiurl                   = "https://api.${var.region}.brightbox.com",
     service_port             = var.apiserver_service_port,
-    local_host               = local.local_host
-    storage_system           = var.storage_system
+    local_host               = local.local_host,
+    storage_system           = var.storage_system,
+    manage_autoscaler        = var.manage_autoscaler,
     }
   )
 
