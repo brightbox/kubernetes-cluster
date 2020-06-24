@@ -51,7 +51,7 @@ variable "cluster_name" {
 }
 
 variable "management_source" {
-  description = "CIDR of any external management workstations"
+  description = "CIDR of any external management workstations. The default is no external workstations"
   type        = list
   default     = ["0.0.0.0/32"]
 }
