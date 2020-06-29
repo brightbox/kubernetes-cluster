@@ -53,7 +53,7 @@ cloud-init status --wait >/dev/null
 
 echo "Installing versioned packages"
 
-sudo apt-get -qq install \
+sudo apt-get -qq -y --allow-change-held-packages install \
 	kubeadm=${kubernetes_release}-00 \
         kubectl=${kubernetes_release}-00 \
 	kubelet=${kubernetes_release}-00

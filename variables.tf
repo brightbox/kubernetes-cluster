@@ -199,7 +199,7 @@ variable "storage_system" {
 variable "kubernetes_release" {
   type        = string
   description = "Version of Kubernetes to install"
-  default     = "1.18.3"
+  default     = "1.18.5"
 }
 
 variable "autoscaler_release" {
