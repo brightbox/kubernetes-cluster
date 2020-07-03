@@ -71,6 +71,12 @@ variable "master_type" {
 }
 #
 # Offsite master Details
+variable "offsite_enabled" {
+  type        = bool
+  description = "Mirror the etcd database offsite"
+  default     = false
+}
+
 variable "offsite_token" {
   type        = string
   description = "Access Token for offsite master"

@@ -10,7 +10,7 @@ locals {
   service_port              = "6443"
   worker_node_ids           = module.k8s_worker.servers[*].id
   storage_node_ids          = module.k8s_storage.servers[*].id
-  offsite_count             = var.master_count > 1 && var.offsite_token != "" ? 1 : 0
+  offsite_count             = var.master_count > 1 && var.offsite_enabled && var.offsite_token != "" ? 1 : 0
   worker_label_script       = <<EOT
 %{if var.worker_count != 0~}
       kubectl label --overwrite ${join(" ", formatlist("node/%s", local.worker_node_ids))} 'node-role.kubernetes.io/worker=' 'node-role.kubernetes.io/storage-'
