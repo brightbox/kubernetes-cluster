@@ -1,0 +1,19 @@
+locals {
+  servers = [
+    for host in brightbox_server.k8s_master :
+    { "address" = host.ipv6_address, "username" = host.username }
+  ]
+  do_server = [
+    for host in digitalocean_droplet.offsite :
+    { "address" = host.ipv6_address, "username" = "root" }
+  ]
+}
+
+module "etcd" {
+  source = "./etcd"
+
+  #Variables
+  bastion      = local.bastion
+  bastion_user = local.bastion_user
+  servers      = concat(local.servers, local.do_server)
+}
