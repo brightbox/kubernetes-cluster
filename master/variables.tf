@@ -63,6 +63,16 @@ variable "apiserver_service_port" {
   description = "Apiserver service port number"
 }
 
+variable "etcd_ca_cert_pem" {
+  type        = string
+  description = "PEM format certificate to use as etcd CA on masters"
+}
+
+variable "etcd_ca_private_key_pem" {
+  type        = string
+  description = "PEM format certificate to use as etcd CA private key on masters"
+}
+
 variable "ca_cert_pem" {
   type        = string
   description = "PEM format certificate to use as CA on masters"

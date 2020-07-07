@@ -14,3 +14,14 @@ variable "bastion_user" {
   description = "Baston host username"
   default     = ""
 }
+
+variable "ca_cert_pem" {
+  type        = string
+  description = "PEM format certificate to use as the etcd CA "
+}
+
+variable "ca_private_key_pem" {
+  type        = string
+  description = "PEM format certificate to use as the etcd CA private key"
+}
+

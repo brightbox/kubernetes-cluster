@@ -1,5 +1,4 @@
 resource "digitalocean_droplet" "offsite" {
-  depends_on = [var.cluster_ready]
 
   count = var.offsite_count
 
