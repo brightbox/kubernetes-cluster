@@ -144,6 +144,7 @@ resource "null_resource" "k8s_master_once" {
 
 
 resource "null_resource" "k8s_master_configure" {
+  depends_on = [module.etcd.etcd_ready]
 
   depends_on = [
     null_resource.k8s_master_once[0]
@@ -198,6 +199,7 @@ resource "null_resource" "k8s_master_configure" {
           cluster_domainname     = var.cluster_domainname,
           service_cidr           = var.service_cidr,
           cluster_cidr           = var.cluster_cidr,
+          etcd_endpoints         = local.external_etcd ? "[${join(", ", [for s in brightbox_server.k8s_master.*.ipv6_address : "'https://[${s}]:2379'"])}]" : ""
           advertise_ip           = local.ipv4[0]
           public_ip              = local.public_ip,
           public_rdns            = local.public_rdns,

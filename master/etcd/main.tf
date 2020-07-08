@@ -1,3 +1,8 @@
+locals {
+  template_path = "${path.module}/templates"
+  etcd_configured = null_resource.etcd_configure.*.id
+}
+
 resource "null_resource" "etcd_configure" {
   count = length(var.servers)
 
@@ -21,8 +26,8 @@ resource "null_resource" "etcd_configure" {
 
 
   provisioner "remote-exec" {
-    inline = [
-      "uname -a"
+    scripts = [
+      "${local.template_path}/install-etcd"
     ]
   }
 }

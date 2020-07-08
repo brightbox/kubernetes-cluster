@@ -3,6 +3,17 @@
 set -e
 
 create_kubeadm_config() {
+        local etcd_section=""
+        if [ "${etcd_endpoints}" ]
+        then
+            etcd_section="etcd:
+  external:
+    endpoints: ${etcd_endpoints}
+    caFile: /etc/kubernetes/pki/etcd/ca.crt
+    certFile: /etc/kubernetes/pki/apiserver-etcd-client.crt
+    keyFile: /etc/kubernetes/pki/apiserver-etcd-client.key
+"
+        fi
         echo "Installing kubeadm.conf"
         case ${kubernetes_release} in
                 1.1[789].*)
@@ -34,6 +45,7 @@ networking:
   dnsDomain: ${cluster_domainname}
   podSubnet: "${cluster_cidr}"
   serviceSubnet: "${service_cidr}"
+$${etcd_section}
 ---
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
