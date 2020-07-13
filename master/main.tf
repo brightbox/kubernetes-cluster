@@ -7,8 +7,8 @@ locals {
   public_rdns   = brightbox_cloudip.k8s_master.reverse_dns
   public_fqdn   = brightbox_cloudip.k8s_master.fqdn
   lb_count      = var.master_count > 1 ? 1 : 0
-  external_etcd = var.offsite_count > 0
-  # external_etcd = var.master_count > 1
+  # external_etcd = var.offsite_count > 0
+  external_etcd = var.master_count > 1
   bastion       = local.lb_count == 1 ? brightbox_cloudip.bastion[0].fqdn : local.public_fqdn
   bastion_ip    = local.lb_count == 1 ? brightbox_cloudip.bastion[0].public_ip : local.public_ip
   bastion_user  = brightbox_server.k8s_master[0].username

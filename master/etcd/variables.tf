@@ -1,5 +1,5 @@
 variable "servers" {
-  type        = list(object({ address = string, username = string }))
+  type        = list(object({ address = string, username = string, id = string }))
   description = "The set of host name/address keys and logon user values"
 }
 

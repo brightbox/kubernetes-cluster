@@ -1,0 +1,77 @@
+#!/bin/sh
+
+# Generate signing requests
+# Server
+cat > /tmp/etcd-certs/server.cnf <<EOF
+[req]
+distinguished_name = req_distinguished_name
+prompt = no
+
+[req_distinguished_name]
+commonName = ${id}
+
+[v3_req]
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth,serverAuth
+authorityKeyIdentifier=keyid
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = ${id}
+DNS.2 = localhost
+IP.1 = 127.0.0.1
+IP.2 = ::1
+IP.3 = ${address}
+EOF
+
+# Peer
+cp /tmp/etcd-certs/server.cnf /tmp/etcd-certs/peer.cnf
+
+# healthcheck-client
+cat > /tmp/etcd-certs/healthcheck-client.cnf <<EOF
+[req]
+distinguished_name = req_distinguished_name
+prompt = no
+
+[req_distinguished_name]
+O = system:masters
+CN = kube-etcd-healthcheck-client
+
+[v3_req]
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth
+authorityKeyIdentifier=keyid
+EOF
+
+# apiserver-client
+cat > /tmp/etcd-certs/apiserver-etcd-client.cnf <<EOF
+[req]
+distinguished_name = req_distinguished_name
+prompt = no
+
+[req_distinguished_name]
+O = system:masters
+CN = kube-apiserver-etcd-client
+
+[v3_req]
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth
+authorityKeyIdentifier=keyid
+EOF
+
+for word in server peer healthcheck-client apiserver-etcd-client
+do
+    # Create Private Keys
+    if [ ! -f /tmp/etcd-certs/etcd/$${word}.key ]
+    then
+        openssl genrsa -out /tmp/etcd-certs/etcd/$${word}.key 2048
+    fi
+    # Generate CSR
+    openssl req -batch -config /tmp/etcd-certs/$${word}.cnf -new \
+        -key /tmp/etcd-certs/etcd/$${word}.key -out /tmp/etcd-certs/$${word}.csr
+    # Sign certificates
+    openssl x509 -req -in /tmp/etcd-certs/$${word}.csr -CA /tmp/etcd-certs/etcd/ca.crt \
+        -CAcreateserial -CAserial /tmp/etcd-certs/ca.srl -CAkey /tmp/etcd-certs/etcd/ca.key \
+        -out /tmp/etcd-certs/etcd/$${word}.crt -days 365 -sha256 \
+        -extfile /tmp/etcd-certs/$${word}.cnf -extensions v3_req
+done
