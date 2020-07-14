@@ -25,6 +25,8 @@ seconds..."
 }
 
 install_etcd_config() {
+    local initial_cluster_state="$1"
+    local cluster="$2"
     cat <<EOF | sudo tee /etc/opt/etcd/etcd.conf 
 # This is the configuration file for the etcd server.
 
@@ -53,10 +55,10 @@ snapshot-count: 10000
 listen-peer-urls: ${peer_urls}
 
 # List of comma separated URLs to listen on for client traffic.
-listen-client-urls: https://[::1]:2379,${client_urls}
+listen-client-urls: https://[::1]:2379,https://127.0.0.1:2379,${client_urls}
 
 # List of additional URLs to listen on that will respond to both the /metrics and /health endpoints
-listen-metrics-urls: http://[::1]:2381
+listen-metrics-urls: http://[::1]:2381,http://127.0.0.1:2381
 
 # Maximum number of snapshot files to retain (0 is unlimited).
 # max-snapshots: 5
@@ -88,13 +90,13 @@ advertise-client-urls: ${client_urls}
 # discovery-srv:
 
 # Initial cluster configuration for bootstrapping.
-initial-cluster: ${initial_cluster}
+initial-cluster: $${cluster}
 
 # Initial cluster token for the etcd cluster during bootstrap.
 initial-cluster-token: 'etcd-cluster'
 
 # Initial cluster state ('new' or 'existing').
-initial-cluster-state: ${initial_cluster_state}
+initial-cluster-state: $${initial_cluster_state}
 
 # Reject reconfiguration requests that would cause quorum loss.
 # strict-reconfig-check: false
@@ -225,14 +227,41 @@ install_etcd() {
     rm -rf /tmp/etcd
 }
 
+add_members() {
+        local members=($(echo $1 | tr "," "\n"))
+
+        for i in "$${members[@]}"
+        do
+                sudo -u etcd /opt/etcd/bin/etcdctl \
+                    --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+                    --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
+                    --key=/etc/kubernetes/pki/etcd/healthcheck-client.key \
+                    member add $${i/=/ --peer-urls=} || true
+        done
+}
+
 sudo mkdir -p /opt/etcd/bin /etc/opt/etcd /var/opt/etcd /etc/kubernetes/pki/etcd
 sudo useradd -s /sbin/nologin --system -U etcd || true
 sudo chown -R etcd:etcd /var/opt/etcd /etc/kubernetes/pki/etcd
 install_etcd
-install_etcd_config
+echo "Installing ${bootstrap_node}"
+if [ -z "$(ls -A /var/opt/etcd)" -a "${bootstrap_node}" ]
+then
+    echo "Installing Bootstrap node"
+    install_etcd_config new "${bootstrap_node}"
+else
+    echo "Installing Cluster node"
+    install_etcd_config existing "${initial_cluster}"
+fi
 install_etcd_systemd
 if [ -d /tmp/etcd-certs/etcd ]
 then
     sudo install --compare --owner=etcd --group=etcd --mode=0600 -D --target-directory "/etc/kubernetes/pki/etcd" /tmp/etcd-certs/etcd/*.key
     sudo install --compare --owner=etcd --group=etcd --mode=0644 -D --target-directory "/etc/kubernetes/pki/etcd" /tmp/etcd-certs/etcd/*.crt
+fi
+sudo systemctl restart etcd || true
+sudo systemctl enable etcd
+if [ "${bootstrap_node}" ]
+then
+    add_members ${initial_cluster}
 fi

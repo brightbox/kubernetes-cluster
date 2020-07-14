@@ -8,7 +8,7 @@ resource "null_resource" "etcd_install" {
   count = length(var.servers)
 
   triggers = {
-    install_etcd = file("${local.template_path}/install-etcd")
+    install_etcd  = file("${local.template_path}/install-etcd")
     install_certs = file("${local.template_path}/install-certs")
   }
 
@@ -41,18 +41,18 @@ resource "null_resource" "etcd_install" {
       templatefile(
         "${local.template_path}/install-certs",
         {
-          id                    = var.servers[count.index].id
+          id      = var.servers[count.index].id
           address = var.servers[count.index].address
         }
       ),
       templatefile(
         "${local.template_path}/install-etcd",
         {
-          initial_cluster       = local.initial_cluster
-          initial_cluster_state = "new"
-          peer_urls             = "https://[${var.servers[count.index].address}]:2380"
-          client_urls           = "https://[${var.servers[count.index].address}]:2379"
-          id                    = var.servers[count.index].id
+          initial_cluster = local.initial_cluster
+          bootstrap_node  = count.index == 0 ? "${var.servers[count.index].id}=https://[${var.servers[count.index].address}]:2380" : ""
+          peer_urls       = "https://[${var.servers[count.index].address}]:2380"
+          client_urls     = "https://[${var.servers[count.index].address}]:2379"
+          id              = var.servers[count.index].id
         }
       )
     ]
