@@ -5,7 +5,7 @@ locals {
   ] : []
   do_server = [
     for host in digitalocean_droplet.offsite :
-    { "address" = host.ipv6_address, "username" = "root", id = "" }
+    { "address" = host.ipv6_address, "username" = "root", id = split(".", host.name)[0] }
   ]
 }
 

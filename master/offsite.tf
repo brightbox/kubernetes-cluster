@@ -15,6 +15,15 @@ resource "digitalocean_droplet" "offsite" {
   }
 }
 
+resource "brightbox_firewall_rule" "offsite_etcd_ipv6" {
+  count            = var.offsite_count
+  destination_port = 2380
+  protocol         = "tcp"
+  source           = digitalocean_droplet.offsite[count.index].ipv6_address
+  description      = "Offsite Etcd peer access"
+  firewall_policy  = var.cluster_firewall_policy
+}
+
 data "digitalocean_ssh_key" "offsite" {
 
   count = var.offsite_count

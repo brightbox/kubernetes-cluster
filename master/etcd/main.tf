@@ -1,15 +1,16 @@
 locals {
   template_path   = "${path.module}/templates"
   etcd_configured = null_resource.etcd_reconfigure.id
-  initial_cluster = join(",", [for s in var.servers : "${s.id}=https://[${s.address}]:2380"])
+  cluster_members = [for s in var.servers : "${s.id}=https://[${s.address}]:2380"]
 }
 
 resource "null_resource" "etcd_install" {
   count = length(var.servers)
 
   triggers = {
-    install_etcd  = file("${local.template_path}/install-etcd")
-    install_certs = file("${local.template_path}/install-certs")
+    install_etcd    = file("${local.template_path}/install-etcd")
+    install_certs   = file("${local.template_path}/install-certs")
+    cluster_members = join(",", local.cluster_members)
   }
 
   connection {
@@ -48,8 +49,9 @@ resource "null_resource" "etcd_install" {
       templatefile(
         "${local.template_path}/install-etcd",
         {
-          initial_cluster = local.initial_cluster
-          bootstrap_node  = count.index == 0 ? "${var.servers[count.index].id}=https://[${var.servers[count.index].address}]:2380" : ""
+          cluster_members = join(",", local.cluster_members)
+          bootstrap_node  = count.index == 0 ? local.cluster_members[count.index] : ""
+          secondary_node  = count.index == 1 ? join(",", slice(local.cluster_members, 0, 2)) : ""
           peer_urls       = "https://[${var.servers[count.index].address}]:2380"
           client_urls     = "https://[${var.servers[count.index].address}]:2379"
           id              = var.servers[count.index].id
@@ -66,7 +68,8 @@ resource "null_resource" "etcd_reconfigure" {
   ]
 
   triggers = {
-    etcd_change = local.initial_cluster
+    ectd_reconfig = join(",", null_resource.etcd_install.*.id)
   }
+
 
 }
