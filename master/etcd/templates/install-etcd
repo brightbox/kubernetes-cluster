@@ -208,6 +208,7 @@ ExecStart=/opt/etcd/bin/etcd --config-file /etc/opt/etcd/etcd.conf
 Restart=always
 RestartSec=10s
 LimitNOFILE=40000
+Umask=0077
 
 [Install]
 WantedBy=multi-user.target
@@ -249,23 +250,18 @@ add_members() {
         done
 }
 
+activate_new_cluster() {
+    echo "Setting up new cluster"
+    retry 5 sudo systemctl start etcd
+    cluster_health
+}
+
 sudo mkdir -p /opt/etcd/bin /etc/opt/etcd /var/opt/etcd /etc/kubernetes/pki/etcd
 sudo useradd -s /sbin/nologin --system -U etcd || true
 sudo chown -R etcd:etcd /var/opt/etcd /etc/kubernetes/pki/etcd
+sudo chmod 0700 /var/opt/etcd
 install_etcd
-echo "Installing ${bootstrap_node}"
-if [ -z "$(ls -A /var/opt/etcd)" -a "${bootstrap_node}" ]
-then
-    echo "Installing Bootstrap node"
-    install_etcd_config new "${bootstrap_node}"
-elif [ -z "$(ls -A /var/opt/etcd)" -a "${secondary_node}" ]
-then
-    echo "Installing Secondary node"
-    install_etcd_config existing "${secondary_node}"
-else
-    echo "Installing Additional Cluster node"
-    install_etcd_config existing "${cluster_members}"
-fi
+install_etcd_config "${cluster_state}" "${cluster_members}"
 install_etcd_systemd
 if [ -d /tmp/etcd-certs/etcd ]
 then
@@ -273,9 +269,12 @@ then
     sudo install --compare --owner=etcd --group=etcd --mode=0644 -D --target-directory "/etc/kubernetes/pki/etcd" /tmp/etcd-certs/etcd/*.crt
 fi
 sudo systemctl enable etcd
-retry 10 sudo systemctl restart etcd
-cluster_health
-if [ "${bootstrap_node}" ]
+if [ -z "$(sudo -u etcd ls -A /var/opt/etcd)" -a "${cluster_state}" = "new" ]
 then
-    add_members ${cluster_members}
+    activate_new_cluster
+elif [ "${cluster_state}" = "new" ]
+then
+    echo "Expected new cluster but existing cluster details detected - aborting"
+    sleep 2
+    exit 1
 fi

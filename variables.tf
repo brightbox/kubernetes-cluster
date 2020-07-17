@@ -38,6 +38,12 @@ variable "apisecret" {
 
 # Cluster Details
 
+variable "new_cluster" {
+  type        = bool
+  description = "Do we need to bootstrap an entirely new etcd cluster?"
+  default     = false
+}
+
 variable "cluster_domainname" {
   type        = string
   description = "internal domain name of the Kubernetes Cluster"

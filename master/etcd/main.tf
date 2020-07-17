@@ -28,12 +28,12 @@ resource "null_resource" "etcd_install" {
   }
 
   provisioner "file" {
-    content     = var.ca_cert_pem
+    content     = tls_self_signed_cert.etcd_ca.cert_pem
     destination = "/tmp/etcd-certs/etcd/ca.crt"
   }
 
   provisioner "file" {
-    content     = var.ca_private_key_pem
+    content     = tls_private_key.etcd_ca.private_key_pem
     destination = "/tmp/etcd-certs/etcd/ca.key"
   }
 
@@ -50,8 +50,7 @@ resource "null_resource" "etcd_install" {
         "${local.template_path}/install-etcd",
         {
           cluster_members = join(",", local.cluster_members)
-          bootstrap_node  = count.index == 0 ? local.cluster_members[count.index] : ""
-          secondary_node  = count.index == 1 ? join(",", slice(local.cluster_members, 0, 2)) : ""
+          cluster_state   = var.new_cluster ? "new" : "existing"
           peer_urls       = "https://[${var.servers[count.index].address}]:2380"
           client_urls     = "https://[${var.servers[count.index].address}]:2379"
           id              = var.servers[count.index].id
@@ -71,5 +70,29 @@ resource "null_resource" "etcd_reconfigure" {
     ectd_reconfig = join(",", null_resource.etcd_install.*.id)
   }
 
+}
 
+resource "tls_private_key" "etcd_ca" {
+  algorithm = "RSA"
+}
+
+resource "tls_self_signed_cert" "etcd_ca" {
+  key_algorithm   = tls_private_key.etcd_ca.algorithm
+  private_key_pem = tls_private_key.etcd_ca.private_key_pem
+
+  subject {
+    common_name         = "etcd-ca"
+    organizational_unit = var.organizational_unit
+  }
+
+  validity_period_hours = var.validity_period
+  early_renewal_hours   = var.renew_period
+
+  allowed_uses = [
+    "key_encipherment",
+    "digital_signature",
+    "cert_signing",
+  ]
+
+  is_ca_certificate = true
 }

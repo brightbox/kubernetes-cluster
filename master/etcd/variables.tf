@@ -15,13 +15,22 @@ variable "bastion_user" {
   default     = ""
 }
 
-variable "ca_cert_pem" {
-  type        = string
-  description = "PEM format certificate to use as the etcd CA "
+variable "validity_period" {
+  type        = number
+  description = "CA Certificate validity period"
 }
 
-variable "ca_private_key_pem" {
-  type        = string
-  description = "PEM format certificate to use as the etcd CA private key"
+variable "renew_period" {
+  type        = number
+  description = "CA Certificate validity period"
 }
 
+variable "organizational_unit" {
+  type        = string
+  description = "OU to assign to etcd CA certificate"
+}
+
+variable "new_cluster" {
+  type        = bool
+  description = "Do we need to bootstrap an entirely new etcd cluster?"
+}

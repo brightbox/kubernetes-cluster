@@ -30,6 +30,7 @@ module "k8s_master" {
   cluster_firewall_policy = module.k8s_cluster.firewall_policy_id
   ca_cert_pem             = tls_self_signed_cert.k8s_ca.cert_pem
   ca_private_key_pem      = tls_private_key.k8s_ca.private_key_pem
-  etcd_ca_cert_pem        = tls_self_signed_cert.k8s_etcd_ca.cert_pem
-  etcd_ca_private_key_pem = tls_private_key.k8s_etcd_ca.private_key_pem
+  validity_period         = local.validity_period
+  renew_period            = local.renew_period
+  new_cluster             = var.new_cluster
 }

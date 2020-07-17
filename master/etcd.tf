@@ -18,7 +18,8 @@ module "etcd" {
   servers      = concat(local.servers, local.do_server)
 
   #Injections
-  ca_cert_pem        = var.etcd_ca_cert_pem
-  ca_private_key_pem = var.etcd_ca_private_key_pem
-
+  validity_period     = var.validity_period
+  renew_period        = var.renew_period
+  new_cluster         = var.new_cluster
+  organizational_unit = local.cluster_fqdn
 }

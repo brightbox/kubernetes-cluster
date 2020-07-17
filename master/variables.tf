@@ -63,16 +63,6 @@ variable "apiserver_service_port" {
   description = "Apiserver service port number"
 }
 
-variable "etcd_ca_cert_pem" {
-  type        = string
-  description = "PEM format certificate to use as etcd CA on masters"
-}
-
-variable "etcd_ca_private_key_pem" {
-  type        = string
-  description = "PEM format certificate to use as etcd CA private key on masters"
-}
-
 variable "ca_cert_pem" {
   type        = string
   description = "PEM format certificate to use as CA on masters"
@@ -129,4 +119,19 @@ variable "offsite_count" {
 variable "manage_autoscaler" {
   type        = bool
   description = "Whether to install and manage the vertical autoscaler"
+}
+
+variable "validity_period" {
+  type        = number
+  description = "CA Certificate validity period"
+}
+
+variable "renew_period" {
+  type        = number
+  description = "CA Certificate validity period"
+}
+
+variable "new_cluster" {
+  type        = bool
+  description = "Do we need to bootstrap an entirely new etcd cluster?"
 }

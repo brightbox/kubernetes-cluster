@@ -175,16 +175,6 @@ resource "null_resource" "k8s_master_configure" {
     destination = "ca.key"
   }
 
-  provisioner "file" {
-    content     = var.etcd_ca_cert_pem
-    destination = "ca-etcd.crt"
-  }
-
-  provisioner "file" {
-    content     = var.etcd_ca_private_key_pem
-    destination = "ca-etcd.key"
-  }
-
   provisioner "remote-exec" {
     script = "${local.template_path}/install-kube"
   }
