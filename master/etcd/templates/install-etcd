@@ -2,6 +2,12 @@
 
 set -eu
 
+etcdctl="sudo -u etcd /opt/etcd/bin/etcdctl \
+                    --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+                    --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
+                    --key=/etc/kubernetes/pki/etcd/healthcheck-client.key"
+endpoints="--endpoints=${all_endpoints}"
+
 # Retries a command on failure.
 # $1 - the max number of attempts
 # $2... - the command to run
@@ -99,7 +105,7 @@ initial-cluster-token: 'etcd-cluster'
 initial-cluster-state: $${initial_cluster_state}
 
 # Reject reconfiguration requests that would cause quorum loss.
-strict-reconfig-check: false
+strict-reconfig-check: true
 
 # Accept etcd V2 client requests
 # enable-v2: false
@@ -208,7 +214,7 @@ ExecStart=/opt/etcd/bin/etcd --config-file /etc/opt/etcd/etcd.conf
 Restart=always
 RestartSec=10s
 LimitNOFILE=40000
-Umask=0077
+UMask=0077
 
 [Install]
 WantedBy=multi-user.target
@@ -229,11 +235,11 @@ install_etcd() {
 }
 
 cluster_health() {
-    retry 10 sudo -u etcd /opt/etcd/bin/etcdctl \
-        --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-        --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
-        --key=/etc/kubernetes/pki/etcd/healthcheck-client.key \
-        endpoint health
+    retry 10 $${etcdctl} $${endpoints} endpoint health
+}
+
+local_health() {
+    retry 10 $${etcdctl} endpoint health
 }
 
 add_members() {
@@ -241,19 +247,21 @@ add_members() {
 
         for i in "$${members[@]}"
         do
-                sudo -u etcd /opt/etcd/bin/etcdctl \
-                    --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-                    --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
-                    --key=/etc/kubernetes/pki/etcd/healthcheck-client.key \
-                    member add $${i/=/ --peer-urls=} || true
+                $${etcdctl} member add $${i/=/ --peer-urls=} || true
                 cluster_health
         done
 }
 
 activate_new_cluster() {
-    echo "Setting up new cluster"
+    echo "Setting up new cluster node $(hostname -s)"
     retry 5 sudo systemctl start etcd
-    cluster_health
+    local_health
+}
+
+maintain_existing_cluster() {
+    echo "Maintaining existing cluster"
+    $${etcdctl} $${endpoints} --debug lock cluster_reconfig /bin/bash /tmp/reconfig_etcd  "${all_endpoints}" "${peer_urls}"
+    echo "Unlocked"
 }
 
 sudo mkdir -p /opt/etcd/bin /etc/opt/etcd /var/opt/etcd /etc/kubernetes/pki/etcd
@@ -269,12 +277,17 @@ then
     sudo install --compare --owner=etcd --group=etcd --mode=0644 -D --target-directory "/etc/kubernetes/pki/etcd" /tmp/etcd-certs/etcd/*.crt
 fi
 sudo systemctl enable etcd
-if [ -z "$(sudo -u etcd ls -A /var/opt/etcd)" -a "${cluster_state}" = "new" ]
-then
-    activate_new_cluster
-elif [ "${cluster_state}" = "new" ]
+if [ "${cluster_state}" = "new" -a "$(sudo -u etcd ls -A /var/opt/etcd)" ]
 then
     echo "Expected new cluster but existing cluster details detected - aborting"
     sleep 2
     exit 1
+fi
+if [ "${cluster_state}" = "existing" ]
+then
+    maintain_existing_cluster
+fi
+if [ -z "$(sudo -u etcd ls -A /var/opt/etcd)" ]
+then
+    activate_new_cluster
 fi

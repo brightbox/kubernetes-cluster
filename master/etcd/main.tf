@@ -2,6 +2,7 @@ locals {
   template_path   = "${path.module}/templates"
   etcd_configured = null_resource.etcd_reconfigure.id
   cluster_members = [for s in var.servers : "${s.id}=https://[${s.address}]:2380"]
+  all_endpoints = join(",",[for s in var.servers: "[${s.address}]:2379"])
 }
 
 resource "null_resource" "etcd_install" {
@@ -10,7 +11,9 @@ resource "null_resource" "etcd_install" {
   triggers = {
     install_etcd    = file("${local.template_path}/install-etcd")
     install_certs   = file("${local.template_path}/install-certs")
+    reconfig_etcd   = file("${local.template_path}/reconfig_etcd")
     cluster_members = join(",", local.cluster_members)
+    cluster_state = tostring(var.new_cluster)
   }
 
   connection {
@@ -37,6 +40,11 @@ resource "null_resource" "etcd_install" {
     destination = "/tmp/etcd-certs/etcd/ca.key"
   }
 
+  provisioner "file" {
+    source = "${local.template_path}/reconfig_etcd"
+    destination = "/tmp/reconfig_etcd"
+  }
+
   provisioner "remote-exec" {
     inline = [
       templatefile(
@@ -53,6 +61,7 @@ resource "null_resource" "etcd_install" {
           cluster_state   = var.new_cluster ? "new" : "existing"
           peer_urls       = "https://[${var.servers[count.index].address}]:2380"
           client_urls     = "https://[${var.servers[count.index].address}]:2379"
+          all_endpoints = local.all_endpoints
           id              = var.servers[count.index].id
         }
       )

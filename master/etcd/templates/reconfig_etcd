@@ -1,0 +1,28 @@
+#!/bin/bash
+# Run as etcd user
+
+set -eu
+
+endpoints="${1}"
+etcdctl="/opt/etcd/bin/etcdctl \
+                    --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+                    --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
+                    --key=/etc/kubernetes/pki/etcd/healthcheck-client.key
+                    --endpoints ${endpoints}"
+
+${etcdctl} member list | while read line
+do
+        read -a members <<< $line
+        if grep -qF ${members[4]:8:-1} <<< $endpoints
+        then
+                echo "Confirmed ${members[4]:8:-1}"
+        else
+                echo "Removing ${members[4]:8:-1}"
+                ${etcdctl} member remove "${members[0]%,}"
+        fi
+done
+if [ -z "$(ls -A /var/opt/etcd)" ]
+then
+    echo "New member detected, adding to member list"
+    ${etcdctl} member add $(hostname -s) --peer-urls="${2}"
+fi
