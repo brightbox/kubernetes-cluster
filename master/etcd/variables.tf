@@ -34,3 +34,8 @@ variable "new_cluster" {
   type        = bool
   description = "Do we need to bootstrap an entirely new etcd cluster?"
 }
+
+variable "deps" {
+  type = list
+  default = []
+}

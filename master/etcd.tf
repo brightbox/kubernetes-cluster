@@ -22,4 +22,5 @@ module "etcd" {
   renew_period        = var.renew_period
   new_cluster         = var.new_cluster
   organizational_unit = local.cluster_fqdn
+  deps = brightbox_firewall_rule.offsite_etcd_ipv6
 }

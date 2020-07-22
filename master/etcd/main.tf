@@ -6,6 +6,9 @@ locals {
 }
 
 resource "null_resource" "etcd_install" {
+  depends_on = [
+    var.deps
+  ]
   count = length(var.servers)
 
   triggers = {

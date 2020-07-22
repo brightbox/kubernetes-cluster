@@ -260,7 +260,7 @@ activate_new_cluster() {
 
 maintain_existing_cluster() {
     echo "Maintaining existing cluster"
-    $${etcdctl} $${endpoints} --debug lock cluster_reconfig /bin/bash /tmp/reconfig_etcd  "${all_endpoints}" "${peer_urls}"
+    $${etcdctl} $${endpoints} lock cluster_reconfig /bin/bash /tmp/reconfig_etcd  "${all_endpoints}" "${peer_urls}"
     echo "Unlocked"
 }
 
