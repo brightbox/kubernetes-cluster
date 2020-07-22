@@ -23,8 +23,7 @@ module "k8s_master" {
   offsite_ssh_key        = var.offsite_ssh_key
   offsite_count          = local.offsite_count
   manage_autoscaler      = var.worker_max > var.worker_count || var.storage_max > var.storage_count
-
-  # master_zone = "b"
+  master_zone            = var.master_zone
 
   #Injections
   cluster_server_group    = module.k8s_cluster.group_id

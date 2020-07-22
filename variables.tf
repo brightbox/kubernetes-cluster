@@ -69,6 +69,12 @@ variable "master_type" {
   description = "Type of server to use as k8s master node"
   default     = "2gb.ssd"
 }
+
+variable "master_zone" {
+  type        = string
+  description = "The zone in which the master nodes should be built. The default is to spread them across all zones."
+  default     = ""
+}
 #
 # Offsite master Details
 variable "offsite_enabled" {
