@@ -36,7 +36,6 @@ variable "master_count" {
 variable "master_zone" {
   type        = string
   description = "The zone the masters are to be built in: 'a' or 'b'. Default is to spread between the zones"
-  default     = ""
 }
 
 variable "cluster_server_group" {
