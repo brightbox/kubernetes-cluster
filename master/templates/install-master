@@ -874,10 +874,14 @@ upgrade() {
                 return 2
         fi
         sudo apt-mark hold kubeadm
+    echo "Updating config map with current endpoints"
+    sudo kubeadm init phase upload-config all --config $HOME/install/kubeadm.conf
+    echo "Obtaining plan"
 	#plan=$(sudo kubeadm upgrade plan ${kubernetes_release})
 	plan=$(sudo kubeadm upgrade plan)
 	case "$${plan}" in
 	*"kubeadm upgrade apply"*)
+                echo "Upgrading Kubernetes"
                 retry 5 sudo kubeadm upgrade apply -y ${kubernetes_release}
                 echo "Upgrading kubelet"
                 retry 5 sudo apt-get -qq -y --allow-change-held-packages install \
