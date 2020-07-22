@@ -32,6 +32,7 @@ data "template_cloudinit_config" "worker_userdata" {
 %{if var.root_size != 0~}
 bootcmd:
   - [cloud-init-per, once, addpartition, sgdisk, /dev/vda, "-e", "-n=0:${var.root_size}G:0"]
+  - [cloud-init-per, once, probepartitions, partprobe]
 %{~endif}
 EOT
   }
