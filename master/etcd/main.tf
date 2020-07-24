@@ -1,8 +1,7 @@
 locals {
   template_path   = "${path.module}/templates"
   etcd_configured = null_resource.etcd_reconfigure.id
-  cluster_members = [for s in var.servers : "${s.id}=https://[${s.address}]:2380"]
-  all_endpoints = join(",",[for s in var.servers: "[${s.address}]:2379"])
+  all_endpoints   = join(",", [for s in var.servers : "[${s.address}]:2379"])
 }
 
 resource "null_resource" "etcd_install" {
@@ -12,11 +11,10 @@ resource "null_resource" "etcd_install" {
   count = length(var.servers)
 
   triggers = {
-    install_etcd    = file("${local.template_path}/install-etcd")
-    install_certs   = file("${local.template_path}/install-certs")
-    reconfig_etcd   = file("${local.template_path}/reconfig_etcd")
-    cluster_members = join(",", local.cluster_members)
-    cluster_state = tostring(var.new_cluster)
+    install_etcd  = file("${local.template_path}/install-etcd")
+    install_certs = file("${local.template_path}/install-certs")
+    reconfig_etcd = file("${local.template_path}/reconfig-etcd")
+    server        = var.servers[count.index].id
   }
 
   connection {
@@ -44,8 +42,8 @@ resource "null_resource" "etcd_install" {
   }
 
   provisioner "file" {
-    source = "${local.template_path}/reconfig_etcd"
-    destination = "/tmp/reconfig_etcd"
+    source      = "${local.template_path}/reconfig-etcd"
+    destination = "/tmp/reconfig-etcd"
   }
 
   provisioner "remote-exec" {
@@ -60,12 +58,11 @@ resource "null_resource" "etcd_install" {
       templatefile(
         "${local.template_path}/install-etcd",
         {
-          cluster_members = join(",", local.cluster_members)
-          cluster_state   = var.new_cluster ? "new" : "existing"
-          peer_urls       = "https://[${var.servers[count.index].address}]:2380"
-          client_urls     = "https://[${var.servers[count.index].address}]:2379"
-          all_endpoints = local.all_endpoints
-          id              = var.servers[count.index].id
+          bootstrap_node = count.index == 0 ? "bootstrap" : ""
+          peer_urls      = "https://[${var.servers[count.index].address}]:2380"
+          client_urls    = "https://[${var.servers[count.index].address}]:2379"
+          all_endpoints  = local.all_endpoints
+          id             = var.servers[count.index].id
         }
       )
     ]

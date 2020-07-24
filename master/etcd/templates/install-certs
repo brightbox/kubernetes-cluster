@@ -59,6 +59,7 @@ extendedKeyUsage = clientAuth
 authorityKeyIdentifier=keyid
 EOF
 
+echo "Installing Etcd Certificates"
 for word in server peer healthcheck-client apiserver-etcd-client
 do
     # Create Private Keys

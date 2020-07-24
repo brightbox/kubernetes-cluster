@@ -2,7 +2,7 @@
 
 set -eu
 
-etcdctl="sudo -u etcd /opt/etcd/bin/etcdctl \
+etcdctl="sudo /opt/etcd/bin/etcdctl \
                     --cacert=/etc/kubernetes/pki/etcd/ca.crt \
                     --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
                     --key=/etc/kubernetes/pki/etcd/healthcheck-client.key"
@@ -32,7 +32,6 @@ seconds..."
 
 install_etcd_config() {
     local initial_cluster_state="$1"
-    local cluster="$2"
     cat <<EOF | sudo tee /etc/opt/etcd/etcd.conf 
 # This is the configuration file for the etcd server.
 
@@ -96,7 +95,7 @@ advertise-client-urls: ${client_urls}
 # discovery-srv:
 
 # Initial cluster configuration for bootstrapping.
-initial-cluster: $${cluster}
+initial-cluster: ${id}=${peer_urls}
 
 # Initial cluster token for the etcd cluster during bootstrap.
 initial-cluster-token: 'etcd-cluster'
@@ -179,25 +178,6 @@ auto-compaction-retention: "1"
 EOF
 }
 
- # - etcd
- #    - --cert-file=/etc/kubernetes/pki/etcd/server.crt
- #    - --client-cert-auth=true
- #    - --data-dir=/var/lib/etcd
- #    - --initial-advertise-peer-urls=https://10.225.198.90:2380
- #    - --listen-peer-urls=https://10.225.198.90:2380
- #    - --initial-cluster=srv-3ezb8=https://10.241.204.62:2380,srv-guvs3=https://10.225.198.90:2380
- #    - --initial-cluster-state=existing
- #    - --key-file=/etc/kubernetes/pki/etcd/server.key
- #    - --advertise-client-urls=https://10.225.198.90:2379
- #    - --listen-client-urls=https://127.0.0.1:2379,https://10.225.198.90:2379
- #    - --listen-metrics-urls=http://127.0.0.1:2381
- #    - --name=srv-guvs3
- #    - --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt
- #    - --peer-client-cert-auth=true
- #    - --peer-key-file=/etc/kubernetes/pki/etcd/peer.key
- #    - --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
- #    - --snapshot-count=10000
- #    - --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
 install_etcd_systemd() {
     
     cat <<EOF | sudo tee /etc/systemd/system/etcd.service
@@ -209,10 +189,9 @@ After=network.target
 [Service]
 User=etcd
 Type=notify
-Environment=ETCD_NAME=%m
 ExecStart=/opt/etcd/bin/etcd --config-file /etc/opt/etcd/etcd.conf
 Restart=always
-RestartSec=10s
+RestartSec=5s
 LimitNOFILE=40000
 UMask=0077
 
@@ -234,22 +213,8 @@ install_etcd() {
     rm -rf /tmp/etcd
 }
 
-cluster_health() {
-    retry 10 $${etcdctl} $${endpoints} endpoint health
-}
-
 local_health() {
     retry 10 $${etcdctl} endpoint health
-}
-
-add_members() {
-        local members=($(echo $1 | tr "," "\n"))
-
-        for i in "$${members[@]}"
-        do
-                $${etcdctl} member add $${i/=/ --peer-urls=} || true
-                cluster_health
-        done
 }
 
 activate_new_cluster() {
@@ -260,16 +225,18 @@ activate_new_cluster() {
 
 maintain_existing_cluster() {
     echo "Maintaining existing cluster"
-    $${etcdctl} $${endpoints} lock cluster_reconfig /bin/bash /tmp/reconfig_etcd  "${all_endpoints}" "${peer_urls}"
+    echo "Obtaining maintenance lock..."
+    retry 10 $${etcdctl} $${endpoints} lock cluster_reconfig hostname
+    $${etcdctl} $${endpoints} lock cluster_reconfig /bin/bash /tmp/reconfig-etcd  "${all_endpoints}" "${peer_urls}"
     echo "Unlocked"
 }
 
+echo "Installing Etcd"
 sudo mkdir -p /opt/etcd/bin /etc/opt/etcd /var/opt/etcd /etc/kubernetes/pki/etcd
 sudo useradd -s /sbin/nologin --system -U etcd || true
 sudo chown -R etcd:etcd /var/opt/etcd /etc/kubernetes/pki/etcd
 sudo chmod 0700 /var/opt/etcd
 install_etcd
-install_etcd_config "${cluster_state}" "${cluster_members}"
 install_etcd_systemd
 if [ -d /tmp/etcd-certs/etcd ]
 then
@@ -277,17 +244,12 @@ then
     sudo install --compare --owner=etcd --group=etcd --mode=0644 -D --target-directory "/etc/kubernetes/pki/etcd" /tmp/etcd-certs/etcd/*.crt
 fi
 sudo systemctl enable etcd
-if [ "${cluster_state}" = "new" -a "$(sudo -u etcd ls -A /var/opt/etcd)" ]
+
+if [ "${bootstrap_node}" -a -z "$(sudo -u etcd ls -A /var/opt/etcd)" ]
 then
-    echo "Expected new cluster but existing cluster details detected - aborting"
-    sleep 2
-    exit 1
-fi
-if [ "${cluster_state}" = "existing" ]
-then
-    maintain_existing_cluster
-fi
-if [ -z "$(sudo -u etcd ls -A /var/opt/etcd)" ]
-then
+    install_etcd_config "new"
     activate_new_cluster
+else
+    install_etcd_config "existing"
+    maintain_existing_cluster
 fi

@@ -30,12 +30,7 @@ variable "organizational_unit" {
   description = "OU to assign to etcd CA certificate"
 }
 
-variable "new_cluster" {
-  type        = bool
-  description = "Do we need to bootstrap an entirely new etcd cluster?"
-}
-
 variable "deps" {
-  type = list
+  type    = list
   default = []
 }

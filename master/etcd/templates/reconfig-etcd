@@ -1,0 +1,54 @@
+#!/bin/bash
+# Run as etcd user
+
+set -eu
+set -o pipefail
+
+endpoints="${1}"
+local_etcdctl="/opt/etcd/bin/etcdctl \
+                    --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+                    --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
+                    --key=/etc/kubernetes/pki/etcd/healthcheck-client.key"
+etcdctl="${local_etcdctl} --endpoints ${endpoints}"
+
+retry() {
+    local max_attempts="${1}"; shift
+    local attempt_num=1
+
+    until "${@}"
+    do
+        if [ "${attempt_num}" -eq "${max_attempts}" ]
+        then
+            echo "Attempt ${attempt_num} failed and there are no more attempts left!"
+            return 1
+        else
+            echo "Attempt ${attempt_num} failed! Trying again in ${attempt_num} seconds..."
+            sleep $(( attempt_num=attempt_num + 1 ))
+        fi
+    done
+}
+
+echo "Removing deleted members"
+${etcdctl} member list | while read line
+do
+        read -a members <<< $line
+        if grep -qF ${members[4]:8:-1} <<< $endpoints
+        then
+                retry 5 ${local_etcdctl} --endpoints ${members[4]:8:-1} endpoint health
+                echo "Confirmed ${members[4]:8:-1}"
+        else
+                echo "Removing ${members[4]:8:-1}"
+                ${etcdctl} member remove "${members[0]%,}"
+        fi
+done
+# Add as new member is we're not in the list
+if [ -z "$(sudo -u etcd ls -A /var/opt/etcd)" ]
+then
+    echo "New member detected"
+    echo "adding $(hostname -s)=${2}"
+    cluster_peers=$(${etcdctl} member add $(hostname -s) --peer-urls="${2}" |sed -n '/^ETCD_INITIAL_CLUSTER=/s/^ETCD_INITIAL_CLUSTER="\(.*\)"$/\1/p')
+    echo "Setting cluster members to ${cluster_peers}"
+    sed -i "s|^initial-cluster: .*$|initial-cluster: ${cluster_peers}|" /etc/opt/etcd/etcd.conf 
+    systemctl start etcd
+    retry 5 ${local_etcdctl} endpoint health
+fi

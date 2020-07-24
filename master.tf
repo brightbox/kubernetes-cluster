@@ -32,5 +32,4 @@ module "k8s_master" {
   ca_private_key_pem      = tls_private_key.k8s_ca.private_key_pem
   validity_period         = local.validity_period
   renew_period            = local.renew_period
-  new_cluster             = var.new_cluster
 }

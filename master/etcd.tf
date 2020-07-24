@@ -20,7 +20,6 @@ module "etcd" {
   #Injections
   validity_period     = var.validity_period
   renew_period        = var.renew_period
-  new_cluster         = var.new_cluster
   organizational_unit = local.cluster_fqdn
-  deps = brightbox_firewall_rule.offsite_etcd_ipv6
+  deps                = brightbox_firewall_rule.offsite_etcd_ipv6
 }

@@ -131,7 +131,3 @@ variable "renew_period" {
   description = "CA Certificate validity period"
 }
 
-variable "new_cluster" {
-  type        = bool
-  description = "Do we need to bootstrap an entirely new etcd cluster?"
-}
