@@ -1,7 +1,7 @@
 # Computed variables
 locals {
-  validity_period           = 87600
-  renew_period              = 730
+  validity_period           = 876000
+  renew_period              = 788400
   region_suffix             = "${var.region}.brightbox.com"
   template_path             = "${path.root}/templates"
   service_cidr              = "172.30.0.0/16"
