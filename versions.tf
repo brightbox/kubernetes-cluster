@@ -28,8 +28,3 @@ provider "tls" {
 provider "template" {
   version = "~> 2.1"
 }
-
-provider "digitalocean" {
-  version = "~> 1.17"
-  token   = var.offsite_token
-}

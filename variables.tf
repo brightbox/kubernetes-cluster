@@ -75,43 +75,6 @@ variable "master_zone" {
   description = "The zone in which the master nodes should be built. The default is to spread them across all zones."
   default     = ""
 }
-#
-# Offsite master Details
-variable "offsite_enabled" {
-  type        = bool
-  description = "Mirror the etcd database offsite"
-  default     = false
-}
-
-variable "offsite_token" {
-  type        = string
-  description = "Access Token for offsite master"
-  default     = ""
-}
-
-variable "offsite_type" {
-  type        = string
-  description = "Slug ID of offset server type to use"
-  default     = "s-2vcpu-2gb"
-}
-
-variable "offsite_image" {
-  type        = string
-  description = "Search pattern to select an offsite image"
-  default     = "ubuntu-18-04-x64"
-}
-
-variable "offsite_region" {
-  type        = string
-  description = "Slug ID of offsite region to create server in"
-  default     = "lon1"
-}
-
-variable "offsite_ssh_key" {
-  type        = string
-  description = "The name tag of the SSH key to use for the offset server"
-  default     = ""
-}
 
 # Worker Nodes
 

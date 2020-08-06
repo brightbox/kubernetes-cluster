@@ -1,5 +1,5 @@
 locals {
-  local_host    = "::"
+  local_host    = "127.0.0.1"
   template_path = "${path.module}/templates"
   cluster_fqdn  = "${var.cluster_name}.${var.cluster_domainname}"
   boot_token    = "${random_string.token_prefix.result}.${random_string.token_suffix.result}"
@@ -108,10 +108,10 @@ resource "brightbox_server" "k8s_master" {
 }
 
 locals {
-  hostnames         = concat(brightbox_server.k8s_master.*.hostname, digitalocean_droplet.offsite.*.ipv4_address)
-  usernames         = concat(brightbox_server.k8s_master.*.username, [for o in digitalocean_droplet.offsite : "root"])
-  ipv6              = concat(brightbox_server.k8s_master.*.ipv6_address, digitalocean_droplet.offsite.*.ipv6_address)
-  ipv4              = concat(brightbox_server.k8s_master.*.ipv4_address_private, digitalocean_droplet.offsite.*.ipv4_address)
+  hostnames         = concat(brightbox_server.k8s_master.*.hostname)
+  usernames         = concat(brightbox_server.k8s_master.*.username)
+  ipv6              = concat(brightbox_server.k8s_master.*.ipv6_address)
+  ipv4              = concat(brightbox_server.k8s_master.*.ipv4_address_private)
   mirrors_hostnames = slice(local.hostnames, 1, length(local.hostnames))
   mirrors_usernames = slice(local.usernames, 1, length(local.usernames))
   mirrors_ipv6      = slice(local.ipv6, 1, length(local.ipv6))

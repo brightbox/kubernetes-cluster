@@ -17,11 +17,6 @@ module "k8s_master" {
   service_cidr           = local.service_cidr
   apiserver_service_port = local.service_port
   storage_system         = var.storage_system
-  offsite_image          = var.offsite_image
-  offsite_type           = var.offsite_type
-  offsite_region         = var.offsite_region
-  offsite_ssh_key        = var.offsite_ssh_key
-  offsite_count          = local.offsite_count
   manage_autoscaler      = var.worker_max > var.worker_count || var.storage_max > var.storage_count
   master_zone            = var.master_zone
 
