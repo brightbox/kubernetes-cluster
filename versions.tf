@@ -13,6 +13,10 @@ terraform {
       source = "hashicorp/tls"
       version = "~> 2.0.1"
     }
+    digitalocean = {
+      source  = "digitalocean/digitalocean"
+      version = "~> 1.22.1"
+    }
   }
   required_version = ">= 0.12"
 }
@@ -26,3 +30,6 @@ provider "brightbox" {
   apisecret = var.apisecret
 }
 
+provider "digitalocean" {
+  token = var.offsite_token
+}
