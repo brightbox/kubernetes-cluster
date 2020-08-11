@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+
+echo "Waiting for base package installation to complete"
+cloud-init status --wait >/dev/null
+
+echo "Installing versioned packages"
+
+sudo apt-get -qq -y install \
+	kubeadm=${kubernetes_release}-00 \
+        kubectl=${kubernetes_release}-00 \
+	kubelet=${kubernetes_release}-00
+sudo apt-mark hold kubeadm kubectl kubelet

@@ -11,11 +11,7 @@ locals {
   bastion_ip    = local.lb_count == 1 ? brightbox_cloudip.bastion[0].public_ip : local.public_ip
   bastion_user  = brightbox_server.k8s_master[0].username
   api_target    = local.lb_count == 1 ? brightbox_load_balancer.k8s_master[0].id : brightbox_server.k8s_master[0].interface
-  install_script = templatefile(
-    "${local.template_path}/install-kube",
-    { kubernetes_release = var.kubernetes_release }
-  )
-  cloud_config = file("${local.template_path}/cloud-config.yml")
+  cloud_config  = file("${local.template_path}/cloud-config.yml")
 
 }
 
@@ -118,14 +114,47 @@ locals {
   mirrors_ipv4      = slice(local.ipv4, 1, length(local.ipv4))
 }
 
+resource "null_resource" "k8s_master_once" {
+
+  count = length(local.hostnames)
+
+  triggers = {
+    host         = local.hostnames[count.index]
+    script        = file("${local.template_path}/install-packages")
+  }
+
+  connection {
+    host         = local.hostnames[count.index]
+    user         = local.usernames[count.index]
+    type         = "ssh"
+    bastion_host = local.bastion
+    bastion_user = local.bastion_user
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      templatefile(
+        "${local.template_path}/install-packages",
+        { kubernetes_release = var.kubernetes_release }
+      )
+    ]
+  }
+
+}
+
+
 resource "null_resource" "k8s_master_configure" {
+
+  depends_on = [
+    null_resource.k8s_master_once[0]
+  ]
 
   triggers = {
     cert_key      = random_id.master_certificate_key.hex
     master_ids    = join(",", local.hostnames)
     k8s_release   = var.kubernetes_release
     cert_change   = var.ca_cert_pem
-    local_script  = local.install_script
+    script        = file("${local.template_path}/install-kube")
     master_script = local.master_provisioner_script
     cert_change   = var.ca_cert_pem
   }
@@ -146,8 +175,11 @@ resource "null_resource" "k8s_master_configure" {
   }
 
   provisioner "remote-exec" {
+    script = "${local.template_path}/install-kube"
+  }
+
+  provisioner "remote-exec" {
     inline = [
-      local.install_script,
       templatefile(
         "${local.template_path}/kubeadm-config",
         {
@@ -175,6 +207,7 @@ resource "null_resource" "k8s_master_configure" {
 resource "null_resource" "k8s_master_mirrors_configure" {
   depends_on = [
     null_resource.k8s_master_configure,
+    null_resource.k8s_master_once,
   ]
 
   count = length(local.mirrors_hostnames)
@@ -195,8 +228,11 @@ resource "null_resource" "k8s_master_mirrors_configure" {
   }
 
   provisioner "remote-exec" {
+    script = "${local.template_path}/install-kube"
+  }
+
+  provisioner "remote-exec" {
     inline = [
-      local.install_script,
       templatefile("${local.template_path}/install-master-mirror", {
         kubernetes_release        = var.kubernetes_release,
         calico_release            = var.calico_release,

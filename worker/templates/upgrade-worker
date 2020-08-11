@@ -81,8 +81,7 @@ case ${kubernetes_release} in
         ;;
 esac
 echo "Upgrading kubelet"
-sudo apt-mark unhold kubelet kubectl
-retry 5 sudo apt-get -qq -y install \
+retry 5 sudo apt-get -qq -y --allow-change-held-packages install \
 	kubectl=${kubernetes_release}-00 \
 	kubelet=${kubernetes_release}-00
 sudo apt-mark hold kubelet kubectl

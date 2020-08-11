@@ -10,7 +10,7 @@ newer_cert() {
 
         for word in $${target_suffix} key
         do
-                if sudo test $${source_prefix}.$${word} -nt $${pki_dir}/$${dest_prefix}.$${word}
+                if ! sudo diff $${source_prefix}.$${word} $${pki_dir}/$${dest_prefix}.$${word}
                 then
                         return 0
                 fi
@@ -865,8 +865,7 @@ upgrade() {
         sudo apt-get -qq update -y
         sudo apt-get -qq install -y  debconf-utils
         echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
-        sudo apt-mark unhold kubeadm
-        if ! retry 5 sudo apt-get -qq install -y kubeadm=${kubernetes_release}-00
+        if ! retry 5 sudo apt-get -qq -y --allow-change-held-packages install kubeadm=${kubernetes_release}-00
         then
                 sudo apt-mark hold kubeadm
                 echo "Failed to install kubeadm at version ${kubernetes_release}-00"
@@ -879,8 +878,7 @@ upgrade() {
 	*"kubeadm upgrade apply"*)
                 retry 5 sudo kubeadm upgrade apply -y ${kubernetes_release}
                 echo "Upgrading kubelet"
-                sudo apt-mark unhold kubelet kubectl
-                retry 5 sudo apt-get -qq -y install \
+                retry 5 sudo apt-get -qq -y --allow-change-held-packages install \
                         kubectl=${kubernetes_release}-00 \
                         kubelet=${kubernetes_release}-00
                 sudo apt-mark hold kubelet kubectl
