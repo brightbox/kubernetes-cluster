@@ -144,10 +144,10 @@ resource "null_resource" "k8s_master_once" {
 
 
 resource "null_resource" "k8s_master_configure" {
-  depends_on = [module.etcd.etcd_ready]
 
   depends_on = [
-    null_resource.k8s_master_once[0]
+    null_resource.k8s_master_once[0],
+    module.etcd.etcd_ready,
   ]
 
   triggers = {
