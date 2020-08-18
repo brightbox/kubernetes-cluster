@@ -17,9 +17,23 @@ locals {
   )
 }
 
-resource "brightbox_server_group" "k8s_worker_group" {
+resource "brightbox_server_group" "k8s_worker" {
   name        = "${var.worker_name}.${var.internal_cluster_fqdn}"
   description = "${var.worker_count}:${var.worker_max}"
+}
+
+resource "brightbox_config_map" "k8s_worker" {
+  name = "${var.worker_name}.${var.internal_cluster_fqdn}"
+  data = {
+    min           = var.worker_count
+    max           = var.worker_max
+    image         = data.brightbox_image.k8s_worker.id
+    type          = var.worker_type
+    region        = var.region
+    zone          = var.worker_zone
+    user_data     = data.template_cloudinit_config.worker_userdata.rendered
+    server_groups = brightbox_server_group.k8s_worker.id
+  }
 }
 
 data "template_cloudinit_config" "worker_userdata" {
@@ -51,12 +65,12 @@ resource "brightbox_server" "k8s_worker" {
   count = var.worker_count
 
   name      = "${var.worker_name}-${count.index}.${var.internal_cluster_fqdn}"
-  image     = data.brightbox_image.k8s_worker.id
-  type      = var.worker_type
-  zone      = "${var.region}-${var.worker_zone == "" ? (count.index % 2 == 0 ? "a" : "b") : var.worker_zone}"
-  user_data = data.template_cloudinit_config.worker_userdata.rendered
+  image     = brightbox_config_map.k8s_worker.data["image"]
+  type      = brightbox_config_map.k8s_worker.data["type"]
+  user_data = brightbox_config_map.k8s_worker.data["user_data"]
+  zone      = "${brightbox_config_map.k8s_worker.data["region"]}-${brightbox_config_map.k8s_worker.data["zone"] == "" ? (count.index % 2 == 0 ? "a" : "b") : brightbox_config_map.k8s_worker.data["zone"]}"
 
-  server_groups = [var.cluster_server_group, brightbox_server_group.k8s_worker_group.id]
+  server_groups = [var.cluster_server_group, brightbox_config_map.k8s_worker.data["server_group"]]
 
   lifecycle {
     ignore_changes = [
