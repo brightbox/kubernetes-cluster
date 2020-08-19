@@ -89,7 +89,7 @@ resource "null_resource" "k8s_worker_upgrade" {
     var.apiserver_ready,
   ]
 
-  count = length(brightbox_server.k8s_worker)
+  count = var.worker_count
 
   triggers = {
     worker_id      = brightbox_server.k8s_worker[count.index].id

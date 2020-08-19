@@ -3,10 +3,18 @@ terraform {
   required_providers {
     brightbox = {
       source  = "brightbox/brightbox"
-      version = "~> 1.4.0"
+      version = "~> 1.4.2"
+    }
+    null = {
+      source = "hashicorp/null"
+      version = "~> 2.1.2"
+    }
+    tls = {
+      source = "hashicorp/tls"
+      version = "~> 2.0.1"
     }
   }
-  required_version = "~> 0.12.0"
+  required_version = ">= 0.13"
 }
 
 provider "brightbox" {
@@ -18,18 +26,3 @@ provider "brightbox" {
   apisecret = var.apisecret
 }
 
-provider "null" {
-  version = "~> 2.0"
-}
-
-provider "random" {
-  version = "~> 2.0"
-}
-
-provider "tls" {
-  version = "~> 2.0.1"
-}
-
-provider "template" {
-  version = "~> 2.1"
-}
