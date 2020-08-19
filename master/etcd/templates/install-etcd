@@ -203,9 +203,12 @@ EOF
 install_etcd() {
     rm -rf /tmp/etcd
     mkdir -p /tmp/etcd
-    curl -sf https://api.github.com/repos/etcd-io/etcd/releases/latest \
+    local download="https://github.com/etcd-io/etcd/releases/download/"
+    curl -sf https://api.github.com/repos/etcd-io/etcd/releases \
+        | grep etcd-v3.4 \
         | grep browser_download_url \
         | grep linux-amd64 \
+        | head -1 \
         | cut -d '"' -f 4 \
         | wget -P /tmp/etcd -qi -
     tar -C /tmp/etcd -xf /tmp/etcd/*.tar.gz
