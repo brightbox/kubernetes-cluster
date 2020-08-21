@@ -33,6 +33,7 @@ resource "brightbox_config_map" "k8s_worker" {
     zone         = var.worker_zone
     user_data    = data.template_cloudinit_config.worker_userdata.rendered
     server_group = brightbox_server_group.k8s_worker.id
+    default_group = var.cluster_server_group
   }
 }
 
@@ -70,7 +71,7 @@ resource "brightbox_server" "k8s_worker" {
   user_data_base64 = brightbox_config_map.k8s_worker.data["user_data"]
   zone             = "${brightbox_config_map.k8s_worker.data["region"]}-${brightbox_config_map.k8s_worker.data["zone"] == "" ? (count.index % 2 == 0 ? "a" : "b") : brightbox_config_map.k8s_worker.data["zone"]}"
 
-  server_groups = [var.cluster_server_group, brightbox_config_map.k8s_worker.data["server_group"]]
+  server_groups = [brightbox_config_map.k8s_worker.data["default_group"], brightbox_config_map.k8s_worker.data["server_group"]]
 
   lifecycle {
     ignore_changes = [
