@@ -873,7 +873,8 @@ upgrade() {
                 return 2
         fi
         sudo apt-mark hold kubeadm
-	plan=$(sudo kubeadm upgrade plan ${kubernetes_release})
+	#plan=$(sudo kubeadm upgrade plan ${kubernetes_release})
+	plan=$(sudo kubeadm upgrade plan)
 	case "$${plan}" in
 	*"kubeadm upgrade apply"*)
                 retry 5 sudo kubeadm upgrade apply -y ${kubernetes_release}
