@@ -6,3 +6,7 @@ generated
 terraform.tfstate*
 inventory/artifacts
 inventory/credentials
+examples/metrics/*.crt
+examples/metrics/*.key
+examples/metrics/*.csr
+examples/metrics/apiservice-bundle.yaml
