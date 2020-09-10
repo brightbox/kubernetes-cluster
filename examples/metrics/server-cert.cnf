@@ -1,0 +1,15 @@
+[req]
+distinguished_name = req_distinguished_name
+prompt = no
+
+[req_distinguished_name]
+commonName = metrics-server.kube-system.svc 
+
+[v3_req]
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+authorityKeyIdentifier=keyid
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = metrics-server.kube-system.svc

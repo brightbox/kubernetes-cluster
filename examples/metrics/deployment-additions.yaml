@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metrics-server
+spec:
+  template:
+    metadata:
+      name: metrics-server
+    spec:
+      containers:
+      - name: metrics-server
+        args:
+          - --tls-cert-file=/etc/kubernetes/pki/apiserver/tls.crt
+          - --tls-private-key-file=/etc/kubernetes/pki/apiserver/tls.key
+          - --kubelet-certificate-authority=/etc/kubernetes/pki/ca/ca.crt
+          - --secure-port=4443
+        volumeMounts:
+        - mountPath: /etc/kubernetes/pki/apiserver
+          name: serving-certificate
+          readOnly: true
+        - mountPath: /etc/kubernetes/pki/ca/ca.crt
+          name: ca-cert
+          readOnly: true
+      volumes:
+      - name: serving-certificate
+        secret:
+          secretName: metric-server-tls
+      - name: ca-cert
+        hostPath:
+          path: /etc/kubernetes/pki/ca.crt
+          type: File
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      - key: CriticalAddonsOnly
+        operator: Exists
