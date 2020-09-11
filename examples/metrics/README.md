@@ -60,7 +60,7 @@ be verified by metrics-server.  Hence the `--kubelet-insecure-tls`
 flag in the workaround.
 
 However you can ask kubelet to request a central signing certificate
-from the control plane by adding `serverTLSBootstrap" true` to the
+from the control plane by adding `serverTLSBootstrap: true` to the
 kubelet configuration (either directly or in the kubadm config). Then
 when kublet starts up it will request a certificate which you can view
 using `kubectl get csr` and approve with `kubectl certificate approve`.
@@ -82,7 +82,7 @@ has no trouble verifying the client certificate presented by the metrics server.
 
 We've encapsulated the process within the [Brightbox Kubernetes Terraform
 manifests](https://github.com/brightbox/kubernetes-cluster). To build
-a cluster with kubletes using centrally signed certificates, set
+a cluster with kubelets using centrally signed certificates, set
 `secure_kublet` variable to `true`. Remember to approve the kubelet
 certificates with kubectl as soon as you have access to the control plane.
 
@@ -92,7 +92,7 @@ Then generate the metrics server signing certificates
 sh examples/metrics/generate-cert.sh
 ```
 
-And then apply a kustomized manifest to load the secure metrics server
+And finally apply a kustomized manifest to load the secure metrics server
 
 ```
 kubectl apply -k examples/metrics
