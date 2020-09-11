@@ -56,6 +56,12 @@ variable "management_source" {
   default     = ["0.0.0.0/32"]
 }
 
+variable "secure_kubelet" {
+  description = "Ask kubelet to request a signing certificate from the master, rather than self-signing. Requires manual approval of certificates"
+  type        = bool
+  default     = false
+}
+
 # Masters
 
 variable "master_count" {

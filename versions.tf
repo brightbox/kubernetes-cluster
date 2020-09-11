@@ -6,11 +6,11 @@ terraform {
       version = "~> 1.4.2"
     }
     null = {
-      source = "hashicorp/null"
+      source  = "hashicorp/null"
       version = "~> 2.1.2"
     }
     tls = {
-      source = "hashicorp/tls"
+      source  = "hashicorp/tls"
       version = "~> 2.0.1"
     }
   }

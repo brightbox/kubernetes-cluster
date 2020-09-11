@@ -96,3 +96,8 @@ variable "manage_autoscaler" {
   type        = bool
   description = "Whether to install and manage the vertical autoscaler"
 }
+
+variable "secure_kubelet" {
+  type        = bool
+  description = "Whether to ask for a central signing certificate or stick with self-signed"
+}

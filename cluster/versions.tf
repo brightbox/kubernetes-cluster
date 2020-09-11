@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     brightbox = {
-      source = "brightbox/brightbox"
+      source  = "brightbox/brightbox"
       version = "~> 1.0"
     }
   }

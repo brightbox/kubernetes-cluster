@@ -119,8 +119,8 @@ resource "null_resource" "k8s_master_once" {
   count = length(local.hostnames)
 
   triggers = {
-    host         = local.hostnames[count.index]
-    script        = file("${local.template_path}/install-packages")
+    host   = local.hostnames[count.index]
+    script = file("${local.template_path}/install-packages")
   }
 
   connection {
@@ -196,6 +196,7 @@ resource "null_resource" "k8s_master_configure" {
           cluster_domainname     = var.cluster_domainname,
           master_certificate_key = random_id.master_certificate_key.hex,
           service_port           = var.apiserver_service_port,
+          secure_kublet          = var.secure_kubelet,
         }
       ),
       local.master_provisioner_script,

@@ -25,14 +25,14 @@ resource "brightbox_server_group" "k8s_worker" {
 resource "brightbox_config_map" "k8s_worker" {
   name = "${var.worker_name}.${var.internal_cluster_fqdn}"
   data = {
-    min          = var.worker_count
-    max          = var.worker_max
-    image        = data.brightbox_image.k8s_worker.id
-    type         = var.worker_type
-    region       = var.region
-    zone         = var.worker_zone
-    user_data    = data.template_cloudinit_config.worker_userdata.rendered
-    server_group = brightbox_server_group.k8s_worker.id
+    min           = var.worker_count
+    max           = var.worker_max
+    image         = data.brightbox_image.k8s_worker.id
+    type          = var.worker_type
+    region        = var.region
+    zone          = var.worker_zone
+    user_data     = data.template_cloudinit_config.worker_userdata.rendered
+    server_group  = brightbox_server_group.k8s_worker.id
     default_group = var.cluster_server_group
   }
 }
