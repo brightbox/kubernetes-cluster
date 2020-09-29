@@ -45,8 +45,8 @@ install_ca() {
         echo "Installing Updated CA"
         local pki_dir=/etc/kubernetes/pki
         sudo mkdir -p "$${pki_dir}/etcd"
-        sudo cp "$${HOME}/ca.crt" "$${HOME}/ca.key" "$${pki_dir}"
-        sudo chmod 0600 "$${pki_dir}/ca.key"
+        sudo install --compare --mode=0600 -D "$${HOME}/ca.key" "$${pki_dir}/ca.key"
+        sudo install --compare --mode=0644 -D "$${HOME}/ca.crt" "$${pki_dir}/ca.crt"
         rm "$${HOME}/ca.key"
 }
 
