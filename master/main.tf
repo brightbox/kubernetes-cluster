@@ -1,5 +1,5 @@
 locals {
-  local_host    = "127.0.0.1"
+  local_host    = "::1"
   template_path = "${path.module}/templates"
   cluster_fqdn  = "${var.cluster_name}.${var.cluster_domainname}"
   boot_token    = "${random_string.token_prefix.result}.${random_string.token_suffix.result}"

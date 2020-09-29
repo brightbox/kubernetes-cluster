@@ -28,6 +28,8 @@ apiServer:
   - ${public_rdns}
   - ${public_ip}
 clusterName: ${cluster_name}
+featureGates:
+  IPv6DualStack: true
 kubernetesVersion: "v${kubernetes_release}"
 controlPlaneEndpoint: "${public_ip}:${service_port}"
 networking:
