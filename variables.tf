@@ -189,10 +189,10 @@ variable "autoscaler_release" {
   default     = "1.18.2"
 }
 
-variable "calico_release" {
+variable "cilium_release" {
   type        = string
-  description = "Version of Calico plugin to install"
-  default     = "3.15"
+  description = "Version of cilium plugin to install"
+  default     = "1.8.3"
 }
 
 # Boot image search string

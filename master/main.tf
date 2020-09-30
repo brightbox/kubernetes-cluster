@@ -236,7 +236,7 @@ resource "null_resource" "k8s_master_mirrors_configure" {
     inline = [
       templatefile("${local.template_path}/install-master-mirror", {
         kubernetes_release        = var.kubernetes_release,
-        calico_release            = var.calico_release,
+        cilium_release            = var.cilium_release,
         cluster_fqdn              = local.cluster_fqdn,
         public_fqdn               = local.public_fqdn,
         service_cluster_ip_range  = var.service_cidr,
@@ -297,7 +297,8 @@ locals {
 
   master_provisioner_script = templatefile("${local.template_path}/install-master", {
     kubernetes_release       = var.kubernetes_release,
-    calico_release           = var.calico_release,
+    cilium_release           = var.cilium_release,
+    master_count             = var.master_count,
     autoscaler_release       = var.autoscaler_release,
     cluster_fqdn             = local.cluster_fqdn,
     public_ip                = local.public_ip,

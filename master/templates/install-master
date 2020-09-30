@@ -175,8 +175,30 @@ ensure_ancillary_items() {
         install_cloud_controller
 
         echo "Installing Calico network controllers"
-        retry 5 kubectl apply -f \
-        https://docs.projectcalico.org/v${calico_release}/manifests/calico.yaml
+        sudo snap install helm --classic
+        helm repo add cilium https://helm.cilium.io/
+        helm install cilium cilium/cilium --version ${cilium_release} \
+            --namespace kube-system --values - <<-EOF
+global:
+  cluster:
+    name: ${cluster_fqdn}
+    ipv4:
+      enabled: true
+    ipv6:
+      enabled: true
+    k8s:
+      requireIPv4PodCIDR: true
+      requireIPv6PodCIDR: true
+config:
+  ipam: kubernetes
+operator:
+  numReplicas: ${master_count}
+  tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/master
+  - key: CriticalAddonsOnly
+    operator: Exists
+EOF
 
         case "${storage_system}" in
             manual)

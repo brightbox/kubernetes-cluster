@@ -8,9 +8,9 @@ variable "kubernetes_release" {
   description = "Version of Kubernetes to install"
 }
 
-variable "calico_release" {
+variable "cilium_release" {
   type        = string
-  description = "Version of Calico to install"
+  description = "Version of cilium to install"
 }
 
 variable "autoscaler_release" {
