@@ -180,19 +180,19 @@ variable "storage_system" {
 variable "kubernetes_release" {
   type        = string
   description = "Version of Kubernetes to install"
-  default     = "1.18.8"
+  default     = "1.20.1"
 }
 
 variable "autoscaler_release" {
   type        = string
   description = "Version of Vertical Autoscaler to install if the scaling features are activated. This needs to be the same minor version as the k8s release"
-  default     = "1.18.2"
+  default     = "1.20.0"
 }
 
 variable "calico_release" {
   type        = string
   description = "Version of Calico plugin to install"
-  default     = "3.15"
+  default     = "3.17"
 }
 
 # Boot image search string

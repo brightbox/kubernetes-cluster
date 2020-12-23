@@ -3,9 +3,21 @@
 set -e
 
 create_kubeadm_config() {
-        echo "Installing kubeadm.conf"
-        case ${kubernetes_release} in
-                1.1[789].*)
+    echo "Installing kubeadm.conf"
+    case ${kubernetes_release} in
+        1.1[789].*)
+            v1beta2
+            ;;
+        1.2[0].*)
+            v1beta2
+            ;;
+        *)
+            echo "Version ${kubernetes_release} not supported"
+            exit 3
+    esac
+}
+
+v1beta2() {
         cat <<EOF >$HOME/install/kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: InitConfiguration
@@ -48,11 +60,6 @@ ipvs:
   scheduler: lc
 mode: ipvs
 EOF
-                ;;
-	*)
-		echo "Version ${kubernetes_release} not supported"
-		exit 3
-        esac
 }
 
 create_kubeadm_config
