@@ -3,7 +3,7 @@ terraform {
   required_providers {
     brightbox = {
       source  = "brightbox/brightbox"
-      version = "~> 1.4.2"
+      version = "~> 1.5"
     }
     null = {
       source  = "hashicorp/null"
