@@ -4,6 +4,7 @@ override.tf
 .terraform
 generated
 terraform.tfstate*
+.terraform.lock.hcl
 inventory/artifacts
 inventory/credentials
 examples/metrics/*.crt

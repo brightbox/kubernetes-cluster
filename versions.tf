@@ -3,15 +3,15 @@ terraform {
   required_providers {
     brightbox = {
       source  = "brightbox/brightbox"
-      version = "~> 1.5"
+      version = "~> 2.0"
     }
     null = {
       source  = "hashicorp/null"
-      version = "~> 2.1.2"
+      version = "~> 2.1"
     }
     tls = {
       source  = "hashicorp/tls"
-      version = "~> 2.0.1"
+      version = "~> 2.0"
     }
   }
   required_version = ">= 0.12"
