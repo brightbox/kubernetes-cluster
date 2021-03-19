@@ -200,5 +200,5 @@ variable "calico_release" {
 variable "image_desc" {
   type        = string
   description = "Image pattern to use to select boot image"
-  default     = "^ubuntu-bionic.*server$"
+  default     = "^ubuntu-focal.*server$"
 }
