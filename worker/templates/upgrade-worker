@@ -56,7 +56,7 @@ sudo apt-get -qq update -y
 sudo apt-get -qq install -y debconf-utils lvm2
 echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
 echo "Upgrading kubeadm"
-if ! retry 5 sudo apt-get -qq -y --allow-change-held-packages install kubeadm=${kubernetes_release}-00
+if ! retry 5 sudo apt-get -qq -y --allow-change-held-packages install kubeadm="${kubernetes_release}-00"
 then
 	sudo apt-mark hold kubeadm
 	echo "Failed to install kubeadm at version ${kubernetes_release}-00"
@@ -66,7 +66,7 @@ fi
 sudo apt-mark hold kubeadm
 echo "Upgrading worker node"
 case ${kubernetes_release} in
-    1.2[0].*)
+    1.2[01].*)
 		retry 5 sudo kubeadm upgrade node
 		;;
 	1.1[789].*)
@@ -76,16 +76,16 @@ case ${kubernetes_release} in
 		retry 5 sudo kubeadm upgrade node --certificate-renewal
 		;;
 	1.14.*)
-		retry 5 sudo kubeadm upgrade node config --kubelet-version=${kubernetes_release}
+		retry 5 sudo kubeadm upgrade node config --kubelet-version="${kubernetes_release}"
 		;;
     *)
-        echo "Unsupported verion ${kubernetes_release}"
+        echo "Unsupported version ${kubernetes_release}"
         exit 1
         ;;
 esac
 echo "Upgrading kubelet"
 retry 5 sudo apt-get -qq -y --allow-change-held-packages install \
-	kubectl=${kubernetes_release}-00 \
-	kubelet=${kubernetes_release}-00
+	kubectl="${kubernetes_release}-00" \
+	kubelet="${kubernetes_release}-00"
 sudo apt-mark hold kubelet kubectl
 retry 5 sudo systemctl restart kubelet
