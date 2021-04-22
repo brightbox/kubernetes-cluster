@@ -197,8 +197,13 @@ EOF
         fi
 }
 
+ensure_updated_apt_keys() {
+    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+}
+
 upgrade() {
 	ensure_updated_ca
+    ensure_updated_apt_keys
 
 	if [ -f /var/run/docker.sock ]
 	then

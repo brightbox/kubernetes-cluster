@@ -42,6 +42,10 @@ EOF
 	fi
 }
 
+ensure_updated_apt_keys() {
+    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+}
+
 echo "Ensuring installation has completed"
 cloud-init status --wait >/dev/null
 
@@ -52,6 +56,7 @@ then
 fi
 
 sudo systemctl enable iscsid && sudo systemctl start iscsid
+ensure_updated_apt_keys
 sudo apt-get -qq update -y
 sudo apt-get -qq install -y debconf-utils lvm2
 echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
