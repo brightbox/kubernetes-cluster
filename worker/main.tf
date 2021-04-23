@@ -78,6 +78,7 @@ resource "brightbox_server" "k8s_worker" {
       image,
       type,
       server_groups,
+      zone,
     ]
     create_before_destroy = true
   }
