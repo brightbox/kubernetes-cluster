@@ -97,6 +97,7 @@ resource "brightbox_server" "k8s_master" {
       image,
       type,
       server_groups,
+      zone,
     ]
     create_before_destroy = true
   }
