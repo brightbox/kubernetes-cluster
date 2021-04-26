@@ -151,13 +151,13 @@ resource "null_resource" "k8s_master_configure" {
   ]
 
   triggers = {
-    cert_key      = random_id.master_certificate_key.hex
-    master_ids    = join(",", local.hostnames)
-    k8s_release   = var.kubernetes_release
-    cert_change   = var.ca_cert_pem
-    script        = file("${local.template_path}/install-kube")
-    master_script = local.master_provisioner_script
-    cert_change   = var.ca_cert_pem
+    cert_key          = random_id.master_certificate_key.hex
+    master_ids        = join(",", local.hostnames)
+    k8s_release       = var.kubernetes_release
+    script            = file("${local.template_path}/install-kube")
+    master_script     = local.master_provisioner_script
+    cert_change       = var.ca_cert_pem
+    controller_client = brightbox_api_client.controller_client.id,
   }
 
   connection {
@@ -203,6 +203,11 @@ resource "null_resource" "k8s_master_configure" {
       local.master_provisioner_script,
     ]
   }
+  provisioner "remote-exec" {
+    inline = [
+      local.cloud_controller_script,
+    ]
+  }
 
 }
 
@@ -237,13 +242,8 @@ resource "null_resource" "k8s_master_mirrors_configure" {
     inline = [
       templatefile("${local.template_path}/install-master-mirror", {
         kubernetes_release        = var.kubernetes_release,
-        calico_release            = var.calico_release,
         cluster_fqdn              = local.cluster_fqdn,
         public_fqdn               = local.public_fqdn,
-        service_cluster_ip_range  = var.service_cidr,
-        controller_client         = brightbox_api_client.controller_client.id,
-        controller_client_secret  = brightbox_api_client.controller_client.secret,
-        apiurl                    = "https://api.${var.region}.brightbox.com",
         boot_token                = local.boot_token
         fqdn                      = local.public_fqdn
         certificate_authority_pem = var.ca_cert_pem
@@ -296,22 +296,31 @@ resource "brightbox_api_client" "controller_client" {
 
 locals {
 
+  cloud_controller_script = templatefile("${local.template_path}/install-cloud-controller", {
+
+    apiurl_b64                   = base64encode("https://api.${var.region}.brightbox.com"),
+    boot_token                   = local.boot_token,
+    cluster_fqdn                 = local.cluster_fqdn,
+    controller_client            = brightbox_api_client.controller_client.id,
+    controller_client_b64        = base64encode(brightbox_api_client.controller_client.id),
+    controller_client_secret_b64 = base64encode(brightbox_api_client.controller_client.secret),
+    kubernetes_release           = var.kubernetes_release,
+    kubernetes_release_b64       = base64encode(var.kubernetes_release),
+    local_host                   = local.local_host,
+    public_ip                    = local.public_ip,
+    service_port                 = var.apiserver_service_port,
+    }
+  )
+
   master_provisioner_script = templatefile("${local.template_path}/install-master", {
-    kubernetes_release       = var.kubernetes_release,
-    calico_release           = var.calico_release,
-    autoscaler_release       = var.autoscaler_release,
-    cluster_fqdn             = local.cluster_fqdn,
-    public_ip                = local.public_ip,
-    public_fqdn              = local.public_fqdn,
-    boot_token               = local.boot_token,
-    service_cluster_ip_range = var.service_cidr,
-    controller_client        = brightbox_api_client.controller_client.id,
-    controller_client_secret = brightbox_api_client.controller_client.secret,
-    apiurl                   = "https://api.${var.region}.brightbox.com",
-    service_port             = var.apiserver_service_port,
-    local_host               = local.local_host,
-    storage_system           = var.storage_system,
-    manage_autoscaler        = var.manage_autoscaler,
+    kubernetes_release = var.kubernetes_release,
+    calico_release     = var.calico_release,
+    autoscaler_release = var.autoscaler_release,
+    cluster_fqdn       = local.cluster_fqdn,
+    public_fqdn        = local.public_fqdn,
+    service_port       = var.apiserver_service_port,
+    storage_system     = var.storage_system,
+    manage_autoscaler  = var.manage_autoscaler,
     }
   )
 

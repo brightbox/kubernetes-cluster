@@ -52,7 +52,7 @@ variable "cluster_name" {
 
 variable "management_source" {
   description = "CIDR of any external management workstations. The default is no external workstations"
-  type        = list
+  type        = list(string)
   default     = ["0.0.0.0/32"]
 }
 
@@ -180,7 +180,7 @@ variable "storage_system" {
 variable "kubernetes_release" {
   type        = string
   description = "Version of Kubernetes to install"
-  default     = "1.20.4"
+  default     = "1.20.6"
 }
 
 variable "autoscaler_release" {
@@ -192,7 +192,7 @@ variable "autoscaler_release" {
 variable "calico_release" {
   type        = string
   description = "Version of Calico plugin to install"
-  default     = "3.17"
+  default     = "3.18"
 }
 
 # Boot image search string
