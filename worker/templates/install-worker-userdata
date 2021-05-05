@@ -140,12 +140,13 @@ systemctl try-restart systemd-timesyncd
 retry 5 systemctl enable iscsid
 retry 5 systemctl start iscsid
 
+partprobe
 case $${storage_system} in
     manual)
+        mkdir /var/local/disk
         ;;
     openebs)
         echo "Setting up storage partition"
-        partprobe
         mkfs -t ext4 /dev/vda2
         echo "/dev/vda2 $${openebs_mount} ext4 defaults 0 0" >> /etc/fstab
         mkdir -p "$${openebs_mount}"
