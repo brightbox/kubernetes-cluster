@@ -156,6 +156,7 @@ resource "null_resource" "k8s_master_configure" {
     k8s_release       = var.kubernetes_release
     script            = file("${local.template_path}/install-kube")
     master_script     = local.master_provisioner_script
+    cloud_script      = local.cloud_controller_script
     cert_change       = var.ca_cert_pem
     controller_client = brightbox_api_client.controller_client.id,
   }
