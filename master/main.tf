@@ -156,6 +156,7 @@ resource "null_resource" "k8s_master_configure" {
     k8s_release       = var.kubernetes_release
     script            = file("${local.template_path}/install-kube")
     master_script     = local.master_provisioner_script
+    autoscaler        = local.autoscaler_manifest
     cloud_script      = local.cloud_controller_script
     cert_change       = var.ca_cert_pem
     controller_client = brightbox_api_client.controller_client.id,
@@ -201,6 +202,7 @@ resource "null_resource" "k8s_master_configure" {
           secure_kublet          = var.secure_kubelet,
         }
       ),
+      local.autoscaler_manifest,
       local.master_provisioner_script,
     ]
   }
@@ -316,7 +318,6 @@ locals {
   master_provisioner_script = templatefile("${local.template_path}/install-master", {
     kubernetes_release = var.kubernetes_release,
     calico_release     = var.calico_release,
-    autoscaler_release = var.autoscaler_release,
     cluster_fqdn       = local.cluster_fqdn,
     public_fqdn        = local.public_fqdn,
     service_port       = var.apiserver_service_port,
@@ -325,6 +326,10 @@ locals {
     }
   )
 
+  autoscaler_manifest = templatefile("${local.template_path}/autoscaler-manifest", {
+    autoscaler_release = var.autoscaler_release,
+    cluster_fqdn       = local.cluster_fqdn,
+  })
 
   masters_configured = concat([null_resource.k8s_master_configure.id], null_resource.k8s_master_mirrors_configure[*].id)
 

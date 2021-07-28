@@ -1,0 +1,44 @@
+#!/bin/sh
+
+helm_config() {
+cat << 'EOF'
+---
+autoDiscovery:
+  clusterName: "${cluster_fqdn}"
+cloudProvider: brightbox
+image:
+  repository: brightbox/cluster-autoscaler-brightbox
+  tag: "${autoscaler_release}"
+  pullPolicy: Always
+tolerations:
+- effect: NoSchedule
+  key: node-role.kubernetes.io/master
+- operator: Exists
+  key: CriticalAddonsOnly
+extraArgs:
+  v: '2'
+  stderrthreshold: info
+  logtostderr: true
+  cluster-name: "${cluster_fqdn}"
+  skip-nodes-with-local-storage: true
+podAnnotations:
+  prometheus.io/scrape: 'true'
+  prometheus.io/port: '8085'
+rbac:
+  create: true
+resources:
+  limits:
+    cpu: 100m
+    memory: 300Mi
+  requests:
+    cpu: 100m
+    memory: 300Mi
+envFromSecret: brightbox-credentials
+priorityClassName: system-cluster-critical
+dnsPolicy: Default
+EOF
+}
+
+echo "autoscaler_manifest() {\ncat <<EOF"
+helm_config | helm template release autoscaler/cluster-autoscaler --namespace kube-system -f - 
+echo "EOF\n}"
