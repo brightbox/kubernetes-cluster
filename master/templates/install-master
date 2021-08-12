@@ -230,7 +230,7 @@ upgrade() {
         sudo apt-get -qq update -y
         sudo apt-get -qq install -y  debconf-utils
         echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
-        if ! retry 5 sudo apt-get -qq -y --allow-change-held-packages install kubeadm=${kubernetes_release}-00
+        if ! retry 5 sudo apt-get -qq -y --allow-change-held-packages --allow-downgrades install kubeadm=${kubernetes_release}-00
         then
                 sudo apt-mark hold kubeadm
                 echo "Failed to install kubeadm at version ${kubernetes_release}-00"
@@ -243,7 +243,7 @@ upgrade() {
 	*"kubeadm upgrade apply"*)
                 retry 5 sudo kubeadm upgrade apply -y ${kubernetes_release}
                 echo "Upgrading kubelet"
-                retry 5 sudo apt-get -qq -y --allow-change-held-packages install \
+                retry 5 sudo apt-get -qq -y --allow-change-held-packages --allow-downgrades install \
                         kubectl=${kubernetes_release}-00 \
                         kubelet=${kubernetes_release}-00
                 sudo apt-mark hold kubelet kubectl
