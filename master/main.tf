@@ -12,7 +12,6 @@ locals {
   bastion_user  = brightbox_server.k8s_master[0].username
   api_target    = local.lb_count == 1 ? brightbox_load_balancer.k8s_master[0].id : brightbox_server.k8s_master[0].interface
   cloud_config  = file("${local.template_path}/cloud-config.yml")
-
 }
 
 resource "brightbox_cloudip" "k8s_master" {
@@ -326,9 +325,13 @@ locals {
     }
   )
 
+  autoscaler_repository = "brightbox/cluster-autoscaler-brightbox"
+  #autoscaler_repository = tonumber(replace(var.autoscaler_release, "/.[0-9]+$/", "")) >= 1.23 ? "k8s.gcr.io/autoscaling/cluster-autoscaler" : "brightbox/cluster-autoscaler-brightbox"
+
   autoscaler_manifest = templatefile("${local.template_path}/autoscaler-manifest", {
     autoscaler_release = var.autoscaler_release,
     cluster_fqdn       = local.cluster_fqdn,
+    autoscaler_repository = local.autoscaler_repository
   })
 
   masters_configured = concat([null_resource.k8s_master_configure.id], null_resource.k8s_master_mirrors_configure[*].id)

@@ -7,7 +7,7 @@ autoDiscovery:
   clusterName: "${cluster_fqdn}"
 cloudProvider: brightbox
 image:
-  repository: brightbox/cluster-autoscaler-brightbox
+  repository: "${autoscaler_repository}"
   tag: "${autoscaler_release}"
   pullPolicy: Always
 tolerations:
