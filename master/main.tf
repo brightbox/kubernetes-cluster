@@ -316,7 +316,6 @@ locals {
 
   master_provisioner_script = templatefile("${local.template_path}/install-master", {
     kubernetes_release = var.kubernetes_release,
-    calico_release     = var.calico_release,
     cluster_fqdn       = local.cluster_fqdn,
     public_fqdn        = local.public_fqdn,
     service_port       = var.apiserver_service_port,
