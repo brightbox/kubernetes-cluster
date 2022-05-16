@@ -70,7 +70,7 @@ spec:
 See the [OpenEBS user guide](https://docs.openebs.io/docs/next/uglocalpv.html) for more details on Local PVs and how to
 e ackup and restore volumes
 
-### JIRA Volumes
+### JIVA Volumes
 
 Jiva is a light weight storage engine that is recommended to use for low capacity workloads. It is based on the [Rancher Longhorn](https://rancher.com/blog/2017/announcing-longhorn-microservices-block-storage/) project.
 
