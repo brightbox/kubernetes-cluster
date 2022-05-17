@@ -277,10 +277,10 @@ resource "null_resource" "set_host_keys" {
   }
 
   provisioner "local-exec" {
-    command = "ssh-keyscan -H ${local.bastion_ip} >> ~/.ssh/known_hosts"
+    command = "ssh-keyscan -4 -H ${local.bastion_ip} >> ~/.ssh/known_hosts"
   }
   provisioner "local-exec" {
-    command = "ssh-keyscan -H ${local.bastion} >> ~/.ssh/known_hosts"
+    command = "ssh-keyscan -4 -H ${local.bastion} >> ~/.ssh/known_hosts"
   }
 }
 
