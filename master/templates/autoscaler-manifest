@@ -324,10 +324,14 @@ spec:
             requests:
               cpu: 100m
               memory: 300Mi
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
       serviceAccountName: release-brightbox-cluster-autoscaler
       tolerations:
         - effect: NoSchedule
           key: node-role.kubernetes.io/master
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
         - key: CriticalAddonsOnly
           operator: Exists
 EOF

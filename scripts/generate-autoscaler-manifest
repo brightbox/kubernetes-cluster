@@ -10,9 +10,13 @@ image:
   repository: "${autoscaler_repository}"
   tag: "${autoscaler_release}"
   pullPolicy: Always
+nodeSelector:
+  node-role.kubernetes.io/control-plane: ""
 tolerations:
 - effect: NoSchedule
   key: node-role.kubernetes.io/master
+- effect: NoSchedule
+  key: node-role.kubernetes.io/control-plane
 - operator: Exists
   key: CriticalAddonsOnly
 extraArgs:
