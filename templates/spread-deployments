@@ -28,12 +28,7 @@ spread_deployments() {
 	if [ $(kubectl -n kube-system get pods -o=custom-columns=NODE:.spec.nodeName --selector=k8s-app=kube-dns --no-headers| sort -u | wc -l) -eq 1 ]
 	then
 		echo "Redeploying services across nodes"
-		if [ $(kubectl version --client --short | grep -o '[0-9.]*') \< '1.15.0' ]
-		then
-			kubectl -n kube-system delete $(kubectl -n kube-system get pods -o name --selector=k8s-app=kube-dns | head -1)
-		else
-			retry 5 kubectl -n kube-system rollout restart deployment coredns
-		fi
+        retry 5 kubectl -n kube-system rollout restart deployment coredns
 	fi
 }
 

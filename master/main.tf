@@ -163,7 +163,7 @@ resource "null_resource" "k8s_master_configure" {
 
   connection {
     user = local.bastion_user
-    host = local.bastion
+    host = "ipv4.${local.bastion}"
   }
 
   provisioner "file" {
