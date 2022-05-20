@@ -160,6 +160,9 @@ ensure_ancillary_items() {
                 echo "Patch already applied - skipping"
         fi
 
+        echo "Adjusting taints until better tolerated"
+        kubectl taint node -l node-role.kubernetes.io/control-plane='' node-role.kubernetes.io/control-plane:NoSchedule- || true
+
         echo "Installing Calico network controllers"
         retry 5 kubectl apply -f \
         https://docs.projectcalico.org/v${calico_release}/manifests/calico.yaml
