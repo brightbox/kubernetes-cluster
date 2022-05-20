@@ -8,6 +8,11 @@ variable "kubernetes_release" {
   description = "Version of Kubernetes to install"
 }
 
+variable "calico_release" {
+  type        = string
+  description = "Version of Calico to install"
+}
+
 variable "autoscaler_release" {
   type        = string
   description = "Version of autoscaler to install"

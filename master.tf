@@ -9,6 +9,7 @@ module "k8s_master" {
   image_desc             = var.image_desc
   region                 = var.region
   kubernetes_release     = var.kubernetes_release
+  calico_release         = var.calico_release
   autoscaler_release     = var.autoscaler_release
   cluster_name           = var.cluster_name
   cluster_domainname     = var.cluster_domainname
