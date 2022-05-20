@@ -165,7 +165,7 @@ ensure_ancillary_items() {
 
         echo "Installing Calico network controllers"
         retry 5 kubectl apply -f \
-        https://docs.projectcalico.org/v${calico_release}/manifests/calico.yaml
+        https://projectcalico.docs.tigera.io/archive/v${calico_release}/manifests/calico.yaml
 
         case "${storage_system}" in
             manual)
