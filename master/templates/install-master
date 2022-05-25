@@ -154,14 +154,28 @@ CLIENTSCRIPT
 }
 
 ensure_ancillary_items() {
-        echo "Patching kube-proxy scheduling tolerations"
-        if ! kubectl -n kube-system patch ds kube-proxy -p='{ "spec": { "template": { "metadata": { "annotations": { "scheduler.alpha.kubernetes.io/critical-pod": "" } }, "spec": { "priorityClassName": "system-node-critical", "tolerations": [{ "key": "CriticalAddonsOnly", "operator": "Exists" }, { "operator": "Exists" }] } } } }'
-        then
-                echo "Patch already applied - skipping"
-        fi
+        #echo "Patching kube-proxy scheduling tolerations"
+        #if ! kubectl -n kube-system patch ds kube-proxy -p='{ "spec": { "template": { "metadata": { "annotations": { "scheduler.alpha.kubernetes.io/critical-pod": "" } }, "spec": { "priorityClassName": "system-node-critical", "tolerations": [{ "key": "CriticalAddonsOnly", "operator": "Exists" }, { "operator": "Exists" }] } } } }'
+        #then
+        #        echo "Patch already applied - skipping"
+        #fi
 
         echo "Adjusting taints until better tolerated"
         kubectl taint node -l node-role.kubernetes.io/control-plane='' node-role.kubernetes.io/control-plane:NoSchedule- || true
+
+        echo "Refreshing Pod Disruption Budget for kube-dns"
+        retry 5 kubectl apply -f - <<-MANIFEST
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: coredns-pdb
+  namespace: kube-system
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      k8s-app: kube-dns
+MANIFEST
 
         echo "Installing Calico network controllers"
         retry 5 kubectl apply -f \
@@ -179,6 +193,7 @@ ensure_ancillary_items() {
                 echo "Unknown storage system ${storage_system}"
                 ;;
         esac
+
 
         if [ "${manage_autoscaler}" = "true" ]
         then
