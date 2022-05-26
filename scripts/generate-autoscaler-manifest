@@ -1,4 +1,7 @@
 #!/bin/sh
+set -e
+
+version="${1:?Give kubernetes version as argument}"
 
 helm_config() {
 cat << 'EOF'
@@ -43,6 +46,6 @@ dnsPolicy: Default
 EOF
 }
 
-echo "autoscaler_manifest() {\ncat <<EOF"
-helm_config | helm template release autoscaler/cluster-autoscaler --namespace kube-system -f - 
-echo "EOF\n}"
+printf "autoscaler_manifest() {\ncat <<EOF\n"
+helm_config | helm template release autoscaler/cluster-autoscaler --kube-version "${version}" --namespace kube-system -f -
+printf "EOF\n}\n"
