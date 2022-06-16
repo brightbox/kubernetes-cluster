@@ -15,14 +15,13 @@ openssl x509 -req -days 365 -sha256 -in tls.csr -CA ca.crt -CAkey ca.key \
 cat ca.crt >> tls.crt
 
 cat > apiservice-bundle.yaml <<EOF
-apiVersion: apiregistration.k8s.io/v1beta1
+apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
+  labels:
+    k8s-app: metrics-server
   name: v1beta1.metrics.k8s.io
 spec:
-  service:
-    name: metrics-server
-    namespace: kube-system
   insecureSkipTLSVerify: false
   caBundle: $(base64 --wrap=0 ca.crt)
 EOF

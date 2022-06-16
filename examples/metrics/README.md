@@ -81,7 +81,9 @@ We've encapsulated the process within the [Brightbox Kubernetes Terraform
 manifests](https://github.com/brightbox/kubernetes-cluster). To build
 a cluster with kubelets using centrally signed certificates, set
 the `secure_kublet` variable to `true`. Remember to approve the kubelet
-certificates with kubectl as soon as you have access to the control plane.
+certificates with kubectl as soon as you have access to the control plane
+(with `kubectl get csr` and approve with `kubectl certificate approve`
+as above).
 
 Then generate the metrics-server signing certificates
 

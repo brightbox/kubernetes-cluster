@@ -2,10 +2,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: metrics-server
+  namespace: kube-system
 spec:
   template:
     metadata:
-      name: metrics-server
+      labels:
+        k8s-app: metrics-server
     spec:
       containers:
       - name: metrics-server
@@ -14,6 +16,9 @@ spec:
           - --tls-private-key-file=/etc/kubernetes/pki/apiserver/tls.key
           - --kubelet-certificate-authority=/etc/kubernetes/pki/ca/ca.crt
           - --secure-port=4443
+          - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+          - --kubelet-use-node-status-port
+          - --metric-resolution=15s
         volumeMounts:
         - mountPath: /etc/kubernetes/pki/apiserver
           name: serving-certificate
