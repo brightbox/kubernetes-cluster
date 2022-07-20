@@ -98,7 +98,7 @@ ensure_updated_ca() {
 update_cert_configs() {
 	sudo mv /etc/kubernetes/*.conf /tmp
 	sudo kubeadm init phase kubeconfig all --config $HOME/install/kubeadm.conf
-	sudo kubeadm alpha certs renew all
+	sudo kubeadm certs renew all
 }
 
 install() {
