@@ -9,7 +9,7 @@ k8s_version="${kubernetes_release}"
 #kubeadm_join_command="sudo kubeadm join --apiserver-advertise-address ${advertise_ip} --apiserver-bind-port ${service_port} --certificate-key ${master_certificate_key} --control-plane --discovery-token-ca-cert-hash sha256:$${discovery_ca_cert_hash} --token ${boot_token} ${fqdn}:${service_port}"
 kubeadm_join_command="sudo kubeadm join --config /tmp/kubeadm.conf"
 cat <<EOF | tee /tmp/kubeadm.conf
-apiVersion: kubeadm.k8s.io/v1beta2
+apiVersion: kubeadm.k8s.io/v1beta3
 kind: JoinConfiguration
 discovery:
   bootstrapToken:
@@ -22,7 +22,7 @@ nodeRegistration:
     cloud-provider: "external"
 controlPlane:
   certificateKey: "${master_certificate_key}"
-  localApiEndpoint:
+  localAPIEndpoint:
     advertiseAddress: "${advertise_ip}"
     bindPort: ${service_port}
 EOF
@@ -238,11 +238,6 @@ upgrade() {
     kubectl taint node -l node-role.kubernetes.io/control-plane='' node-role.kubernetes.io/control-plane:NoSchedule- || true
 }
 
-if [ "${kubernetes_release}" \< "1.15" ]; then
-	echo "HA on version ${kubernetes_release} is not supported. Upgrade to 1.15 or newer"
-	sleep 2
-	exit 1
-fi
 if ss -lnt | grep -q :6443
 then
         upgrade
