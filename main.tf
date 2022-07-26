@@ -4,8 +4,8 @@ locals {
   renew_period              = 788400
   region_suffix             = "${var.region}.brightbox.com"
   template_path             = "${path.root}/templates"
-  service_cidr              = "172.30.0.0/16"
-  cluster_cidr              = "192.168.0.0/16"
+  service_cidr              = "172.30.0.0/16,fd00:ac1e::/112"
+  cluster_cidr              = "192.168.0.0/16,fd00:c0a8::/48"
   cluster_fqdn              = "${var.cluster_name}.${var.cluster_domainname}"
   service_port              = "6443"
   worker_node_ids           = module.k8s_worker.servers[*].id

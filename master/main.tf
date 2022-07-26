@@ -1,5 +1,5 @@
 locals {
-  local_host    = "127.0.0.1"
+  local_host    = "::1"
   template_path = "${path.module}/templates"
   cluster_fqdn  = "${var.cluster_name}.${var.cluster_domainname}"
   boot_token    = "${random_string.token_prefix.result}.${random_string.token_suffix.result}"
@@ -27,7 +27,7 @@ resource "brightbox_cloudip" "k8s_master" {
 
   provisioner "local-exec" {
     when    = destroy
-    command = "ssh-keygen -R ${self.fqdn}; ssh-keygen -R ${self.public_ip}"
+    command = "ssh-keygen -R ${self.fqdn}; ssh-keygen -R ${self.public_ipv4}; ssh-keygen -R ${self.public_ipv6}"
   }
 }
 
