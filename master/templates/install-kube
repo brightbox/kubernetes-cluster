@@ -30,6 +30,7 @@ then
     echo "Kubernetes clusters." >&2
     echo >&2
     echo "Use the IPv4-only version to maintain older clusters" >&2
+    echo "Aborting"
     exit 10
 fi
 

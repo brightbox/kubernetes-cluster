@@ -177,6 +177,16 @@ spec:
       k8s-app: kube-dns
 MANIFEST
 
+        case "${calico_release}" in
+            3.23)
+                ;;
+            *)
+                echo "Calico release ${calico_release} is too old. Needs to be at least 3.23 to support IPv6 VXLAN"
+                echo "Aborting"
+                exit 1
+                ;;
+        esac
+
         echo "Installing Calico network controllers"
         retry 5 curl -Lsf https://projectcalico.docs.tigera.io/archive/v${calico_release}/manifests/calico-vxlan.yaml |
             sed 's/"type": "calico-ipam"/&,"assign_ipv4":"true","assign_ipv6":"true"/' |
