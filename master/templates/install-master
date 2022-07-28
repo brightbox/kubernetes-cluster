@@ -178,17 +178,18 @@ spec:
 MANIFEST
 
         echo "Installing Calico network controllers"
-        retry 5 kubectl apply -f \
-        https://projectcalico.docs.tigera.io/archive/v${calico_release}/manifests/calico.yaml
+        retry 5 curl -Lsf https://projectcalico.docs.tigera.io/archive/v${calico_release}/manifests/calico-vxlan.yaml |
+            sed 's/"type": "calico-ipam"/&,"assign_ipv4":"true","assign_ipv6":"true"/' |
+            kubectl apply -f -
 
-        echo "Setting IP autodetect"
-            retry 5 kubectl set env daemonset/calico-node -n kube-system -c calico-node \
-                IP=autodetect \
-                IP6=none \
-                CALICO_IPV4POOL_NAT_OUTGOING=true \
-                CALICO_IPV6POOL_NAT_OUTGOING=false \
-                CLUSTER_TYPE=kubeadm,k8s \
-                FELIX_IPV6SUPPORT=false
+        echo "Setting IP/IPv6 autodetect"
+        retry 5 kubectl set env daemonset/calico-node -n kube-system -c calico-node \
+            IP=autodetect \
+            IP6=autodetect \
+            CALICO_IPV4POOL_NAT_OUTGOING=true \
+            CALICO_IPV6POOL_NAT_OUTGOING=true \
+            CLUSTER_TYPE=kubeadm,k8s \
+            FELIX_IPV6SUPPORT=true
 
         case "${storage_system}" in
             manual)
