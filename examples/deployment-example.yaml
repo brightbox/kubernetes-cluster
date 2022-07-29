@@ -13,6 +13,8 @@ spec:
       labels:
         app: busybox
     spec:
+      subdomain: dep
+      setHostnameAsFQDN: true
       containers:
       - name: busybox
         image: busybox
