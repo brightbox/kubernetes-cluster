@@ -69,7 +69,7 @@ resource "brightbox_server" "k8s_worker" {
   image            = brightbox_config_map.k8s_worker.data["image"]
   type             = brightbox_config_map.k8s_worker.data["type"]
   user_data_base64 = brightbox_config_map.k8s_worker.data["user_data"]
-  zone             = "${brightbox_config_map.k8s_worker.data["region"]}-${brightbox_config_map.k8s_worker.data["zone"] == "" ? (count.index % 2 == 0 ? "a" : "b") : brightbox_config_map.k8s_worker.data["zone"]}"
+  zone             = brightbox_config_map.k8s_worker.data["zone"] == "" ? "${brightbox_config_map.k8s_worker.data["region"]}-${(count.index % 2 == 0 ? "a" : "b")}" : brightbox_config_map.k8s_worker.data["zone"]
 
   server_groups = [brightbox_config_map.k8s_worker.data["default_group"], brightbox_config_map.k8s_worker.data["server_group"]]
 
