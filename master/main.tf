@@ -3,12 +3,12 @@ locals {
   template_path = "${path.module}/templates"
   cluster_fqdn  = "${var.cluster_name}.${var.cluster_domainname}"
   boot_token    = "${random_string.token_prefix.result}.${random_string.token_suffix.result}"
-  public_ip     = brightbox_cloudip.k8s_master.public_ip
+  public_ip     = brightbox_cloudip.k8s_master.public_ipv4
   public_rdns   = brightbox_cloudip.k8s_master.reverse_dns
   public_fqdn   = brightbox_cloudip.k8s_master.fqdn
   lb_count      = var.master_count > 1 ? 1 : 0
   bastion       = local.lb_count == 1 ? brightbox_cloudip.bastion[0].fqdn : local.public_fqdn
-  bastion_ip    = local.lb_count == 1 ? brightbox_cloudip.bastion[0].public_ip : local.public_ip
+  bastion_ip    = local.lb_count == 1 ? brightbox_cloudip.bastion[0].public_ipv4 : local.public_ip
   bastion_user  = brightbox_server.k8s_master[0].username
   api_target    = local.lb_count == 1 ? brightbox_load_balancer.k8s_master[0].id : brightbox_server.k8s_master[0].interface
   cloud_config  = file("${local.template_path}/cloud-config.yml")
@@ -63,7 +63,7 @@ resource "brightbox_cloudip" "bastion" {
   target = brightbox_server.k8s_master[0].interface
   provisioner "local-exec" {
     when    = destroy
-    command = "ssh-keygen -R ${self.fqdn}; ssh-keygen -R ${self.public_ip}"
+    command = "ssh-keygen -R ${self.fqdn}; ssh-keygen -R ${self.public_ipv4}"
   }
 
 }
