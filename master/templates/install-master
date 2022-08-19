@@ -178,7 +178,7 @@ spec:
 MANIFEST
 
         case "${calico_release}" in
-            3.23)
+            3.2[3-9])
                 ;;
             *)
                 echo "Calico release ${calico_release} is too old. Needs to be at least 3.23 to support IPv6 VXLAN"

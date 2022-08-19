@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: "release"
     app.kubernetes.io/name: "brightbox-cluster-autoscaler"
     app.kubernetes.io/managed-by: "Helm"
-    helm.sh/chart: "cluster-autoscaler-9.18.1"
+    helm.sh/chart: "cluster-autoscaler-9.19.4"
   name: release-brightbox-cluster-autoscaler
   namespace: kube-system
 spec:
@@ -28,7 +28,7 @@ metadata:
     app.kubernetes.io/instance: "release"
     app.kubernetes.io/name: "brightbox-cluster-autoscaler"
     app.kubernetes.io/managed-by: "Helm"
-    helm.sh/chart: "cluster-autoscaler-9.18.1"
+    helm.sh/chart: "cluster-autoscaler-9.19.4"
   name: release-brightbox-cluster-autoscaler
   namespace: kube-system
 automountServiceAccountToken: true
@@ -41,7 +41,7 @@ metadata:
     app.kubernetes.io/instance: "release"
     app.kubernetes.io/name: "brightbox-cluster-autoscaler"
     app.kubernetes.io/managed-by: "Helm"
-    helm.sh/chart: "cluster-autoscaler-9.18.1"
+    helm.sh/chart: "cluster-autoscaler-9.19.4"
   name: release-brightbox-cluster-autoscaler
 rules:
   - apiGroups:
@@ -182,7 +182,7 @@ metadata:
     app.kubernetes.io/instance: "release"
     app.kubernetes.io/name: "brightbox-cluster-autoscaler"
     app.kubernetes.io/managed-by: "Helm"
-    helm.sh/chart: "cluster-autoscaler-9.18.1"
+    helm.sh/chart: "cluster-autoscaler-9.19.4"
   name: release-brightbox-cluster-autoscaler
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -201,7 +201,7 @@ metadata:
     app.kubernetes.io/instance: "release"
     app.kubernetes.io/name: "brightbox-cluster-autoscaler"
     app.kubernetes.io/managed-by: "Helm"
-    helm.sh/chart: "cluster-autoscaler-9.18.1"
+    helm.sh/chart: "cluster-autoscaler-9.19.4"
   name: release-brightbox-cluster-autoscaler
   namespace: kube-system
 rules:
@@ -230,7 +230,7 @@ metadata:
     app.kubernetes.io/instance: "release"
     app.kubernetes.io/name: "brightbox-cluster-autoscaler"
     app.kubernetes.io/managed-by: "Helm"
-    helm.sh/chart: "cluster-autoscaler-9.18.1"
+    helm.sh/chart: "cluster-autoscaler-9.19.4"
   name: release-brightbox-cluster-autoscaler
   namespace: kube-system
 roleRef:
@@ -250,7 +250,7 @@ metadata:
     app.kubernetes.io/instance: "release"
     app.kubernetes.io/name: "brightbox-cluster-autoscaler"
     app.kubernetes.io/managed-by: "Helm"
-    helm.sh/chart: "cluster-autoscaler-9.18.1"
+    helm.sh/chart: "cluster-autoscaler-9.19.4"
   name: release-brightbox-cluster-autoscaler
   namespace: kube-system
 spec:
@@ -274,7 +274,7 @@ metadata:
     app.kubernetes.io/instance: "release"
     app.kubernetes.io/name: "brightbox-cluster-autoscaler"
     app.kubernetes.io/managed-by: "Helm"
-    helm.sh/chart: "cluster-autoscaler-9.18.1"
+    helm.sh/chart: "cluster-autoscaler-9.19.4"
   name: release-brightbox-cluster-autoscaler
   namespace: kube-system
 spec:
