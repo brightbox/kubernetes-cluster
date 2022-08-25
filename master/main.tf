@@ -27,7 +27,7 @@ resource "brightbox_cloudip" "k8s_master" {
 
   provisioner "local-exec" {
     when    = destroy
-    command = "ssh-keygen -R ${self.fqdn}; ssh-keygen -R ${self.public_ip}"
+    command = "ssh-keygen -R ${self.fqdn}; ssh-keygen -R ${self.public_ipv4}"
   }
 }
 

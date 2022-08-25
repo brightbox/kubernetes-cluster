@@ -23,14 +23,11 @@ retry() {
 }
 
 #IPv6 setting check
-if [ "$(sysctl -n net.ipv6.conf.all.disable_ipv6)" -eq 1 ]
+if [ "$(sysctl -n net.ipv6.conf.all.disable_ipv6)" -eq 0 ]
 then
-    echo "Detected IPv6 is disabled" >&2
-    echo "This manifest set is for creating and maintaining dual stack" >&2
-    echo "Kubernetes clusters." >&2
-    echo >&2
-    echo "Use the IPv4-only version to maintain older clusters" >&2
-    echo "Aborting"
+    echo "Active IPv6 detected" >&2
+    echo "This manifest set is for creating and maintaining IPv4 only" >&2
+    echo "Kubernetes clusters. Consider using the dual stack version" >&2
     exit 10
 fi
 
@@ -49,6 +46,7 @@ EOF
 cat <<EOF | sudo tee /etc/sysctl.d/40-kubernetes.conf
 net.ipv6.conf.all.forwarding=1
 net.ipv4.ip_forward=1
+net.ipv6.conf.all.disable_ipv6=1
 net.bridge.bridge-nf-call-ip6tables=1
 net.bridge.bridge-nf-call-iptables=1
 EOF
