@@ -178,30 +178,17 @@ spec:
       k8s-app: kube-dns
 MANIFEST
 
-        case "${calico_release}" in
-            3.2[3-9]*)
-                ;;
-            *)
-                echo "Calico release ${calico_release} is too old. Needs to be at least 3.23 to support IPv6 VXLAN"
-                echo "Aborting"
-                exit 1
-                ;;
-        esac
-
         echo "Installing Calico network controllers"
-        retry 5 curl -Lsf "https://raw.githubusercontent.com/projectcalico/calico/v${calico_release}/manifests/calico-vxlan.yaml" |
-            sed 's/"type": "calico-ipam"/&,"assign_ipv4":"true","assign_ipv6":"true"/' |
-            kubectl apply -f -
+        retry 5 kubectl apply -f "https://raw.githubusercontent.com/projectcalico/calico/v${calico_release}/manifests/calico-vxlan.yaml"
 
-        echo "Setting IP/IPv6 autodetect"
+        echo "Setting IP autodetect"
         retry 5 kubectl set env daemonset/calico-node -n kube-system -c calico-node \
-            FELIX_IPV6SUPPORT=true \
+            FELIX_IPV6SUPPORT=false \
             IP=autodetect \
-            IP6=autodetect \
+            IP6=none \
             CALICO_IPV4POOL_NAT_OUTGOING=true \
-            CALICO_IPV6POOL_NAT_OUTGOING=true \
+            CALICO_IPV6POOL_NAT_OUTGOING=false \
             IP_AUTODETECTION_METHOD=cidr=10.0.0.0/8 \
-            IP6_AUTODETECTION_METHOD=cidr=2a02:1348::/32 \
             CLUSTER_TYPE=kubeadm,k8s
 
         echo "Patching default IPv4 pool (if required)"
@@ -322,12 +309,12 @@ upgrade() {
                 sudo apt-mark hold kubelet kubectl
                 ensure_certs_in_kubelet_config
                 retry 5 sudo systemctl restart kubelet
-		;;
+        ;;
     *)  echo "Already at version ${kubernetes_release} or greater - refreshing certificates"
-		echo $${plan}
+        echo $${plan}
         retry 5 sudo kubeadm init phase upload-certs --upload-certs --config $HOME/install/kubeadm.conf
-		;;
-	esac
+        ;;
+    esac
     ensure_admin_config
     ensure_ancillary_items
 }
