@@ -59,7 +59,7 @@ fi
 sudo systemctl enable iscsid && sudo systemctl start iscsid
 ensure_updated_apt_keys
 sudo apt-get -qq update -y
-sudo apt-get -qq install -y debconf-utils lvm2
+sudo apt-get -qq install -y debconf-utils lvm2 nfs-common
 echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
 echo "Upgrading kubeadm"
 if ! retry 5 sudo apt-get -qq -y --allow-change-held-packages --allow-downgrades install kubeadm="${kubernetes_release}-00"
