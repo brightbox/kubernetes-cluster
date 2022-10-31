@@ -178,7 +178,7 @@ spec:
 MANIFEST
 
         case "${calico_release}" in
-            3.2[3-9])
+            3.2[3-9]*)
                 ;;
             *)
                 echo "Calico release ${calico_release} is too old. Needs to be at least 3.23 to support IPv6 VXLAN"
@@ -188,18 +188,20 @@ MANIFEST
         esac
 
         echo "Installing Calico network controllers"
-        retry 5 curl -Lsf https://projectcalico.docs.tigera.io/archive/v${calico_release}/manifests/calico-vxlan.yaml |
+        retry 5 curl -Lsf "https://raw.githubusercontent.com/projectcalico/calico/v${calico_release}/manifests/calico-vxlan.yaml" |
             sed 's/"type": "calico-ipam"/&,"assign_ipv4":"true","assign_ipv6":"true"/' |
             kubectl apply -f -
 
         echo "Setting IP/IPv6 autodetect"
         retry 5 kubectl set env daemonset/calico-node -n kube-system -c calico-node \
+            FELIX_IPV6SUPPORT=true \
             IP=autodetect \
             IP6=autodetect \
             CALICO_IPV4POOL_NAT_OUTGOING=true \
             CALICO_IPV6POOL_NAT_OUTGOING=true \
-            CLUSTER_TYPE=kubeadm,k8s \
-            FELIX_IPV6SUPPORT=true
+            IP_AUTODETECTION_METHOD=cidr=10.0.0.0/8 \
+            IP6_AUTODETECTION_METHOD=cidr=2a02:1348::/32 \
+            CLUSTER_TYPE=kubeadm,k8s
 
         case "${storage_system}" in
             manual)
