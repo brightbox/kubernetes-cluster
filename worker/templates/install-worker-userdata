@@ -73,7 +73,6 @@ export DEBIAN_FRONTEND=noninteractive
 
 echo "Adding repositories"
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-apt-add-repository -y ppa:gluster/glusterfs-6
 apt-add-repository -y 'deb http://apt.kubernetes.io/ kubernetes-xenial main'
 
 echo "Upgrading existing Packages"
