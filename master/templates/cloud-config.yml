@@ -11,8 +11,6 @@ packages:
   - glusterfs-client
 apt:
   sources:
-    gluster.list:
-      source: "ppa:gluster/glusterfs-6"
     raptor.key:
       keyid: "FEEA9169307EA071"
     cloud-raptor.key:

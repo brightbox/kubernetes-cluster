@@ -90,8 +90,13 @@ then
 	echo "Make containerd CRI v1 runtime use systemd cgroup"
 	sudo mkdir -p /etc/containerd
 	cat <<EOF | sudo tee /etc/containerd/config.toml
-[plugins."io.containerd.grpc.v1.cri"]
-	systemd_cgroup = true
+version = 2
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  runtime_type = "io.containerd.runc.v2"
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+  SystemdCgroup = true
 EOF
 sudo systemctl reload-or-restart containerd
 
