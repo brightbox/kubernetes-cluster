@@ -28,6 +28,7 @@ extraArgs:
   logtostderr: true
   cluster-name: "${cluster_fqdn}"
   skip-nodes-with-local-storage: true
+  scale-down-delay-after-add: "50m"
 podAnnotations:
   prometheus.io/scrape: 'true'
   prometheus.io/port: '8085'
