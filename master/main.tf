@@ -89,13 +89,12 @@ resource "brightbox_server" "k8s_master" {
   user_data = local.cloud_config
   zone      = var.master_zone == "" ? "${var.region}-${(count.index % 2 == 0 ? "a" : "b")}" : var.master_zone
 
-  server_groups = [var.cluster_server_group]
+  server_groups = concat([var.cluster_server_group], var.additional_server_groups)
 
   lifecycle {
     ignore_changes = [
       image,
       type,
-      server_groups,
       zone,
     ]
     create_before_destroy = true

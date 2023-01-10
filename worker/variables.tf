@@ -104,3 +104,9 @@ variable "storage_system" {
   description = "Which storage system to setup"
   default     = "manual"
 }
+
+variable "additional_server_groups" {
+  description = "Additional server group ids to add all cluster nodes to"
+  type        = list(string)
+  default     = []
+}

@@ -101,3 +101,9 @@ variable "secure_kubelet" {
   type        = bool
   description = "Whether to ask for a central signing certificate or stick with self-signed"
 }
+
+variable "additional_server_groups" {
+  description = "Additional server group ids to add all cluster nodes to"
+  type        = list(string)
+  default     = []
+}
