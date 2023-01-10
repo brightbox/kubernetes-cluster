@@ -62,6 +62,12 @@ variable "secure_kubelet" {
   default     = false
 }
 
+variable "additional_server_groups" {
+  description = "Additional server group ids to add all cluster nodes to"
+  type        = list(string)
+  default     = []
+}
+
 # Masters
 
 variable "master_count" {

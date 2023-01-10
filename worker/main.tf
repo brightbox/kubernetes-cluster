@@ -25,15 +25,16 @@ resource "brightbox_server_group" "k8s_worker" {
 resource "brightbox_config_map" "k8s_worker" {
   name = "${var.worker_name}.${var.internal_cluster_fqdn}"
   data = {
-    min           = var.worker_count
-    max           = var.worker_max
-    image         = data.brightbox_image.k8s_worker.id
-    type          = var.worker_type
-    region        = var.region
-    zone          = var.worker_zone
-    user_data     = data.template_cloudinit_config.worker_userdata.rendered
-    server_group  = brightbox_server_group.k8s_worker.id
-    default_group = var.cluster_server_group
+    min               = var.worker_count
+    max               = var.worker_max
+    image             = data.brightbox_image.k8s_worker.id
+    type              = var.worker_type
+    region            = var.region
+    zone              = var.worker_zone
+    user_data         = data.template_cloudinit_config.worker_userdata.rendered
+    server_group      = brightbox_server_group.k8s_worker.id
+    default_group     = var.cluster_server_group
+    additional_groups = join(",", var.additional_server_groups)
   }
 }
 
@@ -71,13 +72,12 @@ resource "brightbox_server" "k8s_worker" {
   user_data_base64 = brightbox_config_map.k8s_worker.data["user_data"]
   zone             = brightbox_config_map.k8s_worker.data["zone"] == "" ? "${brightbox_config_map.k8s_worker.data["region"]}-${(count.index % 2 == 0 ? "a" : "b")}" : brightbox_config_map.k8s_worker.data["zone"]
 
-  server_groups = [brightbox_config_map.k8s_worker.data["default_group"], brightbox_config_map.k8s_worker.data["server_group"]]
+  server_groups = concat([brightbox_config_map.k8s_worker.data["default_group"], brightbox_config_map.k8s_worker.data["server_group"]], var.additional_server_groups)
 
   lifecycle {
     ignore_changes = [
       image,
       type,
-      server_groups,
       zone,
     ]
     create_before_destroy = true
@@ -123,4 +123,3 @@ data "brightbox_image" "k8s_worker" {
   official    = true
   most_recent = true
 }
-

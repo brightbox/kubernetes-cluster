@@ -22,8 +22,9 @@ module "k8s_master" {
   secure_kubelet         = var.secure_kubelet
 
   #Injections
-  cluster_server_group    = module.k8s_cluster.group_id
-  cluster_firewall_policy = module.k8s_cluster.firewall_policy_id
-  ca_cert_pem             = tls_self_signed_cert.k8s_ca.cert_pem
-  ca_private_key_pem      = tls_private_key.k8s_ca.private_key_pem
+  cluster_server_group     = module.k8s_cluster.group_id
+  cluster_firewall_policy  = module.k8s_cluster.firewall_policy_id
+  ca_cert_pem              = tls_self_signed_cert.k8s_ca.cert_pem
+  ca_private_key_pem       = tls_private_key.k8s_ca.private_key_pem
+  additional_server_groups = var.additional_server_groups
 }
