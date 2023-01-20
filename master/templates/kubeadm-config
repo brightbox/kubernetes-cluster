@@ -5,7 +5,7 @@ set -e
 create_kubeadm_config() {
     echo "Installing kubeadm.conf"
     case ${kubernetes_release} in
-        1.2[2345].*)
+        1.2[23456].*)
             v1beta3
             ;;
         *)
@@ -53,8 +53,6 @@ serverTLSBootstrap: ${secure_kublet}
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
 clusterCIDR: "${cluster_cidr}"
-ipvs:
-  scheduler: lc
 mode: ipvs
 EOF
 }
