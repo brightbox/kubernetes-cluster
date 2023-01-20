@@ -1,5 +1,7 @@
 #!/bin/bash
 
+APT_GET="sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_SUSPEND=1 apt-get -qq -y"
+
 # Retries a command on failure.
 # $1 - the max number of attempts
 # $2... - the command to run
@@ -43,8 +45,8 @@ EOF
 }
 
 ensure_updated_apt_keys() {
-    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-    echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/kubernetes.gpg > /dev/null
+    echo "deb [signed-by=/usr/share/keyrings/kubernetes.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 }
 
 echo "Ensuring installation has completed"
@@ -58,11 +60,11 @@ fi
 
 sudo systemctl enable iscsid && sudo systemctl start iscsid
 ensure_updated_apt_keys
-sudo apt-get -qq update -y
-sudo apt-get -qq install -y debconf-utils lvm2 nfs-common
+$${APT_GET} update
+$${APT_GET} install debconf-utils lvm2 nfs-common
 echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
 echo "Upgrading kubeadm"
-if ! retry 5 sudo apt-get -qq -y --allow-change-held-packages --allow-downgrades install kubeadm="${kubernetes_release}-00"
+if ! retry 5 $${APT_GET} --allow-change-held-packages --allow-downgrades install kubeadm="${kubernetes_release}-00"
 then
 	sudo apt-mark hold kubeadm
 	echo "Failed to install kubeadm at version ${kubernetes_release}-00"
@@ -81,7 +83,7 @@ case ${kubernetes_release} in
         ;;
 esac
 echo "Upgrading kubelet"
-retry 5 sudo apt-get -qq -y --allow-change-held-packages --allow-downgrades install \
+retry 5 $${APT_GET} --allow-change-held-packages --allow-downgrades install \
 	kubectl="${kubernetes_release}-00" \
 	kubelet="${kubernetes_release}-00"
 sudo apt-mark hold kubelet kubectl

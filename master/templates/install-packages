@@ -1,13 +1,23 @@
 #!/bin/bash
 
 set -e
+APT_GET="sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_SUSPEND=1 apt-get -qq -y"
 
 echo "Waiting for base package installation to complete"
 cloud-init status --wait >/dev/null
 
+echo "Adding repositories"
+
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/kubernetes.gpg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/docker.gpg
+echo "deb [signed-by=/usr/share/keyrings/kubernetes.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+echo "deb [signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
+
 echo "Installing versioned packages"
 
-sudo apt-get -qq -y install \
+$${APT_GET} update
+$${APT_GET} install \
+    containerd.io \
 	kubeadm=${kubernetes_release}-00 \
         kubectl=${kubernetes_release}-00 \
 	kubelet=${kubernetes_release}-00

@@ -1,5 +1,8 @@
 #!/bin/bash
 # Set script parameters here
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_SUSPEND=1
+
 discovery_ca_cert_hash=$(openssl x509 -noout -pubkey <<CA |openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1 | tr -d '\n'
 ${certificate_authority_pem}
 CA
@@ -72,8 +75,10 @@ retry 5 sysctl --system
 export DEBIAN_FRONTEND=noninteractive
 
 echo "Adding repositories"
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-apt-add-repository -y 'deb http://apt.kubernetes.io/ kubernetes-xenial main'
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/kubernetes.gpg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/docker.gpg
+echo "deb [signed-by=/usr/share/keyrings/kubernetes.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+echo "deb [signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
 
 echo "Upgrading existing Packages"
 apt-get -qq -y update
@@ -86,7 +91,7 @@ apt-get -qq -y install \
 	conntrack \
 	ipset \
 	debconf-utils \
-	containerd \
+	containerd.io \
 	glusterfs-client \
 	kubeadm=$${k8s_version}-00 \
 	kubectl=$${k8s_version}-00 \
