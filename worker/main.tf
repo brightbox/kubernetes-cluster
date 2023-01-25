@@ -27,7 +27,7 @@ resource "brightbox_config_map" "k8s_worker" {
   data = {
     min               = var.worker_count
     max               = var.worker_max
-    image             = data.brightbox_image.k8s_worker.id
+    image             = var.image_desc
     type              = var.worker_type
     region            = var.region
     zone              = var.worker_zone
@@ -67,7 +67,7 @@ resource "brightbox_server" "k8s_worker" {
   count = var.worker_count
 
   name             = "${var.worker_name}-${count.index}.${var.internal_cluster_fqdn}"
-  image            = brightbox_config_map.k8s_worker.data["image"]
+  image            = data.brightbox_image.k8s_worker.id
   type             = brightbox_config_map.k8s_worker.data["type"]
   user_data_base64 = brightbox_config_map.k8s_worker.data["user_data"]
   zone             = brightbox_config_map.k8s_worker.data["zone"] == "" ? "${brightbox_config_map.k8s_worker.data["region"]}-${(count.index % 2 == 0 ? "a" : "b")}" : brightbox_config_map.k8s_worker.data["zone"]
