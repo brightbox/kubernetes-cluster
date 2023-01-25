@@ -74,7 +74,7 @@ fi
 sudo apt-mark hold kubeadm
 echo "Upgrading worker node"
 case ${kubernetes_release} in
-    1.2[2345].*)
+    1.2[23456].*)
 		retry 5 sudo kubeadm upgrade node
 		;;
     *)
