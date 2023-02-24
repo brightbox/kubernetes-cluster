@@ -12,6 +12,7 @@ module "k8s_worker" {
   image_desc             = var.image_desc
   region                 = var.region
   kubernetes_release     = var.kubernetes_release
+  critools_release       = var.critools_release
   internal_cluster_fqdn  = local.cluster_fqdn
   apiserver_service_port = local.service_port
   worker_drain_timeout   = var.worker_drain_timeout
@@ -42,6 +43,7 @@ module "k8s_storage" {
   image_desc             = var.image_desc
   region                 = var.region
   kubernetes_release     = var.kubernetes_release
+  critools_release       = var.critools_release
   internal_cluster_fqdn  = local.cluster_fqdn
   apiserver_service_port = local.service_port
   worker_drain_timeout   = var.worker_drain_timeout

@@ -13,6 +13,11 @@ variable "kubernetes_release" {
   description = "Version of Kubernetes to install"
 }
 
+variable "critools_release" {
+  type        = string
+  description = "Version of cri-tools to install"
+}
+
 variable "root_size" {
   type        = number
   description = "The size of the worker root partition in GiB (0 for full size)"

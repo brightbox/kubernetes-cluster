@@ -189,6 +189,12 @@ variable "kubernetes_release" {
   default     = "1.25.7"
 }
 
+variable "critools_release" {
+  type        = string
+  description = "Version of cri-tools to install"
+  default     = "1.25.0"
+}
+
 variable "autoscaler_release" {
   type        = string
   description = "Version of Vertical Autoscaler to install if the scaling features are activated. This needs to be the same minor version as the k8s release"

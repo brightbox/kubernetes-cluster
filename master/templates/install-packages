@@ -19,6 +19,7 @@ $${APT_GET} update
 $${APT_GET} install \
     containerd.io \
 	kubeadm=${kubernetes_release}-00 \
-        kubectl=${kubernetes_release}-00 \
-	kubelet=${kubernetes_release}-00
-sudo apt-mark hold kubeadm kubectl kubelet
+	kubectl=${kubernetes_release}-00 \
+	kubelet=${kubernetes_release}-00 \
+	cri-tools=${critools_release}-00
+sudo apt-mark hold kubeadm kubectl kubelet cri-tools
