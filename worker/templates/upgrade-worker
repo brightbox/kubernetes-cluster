@@ -63,6 +63,16 @@ ensure_updated_apt_keys
 $${APT_GET} update
 $${APT_GET} install debconf-utils lvm2 nfs-common
 echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
+# Upgrade cri-tools before upgrading kubeadm to avoid CRI API incompatibility
+echo "Upgrading cri-tools"
+if ! retry 5 sudo apt-get -qq -y --allow-change-held-packages --allow-downgrades install cri-tools="${critools_release}-00"
+then
+	sudo apt-mark hold cri-tools
+	echo "Failed to install cri-tools at version ${critools_release}-00"
+	echo "Version installed is at $(dpkg-query --showformat='$${Version}' --show cri-tools)"
+	return 2
+fi
+sudo apt-mark hold cri-tools
 echo "Upgrading kubeadm"
 if ! retry 5 $${APT_GET} --allow-change-held-packages --allow-downgrades install kubeadm="${kubernetes_release}-00"
 then

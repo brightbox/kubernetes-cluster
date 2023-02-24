@@ -8,6 +8,7 @@ ${certificate_authority_pem}
 CA
 )
 k8s_version="${kubernetes_release}"
+critools_version="${critools_release}"
 kubeadm_join_command="kubeadm join --config /tmp/kubeadm.conf"
 storage_system="${storage_system}"
 openebs_mount='/var/openebs/local'
@@ -95,9 +96,10 @@ apt-get -qq -y install \
 	glusterfs-client \
 	kubeadm=$${k8s_version}-00 \
 	kubectl=$${k8s_version}-00 \
-	kubelet=$${k8s_version}-00
+	kubelet=$${k8s_version}-00 \
+	cri-tools=$${critools_version}-00
 
-apt-mark hold kubelet kubeadm kubectl
+apt-mark hold kubelet kubeadm kubectl cri-tools
 
 echo "Selecting iptables version"
 if update-alternatives --set iptables /usr/sbin/iptables-legacy

@@ -2,12 +2,16 @@ locals {
   template_path = "${path.module}/templates"
   upgrade_script = templatefile(
     "${local.template_path}/upgrade-worker",
-    { kubernetes_release = var.kubernetes_release }
+    {
+      kubernetes_release = var.kubernetes_release
+      critools_release   = var.critools_release
+    }
   )
   user_data = templatefile(
     "${local.template_path}/install-worker-userdata",
     {
       kubernetes_release        = var.kubernetes_release
+      critools_release          = var.critools_release
       boot_token                = var.boot_token
       fqdn                      = var.apiserver_fqdn
       service_port              = var.apiserver_service_port

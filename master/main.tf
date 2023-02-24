@@ -134,7 +134,10 @@ resource "null_resource" "k8s_master_once" {
     inline = [
       templatefile(
         "${local.template_path}/install-packages",
-        { kubernetes_release = var.kubernetes_release }
+        {
+          kubernetes_release = var.kubernetes_release
+          critools_release   = var.critools_release
+        }
       )
     ]
   }
@@ -243,6 +246,7 @@ resource "null_resource" "k8s_master_mirrors_configure" {
     inline = [
       templatefile("${local.template_path}/install-master-mirror", {
         kubernetes_release        = var.kubernetes_release,
+        critools_release          = var.critools_release,
         cluster_fqdn              = local.cluster_fqdn,
         public_fqdn               = local.public_fqdn,
         boot_token                = local.boot_token
@@ -315,6 +319,7 @@ locals {
 
   master_provisioner_script = templatefile("${local.template_path}/install-master", {
     kubernetes_release = var.kubernetes_release,
+    critools_release   = var.critools_release,
     calico_release     = var.calico_release,
     cluster_fqdn       = local.cluster_fqdn,
     public_fqdn        = local.public_fqdn,
