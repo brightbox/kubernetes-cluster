@@ -79,7 +79,8 @@ echo "Adding repositories"
 curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/kubernetes.gpg
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/docker.gpg
 echo "deb [signed-by=/usr/share/keyrings/kubernetes.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-echo "deb [signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
+sudo rm -f /etc/apt/sources.list.d/docker.list
+#echo "deb [signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
 
 echo "Upgrading existing Packages"
 apt-get -qq -y update
@@ -92,7 +93,7 @@ apt-get -qq -y install \
 	conntrack \
 	ipset \
 	debconf-utils \
-	containerd.io \
+	containerd \
 	glusterfs-client \
 	kubeadm=$${k8s_version}-00 \
 	kubectl=$${k8s_version}-00 \
