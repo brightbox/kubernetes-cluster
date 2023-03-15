@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-APT_GET="sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_SUSPEND=1 apt-get -qq -y"
+APT_GET="sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_SUSPEND=1 apt-get -o Dpkg::Options::=--force-confold -o Dpkg::Options::=--force-confdef -qq -y"
 
 echo "Waiting for base package installation to complete"
 cloud-init status --wait >/dev/null
