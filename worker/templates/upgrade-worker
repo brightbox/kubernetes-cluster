@@ -1,6 +1,6 @@
 #!/bin/bash
 
-APT_GET="sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_SUSPEND=1 apt-get -qq -y"
+APT_GET="sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_SUSPEND=1 apt-get -o Dpkg::Options::=--force-confold -o Dpkg::Options::=--force-confdef -qq -y"
 
 # Retries a command on failure.
 # $1 - the max number of attempts
@@ -65,7 +65,7 @@ $${APT_GET} install debconf-utils lvm2 nfs-common
 echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
 # Upgrade cri-tools before upgrading kubeadm to avoid CRI API incompatibility
 echo "Upgrading cri-tools"
-if ! retry 5 sudo apt-get -qq -y --allow-change-held-packages --allow-downgrades install cri-tools="${critools_release}-00"
+if ! retry 5 $${APT_GET} --allow-change-held-packages --allow-downgrades install cri-tools="${critools_release}-00"
 then
 	sudo apt-mark hold cri-tools
 	echo "Failed to install cri-tools at version ${critools_release}-00"
@@ -95,6 +95,7 @@ esac
 echo "Upgrading kubelet"
 retry 5 $${APT_GET} --allow-change-held-packages --allow-downgrades install \
 	kubectl="${kubernetes_release}-00" \
-	kubelet="${kubernetes_release}-00"
+	kubelet="${kubernetes_release}-00" \
+    containerd
 sudo apt-mark hold kubelet kubectl
 retry 5 sudo systemctl restart kubelet
