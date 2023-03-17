@@ -204,6 +204,14 @@ MANIFEST
             IP6_AUTODETECTION_METHOD=cidr=2a02:1348::/32 \
             CLUSTER_TYPE=kubeadm,k8s
 
+        echo "Patching default IPv4 pool (if required)"
+        if kubectl get ippools/default-ipv4-ippool -o json --ignore-not-found | grep -q vxlanMode
+        then
+             kubectl patch ippools/default-ipv4-ippool \
+             --type='json' \
+             -p '[{"op": "replace", "path": "/spec/ipipMode", "value": "Never"}, {"op": "replace", "path": "/spec/vxlanMode", "value": "CrossSubnet"}]'
+        fi
+
         case "${storage_system}" in
             manual)
                 ;;
