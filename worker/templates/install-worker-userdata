@@ -87,7 +87,7 @@ apt-get -qq -y update
 apt-get -qq -y upgrade
 
 echo "Installing versioned packages"
-apt-get -qq -y install \
+apt-get -qq -y --allow-change-held-packages install \
 	language-pack-en \
 	socat \
 	conntrack \
