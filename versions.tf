@@ -7,7 +7,7 @@ terraform {
     }
     null = {
       source  = "hashicorp/null"
-      version = "~> 2.1"
+      version = "~> 3.2"
     }
     tls = {
       source  = "hashicorp/tls"
