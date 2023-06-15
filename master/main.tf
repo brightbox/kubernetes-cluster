@@ -331,7 +331,7 @@ locals {
     }
   )
 
-  autoscaler_repository = "brightbox/cluster-autoscaler-brightbox"
+  autoscaler_repository = "${var.container_registry}/cluster-autoscaler-brightbox"
   #autoscaler_repository = tonumber(replace(var.autoscaler_release, "/.[0-9]+$/", "")) >= 1.23 ? "k8s.gcr.io/autoscaling/cluster-autoscaler" : "brightbox/cluster-autoscaler-brightbox"
 
   autoscaler_manifest = templatefile("${local.template_path}/autoscaler-manifest", {
