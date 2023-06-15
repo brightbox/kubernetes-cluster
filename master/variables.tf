@@ -112,3 +112,8 @@ variable "additional_server_groups" {
   type        = list(string)
   default     = []
 }
+
+variable "container_registry" {
+  type        = string
+  description = "path to the container registry to use"
+}

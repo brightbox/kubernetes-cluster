@@ -310,6 +310,7 @@ locals {
     controller_client            = brightbox_api_client.controller_client.id,
     controller_client_b64        = base64encode(brightbox_api_client.controller_client.id),
     controller_client_secret_b64 = base64encode(brightbox_api_client.controller_client.secret),
+    container_registry           = var.container_registry,
     kubernetes_release           = var.kubernetes_release,
     kubernetes_release_b64       = base64encode(var.kubernetes_release),
     local_host                   = local.local_host,
@@ -334,8 +335,8 @@ locals {
   #autoscaler_repository = tonumber(replace(var.autoscaler_release, "/.[0-9]+$/", "")) >= 1.23 ? "k8s.gcr.io/autoscaling/cluster-autoscaler" : "brightbox/cluster-autoscaler-brightbox"
 
   autoscaler_manifest = templatefile("${local.template_path}/autoscaler-manifest", {
-    autoscaler_release = var.autoscaler_release,
-    cluster_fqdn       = local.cluster_fqdn,
+    autoscaler_release    = var.autoscaler_release,
+    cluster_fqdn          = local.cluster_fqdn,
     autoscaler_repository = local.autoscaler_repository
   })
 

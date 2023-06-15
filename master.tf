@@ -8,6 +8,7 @@ module "k8s_master" {
   master_type            = var.master_type
   image_desc             = var.image_desc
   region                 = var.region
+  container_registry     = var.container_registry
   kubernetes_release     = var.kubernetes_release
   critools_release       = var.critools_release
   calico_release         = var.calico_release

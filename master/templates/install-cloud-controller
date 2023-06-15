@@ -302,7 +302,7 @@ spec:
       containers:
       - name: brightbox-cloud-controller-manager
         imagePullPolicy: Always
-        image: brightbox/brightbox-cloud-controller-manager:${kubernetes_release}
+        image: ${container_registry}/brightbox-cloud-controller-manager:${kubernetes_release}
         args:
           - "--cloud-provider=brightbox"
           - "--bind-address=${local_host}"
