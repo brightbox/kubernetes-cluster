@@ -186,7 +186,7 @@ variable "storage_system" {
 variable "kubernetes_release" {
   type        = string
   description = "Version of Kubernetes to install"
-  default     = "1.27.3"
+  default     = "1.27.4"
 }
 
 variable "critools_release" {
@@ -204,7 +204,7 @@ variable "autoscaler_release" {
 variable "calico_release" {
   type        = string
   description = "Version of Calico plugin to install"
-  default     = "3.26.0"
+  default     = "3.26.1"
 }
 
 # Container Registry
