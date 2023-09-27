@@ -74,10 +74,10 @@ retry 5 modprobe -- br_netfilter
 retry 5 sysctl --system
 
 export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_SUSPEND=1
 
 echo "Adding repositories"
 curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/kubernetes.gpg
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/docker.gpg
 echo "deb [signed-by=/usr/share/keyrings/kubernetes.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 sudo rm -f /etc/apt/sources.list.d/docker.list
 #echo "deb [signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
@@ -93,6 +93,8 @@ apt-get -qq -y --allow-change-held-packages install \
 	conntrack \
 	ipset \
 	debconf-utils \
+    lvm2 \
+    nfs-common \
 	containerd \
 	glusterfs-client \
 	kubeadm=$${k8s_version}-00 \
