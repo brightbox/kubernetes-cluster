@@ -79,7 +79,6 @@ resource "tls_private_key" "k8s_ca" {
 }
 
 resource "tls_self_signed_cert" "k8s_ca" {
-  key_algorithm   = tls_private_key.k8s_ca.algorithm
   private_key_pem = tls_private_key.k8s_ca.private_key_pem
 
   subject {
