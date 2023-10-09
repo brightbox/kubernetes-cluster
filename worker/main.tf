@@ -35,14 +35,14 @@ resource "brightbox_config_map" "k8s_worker" {
     type              = var.worker_type
     region            = var.region
     zone              = var.worker_zone
-    user_data         = data.template_cloudinit_config.worker_userdata.rendered
+    user_data         = data.cloudinit_config.worker_userdata.rendered
     server_group      = brightbox_server_group.k8s_worker.id
     default_group     = var.cluster_server_group
     additional_groups = join(",", var.additional_server_groups)
   }
 }
 
-data "template_cloudinit_config" "worker_userdata" {
+data "cloudinit_config" "worker_userdata" {
   gzip          = false
   base64_encode = true
   part {
