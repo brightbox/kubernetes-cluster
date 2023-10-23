@@ -7,8 +7,6 @@ discovery_ca_cert_hash=$(openssl x509 -noout -pubkey <<CA |openssl rsa -pubin -o
 ${certificate_authority_pem}
 CA
 )
-k8s_version="${kubernetes_release}"
-critools_version="${critools_release}"
 kubeadm_join_command="kubeadm join --config /tmp/kubeadm.conf"
 storage_system="${storage_system}"
 openebs_mount='/var/openebs/local'
@@ -88,6 +86,16 @@ echo "Upgrading existing Packages"
 apt-get -qq -y update
 apt-get -qq -y upgrade
 
+echo "Obtaining current versions"
+if ! kube_rel=$(apt-cache madison "kubeadm" | grep -Po "(?<= )${kubernetes_release}[^ ]*")
+then
+    kube_rel="${kubernetes_release}"
+fi
+if ! cri_rel=$(apt-cache madison "cri-tools" | grep -Po "(?<= )${critools_release}[^ ]*")
+then
+    cri_rel="${critools_release}"
+fi
+
 echo "Installing versioned packages"
 apt-get -qq -y --allow-change-held-packages install \
 	language-pack-en \
@@ -99,10 +107,10 @@ apt-get -qq -y --allow-change-held-packages install \
     nfs-common \
 	containerd \
 	glusterfs-client \
-	kubeadm=$${k8s_version}-00 \
-	kubectl=$${k8s_version}-00 \
-	kubelet=$${k8s_version}-00 \
-	cri-tools=$${critools_version}-00
+	kubeadm=$${kube_rel} \
+	kubectl=$${kube_rel} \
+	kubelet=$${kube_rel} \
+	cri-tools=$${cri_rel}
 
 apt-mark hold kubelet kubeadm kubectl cri-tools
 

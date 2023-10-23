@@ -223,29 +223,37 @@ upgrade() {
 	echo "docker.io docker.io/restart select true" | sudo debconf-set-selections
 	# Upgrade cri-tools before upgrading kubeadm to avoid CRI API incompatibility
 	echo "Upgrading cri-tools"
-	if ! retry 5 $${APT_GET} --allow-change-held-packages install cri-tools=${critools_release}-00
-	then
-		sudo apt-mark hold cri-tools
-		echo "Failed to install cri-tools at version ${critools_release}-00"
-		echo "Version installed is at $(dpkg-query --showformat='$${Version}' --show cri-tools)"
-		exit 2
-	fi
-	sudo apt-mark hold cri-tools
-	echo "Upgrading kubeadm"
-	if ! retry 5 $${APT_GET} --allow-change-held-packages install kubeadm=${kubernetes_release}-00
-	then
-		sudo apt-mark hold kubeadm
-		echo "Failed to install kubeadm at version ${kubernetes_release}-00"
-		echo "Version installed is at $(dpkg-query --showformat='$${Version}' --show kubeadm)"
-		exit 2
-	fi
+    if ! cri_rel=$(apt-cache madison "cri-tools" | grep -Po "(?<= )${critools_release}[^ ]*")
+    then
+        cri_rel="${critools_release}"
+    fi
+    if ! retry 5 $${APT_GET} --allow-change-held-packages --allow-downgrades install cri-tools=$${cri_rel}
+    then
+            sudo apt-mark hold cri-tools
+            echo "Failed to install cri-tools at version $${cri_rel}"
+            echo "Version installed is at $(dpkg-query --showformat='$${Version}' --show cri-tools)"
+            return 2
+    fi
+    sudo apt-mark hold cri-tools
+    echo "Upgrading kubeadm"
+    if ! kube_rel=$(apt-cache madison "kubeadm" | grep -Po "(?<= )${kubernetes_release}[^ ]*")
+    then
+        kube_rel="${kubernetes_release}"
+    fi
+    if ! retry 5 $${APT_GET} --allow-change-held-packages --allow-downgrades install kubeadm=$${kube_rel}
+    then
+            sudo apt-mark hold kubeadm
+            echo "Failed to install kubeadm at version $${kube_rel}"
+            echo "Version installed is at $(dpkg-query --showformat='$${Version}' --show kubeadm)"
+            return 2
+    fi
 	sudo apt-mark hold kubeadm
 	echo "Upgrading control plane mirror"
     retry 5 sudo kubeadm upgrade apply -y ${kubernetes_release}
 	echo "Upgrading kubelet"
 	retry 5 $${APT_GET} --allow-change-held-packages install \
-		kubectl=${kubernetes_release}-00 \
-		kubelet=${kubernetes_release}-00 \
+		kubectl=$${kube_rel} \
+		kubelet=$${kube_rel} \
         containerd
 	sudo apt-mark hold kubelet kubectl
 	retry 5 sudo systemctl restart kubelet

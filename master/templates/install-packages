@@ -18,10 +18,18 @@ sudo rm -f /etc/apt/sources.list.d/docker.list
 echo "Installing versioned packages"
 
 $${APT_GET} update
+if ! kube_rel=$(apt-cache madison "kubeadm" | grep -Po "(?<= )${kubernetes_release}[^ ]*")
+then
+    kube_rel="${kubernetes_release}"
+fi
+if ! cri_rel=$(apt-cache madison "cri-tools" | grep -Po "(?<= )${critools_release}[^ ]*")
+then
+    cri_rel="${critools_release}"
+fi
 $${APT_GET} --allow-change-held-packages install \
     containerd \
-	kubeadm=${kubernetes_release}-00 \
-	kubectl=${kubernetes_release}-00 \
-	kubelet=${kubernetes_release}-00 \
-	cri-tools=${critools_release}-00
+	kubeadm=$${kube_rel} \
+	kubectl=$${kube_rel} \
+	kubelet=$${kube_rel} \
+	cri-tools=$${cri_rel}
 sudo apt-mark hold kubeadm kubectl kubelet cri-tools

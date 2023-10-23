@@ -186,25 +186,25 @@ variable "storage_system" {
 variable "kubernetes_release" {
   type        = string
   description = "Version of Kubernetes to install"
-  default     = "1.27.4"
+  default     = "1.28.3"
 }
 
 variable "critools_release" {
   type        = string
   description = "Version of cri-tools to install"
-  default     = "1.26.0"
+  default     = "1.28"
 }
 
 variable "autoscaler_release" {
   type        = string
   description = "Version of Vertical Autoscaler to install if the scaling features are activated. This needs to be the same minor version as the k8s release"
-  default     = "1.27.1"
+  default     = "1.28.0"
 }
 
 variable "calico_release" {
   type        = string
   description = "Version of Calico plugin to install"
-  default     = "3.26.1"
+  default     = "3.26.3"
 }
 
 # Container Registry

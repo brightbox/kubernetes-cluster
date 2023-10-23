@@ -5,7 +5,7 @@ set -e
 create_kubeadm_config() {
     echo "Installing kubeadm.conf"
     case ${kubernetes_release} in
-        1.2[234567].*)
+        1.2[2345678].*)
             v1beta3
             ;;
         *)
