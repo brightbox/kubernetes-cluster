@@ -186,7 +186,7 @@ variable "storage_system" {
 variable "kubernetes_release" {
   type        = string
   description = "Version of Kubernetes to install"
-  default     = "1.29.1"
+  default     = "1.29.2"
 }
 
 variable "critools_release" {
