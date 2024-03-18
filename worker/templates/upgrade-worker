@@ -46,11 +46,9 @@ EOF
 
 ensure_updated_apt_keys() {
     local rel=${kubernetes_release}
-    curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/kubernetes.gpg
     curl -fsSL https://pkgs.k8s.io/core:/stable:/v$${rel%.*}/deb/Release.key | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-    echo "deb [signed-by=/usr/share/keyrings/kubernetes.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes-old.list
     echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v$${rel%.*}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-    sudo rm -f /etc/apt/sources.list.d/docker.list
+    sudo rm -f /etc/apt/sources.list.d/docker.list /etc/apt/sources.list.d/kubernetes-old.list /usr/share/keyrings/kubernetes.gpg
 }
 
 echo "Ensuring installation has completed"
