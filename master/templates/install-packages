@@ -17,11 +17,11 @@ sudo rm -f /etc/apt/sources.list.d/kubernetes-old.list /etc/apt/sources.list.d/d
 echo "Installing versioned packages"
 
 $${APT_GET} update
-if ! kube_rel=$(apt-cache madison "kubeadm" | grep -Po "(?<= )${kubernetes_release}[^ ]*")
+if ! kube_rel=$(apt-cache madison "kubeadm" | grep -Po -m 1 "(?<= )${kubernetes_release}[^ ]*")
 then
     kube_rel="${kubernetes_release}"
 fi
-if ! cri_rel=$(apt-cache madison "cri-tools" | grep -Po "(?<= )${critools_release}[^ ]*")
+if ! cri_rel=$(apt-cache madison "cri-tools" | grep -Po -m 1 "(?<= )${critools_release}[^ ]*")
 then
     cri_rel="${critools_release}"
 fi
