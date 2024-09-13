@@ -270,7 +270,6 @@ ensure_updated_apt_keys() {
 }
 
 upgrade() {
-        ensure_updated_ca
         ensure_updated_apt_keys
 
         if [ -f /var/run/docker.sock ]
@@ -310,6 +309,7 @@ upgrade() {
                 return 2
         fi
         sudo apt-mark hold kubeadm
+        ensure_updated_ca
 	plan=$(sudo kubeadm upgrade plan ${kubernetes_release})
 	case "$${plan}" in
 	*"kubeadm upgrade apply"*)
