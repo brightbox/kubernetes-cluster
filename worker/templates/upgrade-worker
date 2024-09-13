@@ -99,7 +99,7 @@ case ${kubernetes_release} in
     1.2[23456789].*)
 		retry 5 sudo kubeadm upgrade node
 		;;
-    1.3[0].*)
+    1.3[01].*)
 		retry 5 sudo kubeadm upgrade node
 		;;
     *)

@@ -86,11 +86,11 @@ apt-get -qq -y update
 apt-get -qq -y upgrade
 
 echo "Obtaining current versions"
-if ! kube_rel=$(apt-cache madison "kubeadm" | grep -Po "(?<= )${kubernetes_release}[^ ]*")
+if ! kube_rel=$(apt-cache madison "kubeadm" | grep -Po -m 1 "(?<= )${kubernetes_release}[^ ]*")
 then
     kube_rel="${kubernetes_release}"
 fi
-if ! cri_rel=$(apt-cache madison "cri-tools" | grep -Po "(?<= )${critools_release}[^ ]*")
+if ! cri_rel=$(apt-cache madison "cri-tools" | grep -Po -m 1 "(?<= )${critools_release}[^ ]*")
 then
     cri_rel="${critools_release}"
 fi

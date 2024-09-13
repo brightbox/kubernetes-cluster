@@ -1,7 +1,6 @@
 # Computed variables
 locals {
-  validity_period           = 876000
-  renew_period              = 788400
+  validity_period           = 2562047
   region_suffix             = "${var.region}.brightbox.com"
   template_path             = "${path.root}/templates"
   service_cidr              = "172.30.0.0/16,fd00:ac1e::/112"
@@ -87,7 +86,6 @@ resource "tls_self_signed_cert" "k8s_ca" {
   }
 
   validity_period_hours = local.validity_period
-  early_renewal_hours   = local.renew_period
 
   allowed_uses = [
     "key_encipherment",
