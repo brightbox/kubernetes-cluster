@@ -54,6 +54,7 @@ bootcmd:
   - [cloud-init-per, once, addpartition, sgdisk, /dev/vda, "-e", "-n=0:${var.root_size}G:0"]
   - [cloud-init-per, once, probepartitions, partprobe]
 %{~endif}
+package_update: false
 EOT
   }
 
