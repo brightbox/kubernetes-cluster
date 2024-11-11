@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: load-balancer-tcp
+  name: hello-world-annotated
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      run: load-balancer-tcp
+  template:
+    metadata:
+      labels:
+        run: load-balancer-tcp
+    spec:
+      containers:
+      - image: gcr.io/google-samples/node-hello:1.0
+        name: hello-world-annotated
+        ports:
+          - name: hello-world
+            containerPort: 8080
+            protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: load-balancer-tcp
+  name: annotated-lb-service
+  annotations:
+    service.beta.kubernetes.io/brightbox-load-balancer-listener-protocol: "tcp"
+spec:
+  selector:
+    run: load-balancer-tcp
+  type: LoadBalancer
+  ports:
+  - name: https
+    protocol: TCP
+    port: 443
+    targetPort: hello-world
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: hello-world
