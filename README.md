@@ -264,17 +264,19 @@ via a secure connection straightaway.
 ```
 $ curl https://my-domain.co/
 ```
-### Manual Cloud IP allocation example
+### Fully Automatic SSL certificate management
+You can create an SSL enabled load balancer in one go by specifying an HTTPS listener in your manifest. The SSL certificate requested with be the domain name and reverse name of the cloud IP allocated. Apply the manifest example with `kubectl apply -f load-balancer-ssl-example.yml` to see this in action.
+
+### Automatic SSL certificates with manual Cloud IPs 
 If you allocate a cloud IP manually via the [Brightbox Cloud
 Manager](https://www.brightbox.com/docs/guides/manager/getting-started/)
-you can create an SSL enabled load balancer in one go.
+you can have finer control over the lifetime of the cloudip. 
 
 - Select or create a new CloudIP in the Brightbox Manager and map your
 chosen domain to it either via a CNAME record or directly to the addresses
 shown in the Manager. You may want to set the reverse DNS on the CloudIP too.
-- Make a copy of the `load-balancer-ssl-example.yml` manifest and edit it.
-- Enter the name of your domain against the `brightbox-load-balancer-ssl-domains` annotation
-- Alter the value of `LoadBalancerIP` to match the address of the chosen CloudIP
+- Make a copy of the `load-balancer-ssl-annotation-example.yml` manifest and edit it.
+- Enter the id of your cloud IP against the `brightbox-load-balancer-cloudip-allocations` annotation
 - Apply the manifest with `kubectl apply -f`
 
 The load balancer will automatically obtain the appropriate SSL certificates and install them. Once they are in place you can access via an https URL
