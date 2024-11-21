@@ -198,13 +198,13 @@ variable "critools_release" {
 variable "autoscaler_release" {
   type        = string
   description = "Version of Vertical Autoscaler to install if the scaling features are activated. This needs to be the same minor version as the k8s release"
-  default     = "1.31.0"
+  default     = "1.31.1"
 }
 
 variable "calico_release" {
   type        = string
   description = "Version of Calico plugin to install"
-  default     = "3.28.2"
+  default     = "3.29.1"
 }
 
 # Container Registry
