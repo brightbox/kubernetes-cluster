@@ -95,18 +95,7 @@ then
 fi
 sudo apt-mark hold kubeadm
 echo "Upgrading worker node"
-case ${kubernetes_release} in
-    1.2[23456789].*)
-		retry 5 sudo kubeadm upgrade node
-		;;
-    1.3[012].*)
-		retry 5 sudo kubeadm upgrade node
-		;;
-    *)
-        echo "Unsupported version ${kubernetes_release}"
-        exit 1
-        ;;
-esac
+retry 5 sudo kubeadm upgrade node
 echo "Upgrading kubelet"
 retry 5 $${APT_GET} --allow-change-held-packages --allow-downgrades install \
 	kubectl="$${kube_rel}" \
