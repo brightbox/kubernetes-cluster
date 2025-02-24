@@ -98,7 +98,7 @@ ensure_updated_ca() {
 
 update_cert_configs() {
 	sudo mv /etc/kubernetes/*.conf /tmp
-	sudo kubeadm init phase kubeconfig all --config $HOME/install/kubeadm.conf
+	sudo kubeadm init phase kubeconfig all --config "$${HOME}/install/kubeadm.conf"
 	sudo kubeadm certs renew all
 }
 
@@ -108,10 +108,13 @@ install() {
 }
 
 ensure_admin_config() {
-        echo "Installing admin config"
-        mkdir -p $HOME/.kube
-        sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
-        sudo chown $(id -u):$(id -g) $HOME/.kube/config
+        if [ -e /etc/kubernetes/admin.conf ]
+        then
+            echo "Installing admin config"
+            mkdir -p "$${HOME}/.kube"
+            sudo cp -f /etc/kubernetes/admin.conf "$${HOME}/.kube/config"
+            sudo chown "$(id -u):$(id -g)" "$${HOME}/.kube/config"
+        fi
 
         echo "Installing client cert generator"
         cat <<"CLIENTSCRIPT" | sudo tee /usr/local/bin/generate-client-cert.sh
