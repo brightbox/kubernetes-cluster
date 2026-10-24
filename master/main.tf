@@ -1,5 +1,5 @@
 locals {
-  local_host    = "::1"
+  local_host    = var.dual_stack ? "::1" : "127.0.0.1"
   template_path = "${path.module}/templates"
   cluster_fqdn  = "${var.cluster_name}.${var.cluster_domainname}"
   boot_token    = "${random_string.token_prefix.result}.${random_string.token_suffix.result}"
@@ -12,6 +12,7 @@ locals {
   bastion_user  = brightbox_server.k8s_master[0].username
   api_target    = local.lb_count == 1 ? brightbox_load_balancer.k8s_master[0].id : brightbox_server.k8s_master[0].interface
   cloud_config  = file("${local.template_path}/cloud-config.yml")
+  install_kube  = templatefile("${local.template_path}/install-kube", { dual_stack = var.dual_stack })
 }
 
 resource "brightbox_cloudip" "k8s_master" {
@@ -156,7 +157,7 @@ resource "null_resource" "k8s_master_configure" {
     cert_key          = random_id.master_certificate_key.hex
     master_ids        = join(",", local.hostnames)
     k8s_release       = var.kubernetes_release
-    script            = file("${local.template_path}/install-kube")
+    script            = local.install_kube
     master_script     = local.master_provisioner_script
     autoscaler        = local.autoscaler_manifest
     cloud_script      = local.cloud_controller_script
@@ -180,7 +181,7 @@ resource "null_resource" "k8s_master_configure" {
   }
 
   provisioner "remote-exec" {
-    script = "${local.template_path}/install-kube"
+    inline = [local.install_kube]
   }
 
   provisioner "remote-exec" {
@@ -241,7 +242,7 @@ resource "null_resource" "k8s_master_mirrors_configure" {
   }
 
   provisioner "remote-exec" {
-    script = "${local.template_path}/install-kube"
+    inline = [local.install_kube]
   }
 
   provisioner "remote-exec" {
@@ -329,6 +330,7 @@ locals {
     service_port       = var.apiserver_service_port,
     storage_system     = var.storage_system,
     manage_autoscaler  = var.manage_autoscaler,
+    dual_stack         = var.dual_stack,
     }
   )
 

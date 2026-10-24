@@ -22,6 +22,7 @@ module "k8s_master" {
   manage_autoscaler      = var.worker_max > var.worker_count || var.storage_max > var.storage_count
   master_zone            = var.master_zone
   secure_kubelet         = var.secure_kubelet
+  dual_stack             = var.dual_stack
 
   #Injections
   cluster_server_group     = module.k8s_cluster.group_id

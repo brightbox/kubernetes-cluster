@@ -62,6 +62,12 @@ variable "secure_kubelet" {
   default     = false
 }
 
+variable "dual_stack" {
+  description = "Run the cluster dual stack (IPv4 and IPv6). Set to false to build and maintain an IPv4-only cluster, with IPv6 disabled on the nodes"
+  type        = bool
+  default     = true
+}
+
 variable "additional_server_groups" {
   description = "Additional server group ids to add all cluster nodes to"
   type        = list(string)

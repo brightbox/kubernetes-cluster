@@ -307,3 +307,11 @@ for each node. Then
     kubectl delete nodes srv-abcde srv-edcba
 
 Finally reduce the `worker_count` variable and run `terraform apply`
+
+## IPv4-only clusters
+Clusters are built dual stack (IPv4 and IPv6) by default. To build or maintain a
+cluster with IPv4-only Kubernetes networking, set `dual_stack = false` in your
+`terraform.tfvars`. Pod and service addresses are then IPv4 only and Calico runs
+without IPv6. IPv6 on the hosts themselves is left as it is. Older clusters
+built with IPv6 disabled need this setting. Changing the setting does not
+convert an existing cluster from one mode to the other.

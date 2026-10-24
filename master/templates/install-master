@@ -157,7 +157,7 @@ CLIENTSCRIPT
 
 install_network_controllers() {
     curl -Lsf "https://raw.githubusercontent.com/projectcalico/calico/v${calico_release}/manifests/calico-vxlan.yaml" |
-        sed 's/"type": "calico-ipam"/&,"assign_ipv4":"true","assign_ipv6":"true"/' |
+        sed 's/"type": "calico-ipam"/&,"assign_ipv4":"true","assign_ipv6":"${dual_stack}"/' |
         kubectl apply -f -
 }
 
@@ -194,11 +194,11 @@ MANIFEST
 
         echo "Setting IP/IPv6 autodetect"
         retry 5 kubectl set env daemonset/calico-node -n kube-system -c calico-node \
-            FELIX_IPV6SUPPORT=true \
+            FELIX_IPV6SUPPORT=${dual_stack} \
             IP=autodetect \
-            IP6=autodetect \
+            IP6=${dual_stack ? "autodetect" : "none"} \
             CALICO_IPV4POOL_NAT_OUTGOING=true \
-            CALICO_IPV6POOL_NAT_OUTGOING=true \
+            CALICO_IPV6POOL_NAT_OUTGOING=${dual_stack} \
             IP_AUTODETECTION_METHOD=cidr=10.0.0.0/8 \
             IP6_AUTODETECTION_METHOD=cidr=2a02:1348::/32 \
             CLUSTER_TYPE=kubeadm,k8s

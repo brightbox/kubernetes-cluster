@@ -107,6 +107,12 @@ variable "secure_kubelet" {
   description = "Whether to ask for a central signing certificate or stick with self-signed"
 }
 
+variable "dual_stack" {
+  type        = bool
+  description = "Whether the cluster runs dual stack or IPv4 only"
+  default     = true
+}
+
 variable "additional_server_groups" {
   description = "Additional server group ids to add all cluster nodes to"
   type        = list(string)
