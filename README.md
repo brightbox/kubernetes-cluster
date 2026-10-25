@@ -283,7 +283,61 @@ The load balancer will automatically obtain the appropriate SSL certificates and
 
 ## Upgrade a Cluster
 The scripts will upgrade the version of Kubernetes on an existing cluster. Change the `kubernetes_release` version number as required and run `terraform apply`. Both the master and workers will be upgraded to the new version.
+
 Upgrades will only work if permitted by the `kubeadm upgrade` facility. You can check before hand by logging onto your master and running [`kubeadm upgrade plan`](https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-upgrade/#cmd-upgrade-plan)
+
+kubeadm only upgrades one minor version at a time, so to go from 1.21 to
+1.35, apply 1.22, 1.23 and so on in turn. Releases 1.21 and up are supported.
+
+`critools_release`, `calico_release` and `autoscaler_release` are chosen
+automatically from `kubernetes_release`. Leave them unset unless you need a
+particular version.
+
+### Upgrading clusters built with older versions of these manifests
+
+The manifests need Terraform (or OpenTofu) 1.9 or later. After updating to a
+newer version of these manifests, run
+
+    terraform init -upgrade
+
+to fetch the newer providers, then check `terraform plan` carefully before
+applying. Servers should be updated in place, not replaced.
+
+#### CA certificate changes
+
+The cluster CA certificate and key are protected with `prevent_destroy`, so
+a plan that would replace them fails rather than breaking the cluster.
+Clusters built with version 2.x of the `hashicorp/tls` provider hit this:
+version 4.x wants to replace the CA because two settings are missing from the
+state. Fix the state, which leaves the certificate and key unchanged:
+
+    terraform state pull > state-backup.json
+    jq '(.resources[]
+         | select(.type == "tls_self_signed_cert" and .name == "k8s_ca")
+         | .instances[].attributes)
+        |= (.set_authority_key_id = false
+            | .set_subject_key_id = false
+            | .subject |= map(if .street_address == [] then .street_address = null else . end))
+        | .serial += 1' state-backup.json > state-fixed.json
+    terraform state push state-fixed.json
+    terraform plan
+
+`terraform state push -force state-backup.json` restores the original state.
+The backup contains the CA private key, so keep it safe.
+
+#### Calico networking mode changes
+
+Upgrading the Calico release on an older cluster can change its networking
+mode (older clusters used IPIP, current ones use VXLAN). Test this on a
+non-production cluster first.
+
+### Destroying a cluster
+
+Because of `prevent_destroy`, remove the CA from the state before running
+`terraform destroy`:
+
+    terraform state rm tls_self_signed_cert.k8s_ca tls_private_key.k8s_ca
+
 ## Adding Workers
 You can add by changing the `worker_count` variable
 and running `terraform apply`. You can also change the `worker_type` and
@@ -309,6 +363,7 @@ for each node. Then
 Finally reduce the `worker_count` variable and run `terraform apply`
 
 ## IPv4-only clusters
+
 Clusters are built dual stack (IPv4 and IPv6) by default. To build or maintain a
 cluster with IPv4-only Kubernetes networking, set `dual_stack = false` in your
 `terraform.tfvars`. Pod and service addresses are then IPv4 only and Calico runs
