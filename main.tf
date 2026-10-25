@@ -28,7 +28,27 @@ locals {
     "1.34" = "3.31.4"
     "1.35" = "3.31.4"
   }
-  calico_release            = coalesce(var.calico_release, lookup(local.calico_releases, local.k8s_minor_release, ""))
+  calico_release = coalesce(var.calico_release, lookup(local.calico_releases, local.k8s_minor_release, ""))
+  # Cluster autoscaler release used with each Kubernetes minor version, taken
+  # from the last default set while that minor was the default. 1.33 and 1.34
+  # were never the default, so they use the latest published tag.
+  autoscaler_releases = {
+    "1.22" = "1.22.2"
+    "1.23" = "1.23.0"
+    "1.24" = "1.24.0"
+    "1.25" = "1.25.0"
+    "1.26" = "1.26.2"
+    "1.27" = "1.27.1"
+    "1.28" = "1.28.2"
+    "1.29" = "1.29.0"
+    "1.30" = "1.30.2"
+    "1.31" = "1.31.1"
+    "1.32" = "1.32.0"
+    "1.33" = "1.33.4"
+    "1.34" = "1.34.3"
+    "1.35" = "1.35.0"
+  }
+  autoscaler_release        = coalesce(var.autoscaler_release, lookup(local.autoscaler_releases, local.k8s_minor_release, local.k8s_minor_release))
   worker_node_ids           = module.k8s_worker.servers[*].id
   storage_node_ids          = module.k8s_storage.servers[*].id
   worker_label_script       = <<EOT

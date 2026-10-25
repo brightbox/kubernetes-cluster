@@ -212,8 +212,17 @@ variable "critools_release" {
 
 variable "autoscaler_release" {
   type        = string
-  description = "Version of Vertical Autoscaler to install if the scaling features are activated. This needs to be the same minor version as the k8s release"
-  default     = "1.35.0"
+  description = "Version of Vertical Autoscaler to install if the scaling features are activated. This needs to be the same minor version as the k8s release. Defaults to the release tested with the chosen Kubernetes minor version (see autoscaler_releases in main.tf)"
+  default     = null
+
+  validation {
+    condition = (
+      var.autoscaler_release == null
+      ? contains(keys(local.autoscaler_releases), join(".", slice(split(".", var.kubernetes_release), 0, 2))) || (var.worker_max <= var.worker_count && var.storage_max <= var.storage_count)
+      : join(".", slice(split(".", coalesce(var.autoscaler_release, "0.0")), 0, 2)) == join(".", slice(split(".", var.kubernetes_release), 0, 2))
+    )
+    error_message = "autoscaler_release must have the same minor version as kubernetes_release. If no default is known for this kubernetes_release, set autoscaler_release explicitly."
+  }
 }
 
 variable "calico_release" {
