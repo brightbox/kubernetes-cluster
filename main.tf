@@ -120,6 +120,10 @@ resource "null_resource" "label_nodes" {
 
 resource "tls_private_key" "k8s_ca" {
   algorithm = "RSA"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "tls_self_signed_cert" "k8s_ca" {
@@ -139,4 +143,9 @@ resource "tls_self_signed_cert" "k8s_ca" {
   ]
 
   is_ca_certificate = true
+
+  # Replacing the CA invalidates every certificate in a running cluster.
+  lifecycle {
+    prevent_destroy = true
+  }
 }
