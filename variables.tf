@@ -218,8 +218,13 @@ variable "autoscaler_release" {
 
 variable "calico_release" {
   type        = string
-  description = "Version of Calico plugin to install"
-  default     = "3.31.4"
+  description = "Version of Calico plugin to install. Defaults to the release tested with the chosen Kubernetes minor version (see calico_releases in main.tf)"
+  default     = null
+
+  validation {
+    condition     = var.calico_release != null || contains(keys(local.calico_releases), join(".", slice(split(".", var.kubernetes_release), 0, 2)))
+    error_message = "No default Calico release is known for this kubernetes_release; set calico_release explicitly."
+  }
 }
 
 # Container Registry

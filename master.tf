@@ -11,7 +11,7 @@ module "k8s_master" {
   container_registry     = var.container_registry
   kubernetes_release     = var.kubernetes_release
   critools_release       = local.critools_release
-  calico_release         = var.calico_release
+  calico_release         = local.calico_release
   autoscaler_release     = var.autoscaler_release
   cluster_name           = var.cluster_name
   cluster_domainname     = var.cluster_domainname

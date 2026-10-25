@@ -1,14 +1,34 @@
 # Computed variables
 locals {
-  validity_period           = 2562047
-  region_suffix             = "${var.region}.brightbox.com"
-  template_path             = "${path.root}/templates"
-  service_cidr              = var.dual_stack ? "172.30.0.0/16,fd00:ac1e::/112" : "172.30.0.0/16"
-  cluster_cidr              = var.dual_stack ? "192.168.0.0/16,fd00:c0a8::/48" : "192.168.0.0/16"
-  cluster_fqdn              = "${var.cluster_name}.${var.cluster_domainname}"
-  service_port              = "6443"
-  k8s_minor_release         = join(".", slice(split(".", var.kubernetes_release), 0, 2))
-  critools_release          = coalesce(var.critools_release, tonumber(split(".", var.kubernetes_release)[1]) < 24 ? "1.25" : local.k8s_minor_release)
+  validity_period   = 2562047
+  region_suffix     = "${var.region}.brightbox.com"
+  template_path     = "${path.root}/templates"
+  service_cidr      = var.dual_stack ? "172.30.0.0/16,fd00:ac1e::/112" : "172.30.0.0/16"
+  cluster_cidr      = var.dual_stack ? "192.168.0.0/16,fd00:c0a8::/48" : "192.168.0.0/16"
+  cluster_fqdn      = "${var.cluster_name}.${var.cluster_domainname}"
+  service_port      = "6443"
+  k8s_minor_release = join(".", slice(split(".", var.kubernetes_release), 0, 2))
+  critools_release  = coalesce(var.critools_release, tonumber(split(".", var.kubernetes_release)[1]) < 24 ? "1.25" : local.k8s_minor_release)
+  # Calico release used with each Kubernetes minor version, taken from the
+  # last default set while that minor was the default. The install script
+  # needs 3.24 or later (manifest URL), so 1.22-1.24 use 3.24.6.
+  calico_releases = {
+    "1.22" = "3.24.6"
+    "1.23" = "3.24.6"
+    "1.24" = "3.24.6"
+    "1.25" = "3.25.0"
+    "1.26" = "3.25.1"
+    "1.27" = "3.26.1"
+    "1.28" = "3.27.0"
+    "1.29" = "3.27.2"
+    "1.30" = "3.28.0"
+    "1.31" = "3.29.1"
+    "1.32" = "3.29.1"
+    "1.33" = "3.31.4"
+    "1.34" = "3.31.4"
+    "1.35" = "3.31.4"
+  }
+  calico_release            = coalesce(var.calico_release, lookup(local.calico_releases, local.k8s_minor_release, ""))
   worker_node_ids           = module.k8s_worker.servers[*].id
   storage_node_ids          = module.k8s_storage.servers[*].id
   worker_label_script       = <<EOT
