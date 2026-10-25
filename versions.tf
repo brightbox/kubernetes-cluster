@@ -14,7 +14,9 @@ terraform {
       version = "~> 4.0"
     }
   }
-  required_version = ">= 0.12.26"
+  # Variable validations refer to other variables, which needs Terraform 1.9+.
+  # OpenTofu checks this constraint against its own version.
+  required_version = ">= 1.9.0"
 }
 
 provider "brightbox" {
