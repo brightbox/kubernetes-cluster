@@ -197,8 +197,17 @@ variable "kubernetes_release" {
 
 variable "critools_release" {
   type        = string
-  description = "Version of cri-tools to install"
-  default     = "1.35"
+  description = "Version of cri-tools to install. Defaults to the Kubernetes minor version, or 1.25 for releases older than 1.24"
+  default     = null
+
+  validation {
+    condition = var.critools_release == null || (
+      tonumber(split(".", var.kubernetes_release)[1]) >= 24
+      ? var.critools_release == join(".", slice(split(".", var.kubernetes_release), 0, 2))
+      : contains(["1.25", "1.26"], coalesce(var.critools_release, "unset"))
+    )
+    error_message = "critools_release must match the kubernetes_release minor version (or be 1.25/1.26 for releases older than 1.24); leave it unset to choose automatically."
+  }
 }
 
 variable "autoscaler_release" {

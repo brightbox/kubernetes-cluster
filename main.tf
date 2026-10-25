@@ -7,6 +7,8 @@ locals {
   cluster_cidr              = var.dual_stack ? "192.168.0.0/16,fd00:c0a8::/48" : "192.168.0.0/16"
   cluster_fqdn              = "${var.cluster_name}.${var.cluster_domainname}"
   service_port              = "6443"
+  k8s_minor_release         = join(".", slice(split(".", var.kubernetes_release), 0, 2))
+  critools_release          = coalesce(var.critools_release, tonumber(split(".", var.kubernetes_release)[1]) < 24 ? "1.25" : local.k8s_minor_release)
   worker_node_ids           = module.k8s_worker.servers[*].id
   storage_node_ids          = module.k8s_storage.servers[*].id
   worker_label_script       = <<EOT
