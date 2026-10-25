@@ -9,7 +9,7 @@ cloud-init status --wait >/dev/null
 echo "Adding repositories"
 
 rel=${kubernetes_release}
-mkdir -p /etc/apt/keyrings
+sudo mkdir -p /etc/apt/keyrings
 %{ if tonumber(split(".", kubernetes_release)[1]) < 24 ~}
 curl -fsSL https://raw.githubusercontent.com/kubernetes/k8s.io/main/apt/doc/apt-key.gpg | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] http://orbit.brightbox.com/v1/acc-tqs4c/apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
