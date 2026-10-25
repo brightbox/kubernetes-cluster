@@ -234,6 +234,13 @@ variable "calico_release" {
     condition     = var.calico_release != null || contains(keys(local.calico_releases), join(".", slice(split(".", var.kubernetes_release), 0, 2)))
     error_message = "No default Calico release is known for this kubernetes_release; set calico_release explicitly."
   }
+
+  # Releases before 3.24 come from the Calico docs archive, which only serves
+  # the final patch of each minor release (3.23.5 for 3.23).
+  validation {
+    condition     = var.calico_release == null || tonumber(split(".", coalesce(var.calico_release, "3.24"))[1]) >= 24 || coalesce(var.calico_release, "3.23.5") == "3.23.5"
+    error_message = "Calico releases older than 3.24 are installed from the Calico docs archive, which only has 3.23.5; set calico_release to 3.23.5 or 3.24 or later."
+  }
 }
 
 # Container Registry

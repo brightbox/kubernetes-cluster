@@ -11,8 +11,10 @@ locals {
   critools_release  = coalesce(var.critools_release, tonumber(split(".", var.kubernetes_release)[1]) < 24 ? "1.25" : local.k8s_minor_release)
   # Calico release used with each Kubernetes minor version, taken from the
   # last default set while that minor was the default. The install script
-  # needs 3.24 or later (manifest URL), so 1.22-1.24 use 3.24.6.
+  # pulls 3.24+ from GitHub, so 1.22-1.24 use 3.24.6 (tested with 1.22-1.25).
+  # 1.21 uses 3.23.5 (tested with 1.21-1.23) from the Calico docs archive.
   calico_releases = {
+    "1.21" = "3.23.5"
     "1.22" = "3.24.6"
     "1.23" = "3.24.6"
     "1.24" = "3.24.6"
@@ -33,6 +35,7 @@ locals {
   # from the last default set while that minor was the default. 1.33 and 1.34
   # were never the default, so they use the latest published tag.
   autoscaler_releases = {
+    "1.21" = "1.21.0"
     "1.22" = "1.22.2"
     "1.23" = "1.23.0"
     "1.24" = "1.24.0"

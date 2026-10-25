@@ -298,8 +298,20 @@ upgrade() {
     kubectl taint nodes "$${HOSTNAME}" node-role.kubernetes.io/control-plane:NoSchedule --overwrite
 }
 
+%{ if tonumber(split(".", kubernetes_release)[1]) < 22 ~}
+v1beta2() {
+    v1beta3
+    sed -i 's#kubeadm.k8s.io/v1beta3#kubeadm.k8s.io/v1beta2#' /tmp/kubeadm.conf
+}
+
+%{ endif ~}
 echo "Installing kubeadm.conf"
 case ${kubernetes_release} in
+%{ if tonumber(split(".", kubernetes_release)[1]) < 22 ~}
+    1.21.*)
+        v1beta2
+        ;;
+%{ endif ~}
     1.2[23456789].*)
         v1beta3
         ;;

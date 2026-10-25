@@ -156,7 +156,11 @@ CLIENTSCRIPT
 }
 
 install_network_controllers() {
+%{ if tonumber(split(".", calico_release)[1]) < 24 ~}
+    curl -Lsf "https://docs.tigera.io/archive/v${join(".", slice(split(".", calico_release), 0, 2))}/manifests/calico-vxlan.yaml" |
+%{ else ~}
     curl -Lsf "https://raw.githubusercontent.com/projectcalico/calico/v${calico_release}/manifests/calico-vxlan.yaml" |
+%{ endif ~}
         sed 's/"type": "calico-ipam"/&,"assign_ipv4":"true","assign_ipv6":"${dual_stack}"/' |
         kubectl apply -f -
 }
