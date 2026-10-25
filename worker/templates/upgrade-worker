@@ -60,7 +60,8 @@ ensure_updated_apt_keys() {
 }
 
 echo "Ensuring installation has completed"
-cloud-init status --wait >/dev/null
+# Exit status 2 means cloud-init finished with recoverable errors
+cloud-init status --wait >/dev/null || [ $? -eq 2 ]
 
 echo "Checking for upgrades"
 if [ -f /var/run/docker.sock ]

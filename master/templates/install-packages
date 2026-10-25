@@ -4,7 +4,8 @@ set -eu
 APT_GET="sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_SUSPEND=1 apt-get -o Dpkg::Options::=--force-confold -o Dpkg::Options::=--force-confdef -qq -y"
 
 echo "Waiting for base package installation to complete"
-cloud-init status --wait >/dev/null
+# Exit status 2 means cloud-init finished with recoverable errors
+cloud-init status --wait >/dev/null || [ $? -eq 2 ]
 
 echo "Adding repositories"
 
