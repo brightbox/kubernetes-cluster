@@ -124,6 +124,12 @@ resource "null_resource" "k8s_master_once" {
     script = file("${local.template_path}/install-packages")
   }
 
+  # Only run on new masters. Upgrades are done by install-master, which
+  # upgrades kubeadm before the control plane and kubelet after it.
+  lifecycle {
+    ignore_changes = [triggers["script"]]
+  }
+
   connection {
     host         = local.hostnames[count.index]
     user         = local.usernames[count.index]
