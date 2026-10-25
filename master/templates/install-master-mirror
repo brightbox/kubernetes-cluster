@@ -229,8 +229,13 @@ EOF
 ensure_updated_apt_keys() {
     local rel=${kubernetes_release}
     mkdir -p /etc/apt/keyrings
+%{ if tonumber(split(".", kubernetes_release)[1]) < 24 ~}
+    curl -fsSL https://raw.githubusercontent.com/kubernetes/k8s.io/main/apt/doc/apt-key.gpg | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] http://orbit.brightbox.com/v1/acc-tqs4c/apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+%{ else ~}
     curl -fsSL https://pkgs.k8s.io/core:/stable:/v$${rel%.*}/deb/Release.key | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
     echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v$${rel%.*}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+%{ endif ~}
     sudo rm -f /etc/apt/sources.list.d/kubernetes-old.list /etc/apt/sources.list.d/docker.list /usr/share/keyrings/kubernetes.gpg
 }
 
