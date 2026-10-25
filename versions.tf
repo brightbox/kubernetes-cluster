@@ -11,7 +11,7 @@ terraform {
     }
     tls = {
       source  = "hashicorp/tls"
-      version = "~> 4.0"
+      version = ">= 4.2, < 5.0"
     }
   }
   # Variable validations refer to other variables, which needs Terraform 1.9+.

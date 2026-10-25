@@ -305,19 +305,25 @@ applying. Servers should be updated in place, not replaced.
 
 #### CA certificate changes
 
-The cluster CA certificate and key are protected with `prevent_destroy`, so
-a plan that would replace them fails rather than breaking the cluster.
-Clusters built with version 2.x of the `hashicorp/tls` provider hit this:
-version 4.x wants to replace the CA because two settings are missing from the
-state. Fix the state, which leaves the certificate and key unchanged:
+The cluster CA certificate and key are protected with `prevent_destroy`, so a
+plan that would replace them fails rather than breaking the cluster. Clusters
+built with version 2.x of the `hashicorp/tls` provider hit this: version 4.2 and
+later (which these manifests require) wants to replace the CA because its state
+is formatted differently. You can fix up the state to leave the certificate and
+key unchanged like this:
 
     terraform state pull > state-backup.json
     jq '(.resources[]
+         | select(.type == "tls_private_key" and .name == "k8s_ca")
+         | .instances[0].attributes.private_key_pem) as $key
+        | (.resources[]
          | select(.type == "tls_self_signed_cert" and .name == "k8s_ca")
          | .instances[].attributes)
         |= (.set_authority_key_id = false
             | .set_subject_key_id = false
-            | .subject |= map(if .street_address == [] then .street_address = null else . end))
+            | .ready_for_renewal = false
+            | .private_key_pem = $key
+            | .subject |= map(with_entries(if .value == "" or .value == [] then .value = null else . end)))
         | .serial += 1' state-backup.json > state-fixed.json
     terraform state push state-fixed.json
     terraform plan
