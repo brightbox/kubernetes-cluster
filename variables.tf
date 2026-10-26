@@ -225,6 +225,17 @@ variable "autoscaler_release" {
   }
 }
 
+variable "cloud_controller_release" {
+  type        = string
+  description = "Version of the Brightbox cloud controller manager image to install. Defaults to best available version that matches the kubernetes_release (including patch version). Must have the same major and minor version as kubernetes_release"
+  default     = null
+
+  validation {
+    condition     = var.cloud_controller_release == null || join(".", slice(split(".", coalesce(var.cloud_controller_release, "0.0")), 0, 2)) == join(".", slice(split(".", var.kubernetes_release), 0, 2))
+    error_message = "cloud_controller_release must have the same major and minor version as kubernetes_release."
+  }
+}
+
 variable "calico_release" {
   type        = string
   description = "Version of Calico plugin to install. Defaults to the release tested with the chosen Kubernetes minor version (see calico_releases in main.tf)"

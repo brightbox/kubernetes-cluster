@@ -4,25 +4,26 @@ module "k8s_master" {
   cluster_ready = module.k8s_cluster
 
   #Variables
-  master_count           = var.master_count
-  master_type            = var.master_type
-  image_desc             = var.image_desc
-  region                 = var.region
-  container_registry     = var.container_registry
-  kubernetes_release     = var.kubernetes_release
-  critools_release       = local.critools_release
-  calico_release         = local.calico_release
-  autoscaler_release     = local.autoscaler_release
-  cluster_name           = var.cluster_name
-  cluster_domainname     = var.cluster_domainname
-  cluster_cidr           = local.cluster_cidr
-  service_cidr           = local.service_cidr
-  apiserver_service_port = local.service_port
-  storage_system         = var.storage_system
-  manage_autoscaler      = var.worker_max > var.worker_count || var.storage_max > var.storage_count
-  master_zone            = var.master_zone
-  secure_kubelet         = var.secure_kubelet
-  dual_stack             = var.dual_stack
+  master_count             = var.master_count
+  master_type              = var.master_type
+  image_desc               = var.image_desc
+  region                   = var.region
+  container_registry       = var.container_registry
+  kubernetes_release       = var.kubernetes_release
+  critools_release         = local.critools_release
+  calico_release           = local.calico_release
+  autoscaler_release       = local.autoscaler_release
+  cloud_controller_release = local.cloud_controller_release
+  cluster_name             = var.cluster_name
+  cluster_domainname       = var.cluster_domainname
+  cluster_cidr             = local.cluster_cidr
+  service_cidr             = local.service_cidr
+  apiserver_service_port   = local.service_port
+  storage_system           = var.storage_system
+  manage_autoscaler        = var.worker_max > var.worker_count || var.storage_max > var.storage_count
+  master_zone              = var.master_zone
+  secure_kubelet           = var.secure_kubelet
+  dual_stack               = var.dual_stack
 
   #Injections
   cluster_server_group     = module.k8s_cluster.group_id

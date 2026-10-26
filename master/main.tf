@@ -321,6 +321,7 @@ locals {
     container_registry           = var.container_registry,
     kubernetes_release           = var.kubernetes_release,
     kubernetes_release_b64       = base64encode(var.kubernetes_release),
+    cloud_controller_release     = var.cloud_controller_release,
     local_host                   = local.local_host,
     public_ip                    = local.public_ip,
     service_port                 = var.apiserver_service_port,

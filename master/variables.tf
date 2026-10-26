@@ -23,6 +23,11 @@ variable "autoscaler_release" {
   description = "Version of autoscaler to install"
 }
 
+variable "cloud_controller_release" {
+  type        = string
+  description = "Version of the Brightbox cloud controller manager image to install"
+}
+
 variable "image_desc" {
   type        = string
   description = "Image pattern to use to select boot image"

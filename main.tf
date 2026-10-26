@@ -51,7 +51,33 @@ locals {
     "1.34" = "1.34.3"
     "1.35" = "1.35.0"
   }
-  autoscaler_release        = coalesce(var.autoscaler_release, lookup(local.autoscaler_releases, local.k8s_minor_release, local.k8s_minor_release))
+  autoscaler_release = coalesce(var.autoscaler_release, lookup(local.autoscaler_releases, local.k8s_minor_release, local.k8s_minor_release))
+  # cloud controller release version used with each Kubernetes version. Exact
+  # versions (including patch) that match the Kubernetes release are preferred,
+  # otherwise the newest release matching that minor version.
+  cloud_controller_releases = {
+    "1.21" = ["1.21.14"]
+    "1.22" = ["1.22.17"]
+    "1.23" = ["1.23.17"]
+    "1.24" = ["1.24.17"]
+    "1.25" = ["1.25.16"]
+    "1.26" = ["1.26.15"]
+    "1.27" = ["1.27.16"]
+    "1.28" = ["1.28.15"]
+    "1.29" = ["1.29.13"]
+    "1.30" = ["1.30.10"]
+    "1.31" = ["1.31.6"]
+    "1.32" = ["1.32.13"]
+    "1.33" = ["1.33.9"]
+    "1.34" = ["1.34.5"]
+    "1.35" = ["1.35.2", "1.35.9"]
+  }
+  cloud_controller_tags = lookup(local.cloud_controller_releases, local.k8s_minor_release, [])
+  cloud_controller_release = coalesce(var.cloud_controller_release,
+    contains(local.cloud_controller_tags, var.kubernetes_release)
+    ? var.kubernetes_release
+    : reverse(concat([var.kubernetes_release], local.cloud_controller_tags))[0]
+  )
   worker_node_ids           = module.k8s_worker.servers[*].id
   storage_node_ids          = module.k8s_storage.servers[*].id
   worker_label_script       = <<EOT
