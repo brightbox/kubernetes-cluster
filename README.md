@@ -337,6 +337,34 @@ Upgrading the Calico release on an older cluster can change its networking
 mode (older clusters used IPIP, current ones use VXLAN). Test this on a
 non-production cluster first.
 
+#### Calico CRD upgrade errors
+
+Clusters that first installed a (very) old Calico release (pre 3.17) have Calico
+CRDs created in the old `apiextensions.k8s.io/v1beta1` format, with
+`spec.preserveUnknownFields: true`. Newer Calico CRDs have schema defaults,
+which Kubernetes refuses while that flag is set, and `kubectl apply` does not
+clear it. The upgrade then fails with:
+
+    The CustomResourceDefinition "ipamblocks.crd.projectcalico.org" is invalid: spec.preserveUnknownFields: Invalid value: true: must be false in order to use defaults in the schema
+
+To check, run this on the master. Any Calico CRD showing `true` needs fixing:
+
+    kubectl get crd -o custom-columns=NAME:.metadata.name,PRESERVE:.spec.preserveUnknownFields | grep projectcalico
+
+Fix it by replacing just the CRDs from the Calico manifest being installed (here
+3.23). This rewrites the CRD definitions in place. **Do not delete the CRDs**,
+as that deletes all the Calico resources with them!
+
+    curl -fsSL https://docs.tigera.io/archive/v3.23/manifests/calico-vxlan.yaml |
+      awk 'BEGIN{RS="\n---\n"; ORS="\n---\n"} /kind: CustomResourceDefinition/' > calico-crds.yaml
+    kubectl replace -f calico-crds.yaml
+
+For Calico 3.24 and later, the manifest is at
+`https://raw.githubusercontent.com/projectcalico/calico/v<version>/manifests/calico-vxlan.yaml`.
+Then run `terraform apply` again. Only replace the CRDs: the rest of the
+manifest should still go through `kubectl apply`, which keeps changes made
+by other tools.
+
 ### Destroying a cluster
 
 Because of `prevent_destroy`, remove the CA from the state before running
