@@ -325,6 +325,11 @@ upgrade() {
         fi
         sudo apt-mark hold kubeadm
         ensure_updated_ca
+        # kubeadm's preflight fails if the control plane node is briefly NotReady,
+        # e.g. while the kubelet reconnects after a certificate refresh
+        echo "Waiting for control plane node to be Ready"
+        sudo kubectl --kubeconfig /etc/kubernetes/admin.conf \
+                wait --for=condition=Ready "node/$${HOSTNAME}" --timeout=2m
 	plan=$(sudo kubeadm upgrade plan ${kubernetes_release})
 	case "$${plan}" in
 	*"kubeadm upgrade apply"*)
