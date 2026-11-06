@@ -91,7 +91,8 @@ elif [ -d /run/containerd ]
 then
 	echo "Make containerd CRI v1 runtime use systemd cgroup"
 	sudo mkdir -p /etc/containerd
-	cat <<EOF | sudo tee /etc/containerd/config.toml
+	containerd_config=$(mktemp)
+	cat <<EOF >"$${containerd_config}"
 version = 2
 
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
@@ -100,7 +101,17 @@ version = 2
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
   SystemdCgroup = true
 EOF
-sudo systemctl reload-or-restart containerd
+	# Restarting containerd can restart the control plane containers, so
+	# only do it when the config has changed
+	if sudo cmp -s "$${containerd_config}" /etc/containerd/config.toml
+	then
+		echo "containerd config unchanged"
+	else
+		sudo install -m 644 "$${containerd_config}" /etc/containerd/config.toml
+		echo "containerd config changed - restarting containerd"
+		sudo systemctl restart containerd
+	fi
+	rm -f "$${containerd_config}"
 
 	echo "Setting up critools"
 	cat <<EOF | sudo tee /etc/crictl.yaml
