@@ -343,11 +343,15 @@ upgrade() {
                 ensure_certs_in_kubelet_config
                 retry 5 sudo systemctl restart kubelet
 		;;
-    *)  echo "Already at version ${kubernetes_release} or greater - refreshing certificates"
+    *)  echo "Already at version ${kubernetes_release} or greater"
 		echo $${plan}
-        retry 5 sudo kubeadm init phase upload-certs --upload-certs --config $HOME/install/kubeadm.conf
 		;;
 	esac
+    # New control plane nodes fetch the shared certificates from the
+    # kubeadm-certs secret when they join. It is deleted after 2 hours, so
+    # upload it on every run, including after an upgrade.
+    echo "Uploading control plane certificates"
+    retry 5 sudo kubeadm init phase upload-certs --upload-certs --config $HOME/install/kubeadm.conf
     ensure_admin_config
     ensure_ancillary_items
 }
