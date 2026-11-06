@@ -13,7 +13,9 @@ k8s_version="${kubernetes_release}"
 kubeadm_join_command="sudo kubeadm join --config /tmp/kubeadm.conf"
 
 v1beta3() {
-    cat <<EOF | tee /tmp/kubeadm.conf
+    # Contains the bootstrap token and certificate key, so keep it private
+    install -m 600 /dev/null /tmp/kubeadm.conf
+    cat <<EOF >/tmp/kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: JoinConfiguration
 discovery:
@@ -34,7 +36,9 @@ EOF
 }
 
 v1beta4() {
-    cat <<EOF | tee /tmp/kubeadm.conf
+    # Contains the bootstrap token and certificate key, so keep it private
+    install -m 600 /dev/null /tmp/kubeadm.conf
+    cat <<EOF >/tmp/kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: JoinConfiguration
 discovery:
