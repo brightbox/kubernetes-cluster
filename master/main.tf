@@ -270,6 +270,38 @@ resource "null_resource" "k8s_master_mirrors_configure" {
   }
 }
 
+# Removes an extra control plane node from the cluster (drain, etcd member,
+# Node) before its server is destroyed, so lowering master_count doesn't
+# leave etcd without quorum.
+resource "terraform_data" "k8s_master_mirrors_membership" {
+  count = length(local.mirrors_hostnames)
+
+  # Replaced only when the server is, which is when the removal must run
+  triggers_replace = brightbox_server.k8s_master[count.index + 1].id
+
+  # Destroy-time provisioners can only refer to self, so keep what they
+  # need here. Changes to these update in place without running anything.
+  input = {
+    host         = local.mirrors_hostnames[count.index]
+    user         = local.mirrors_usernames[count.index]
+    bastion_host = local.bastion
+    bastion_user = local.bastion_user
+    script       = file("${local.template_path}/remove-master-mirror")
+  }
+
+  provisioner "remote-exec" {
+    when = destroy
+    connection {
+      type         = "ssh"
+      host         = self.input.host
+      user         = self.input.user
+      bastion_host = self.input.bastion_host
+      bastion_user = self.input.bastion_user
+    }
+    inline = [self.input.script]
+  }
+}
+
 resource "null_resource" "set_host_keys" {
 
   triggers = {

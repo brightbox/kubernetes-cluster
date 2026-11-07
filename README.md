@@ -295,7 +295,7 @@ particular version.
 
 ### Clusters with multiple control plane nodes
 
-When `master_count` is more than 1, run upgrades and increases to `master_count`
+When `master_count` is more than 1, run upgrades and changes to `master_count`
 with:
 
     terraform apply -parallelism=1
@@ -305,6 +305,30 @@ upgrades or joins the extra control plane nodes in parallel. If an upgrade
 changes the etcd version, the extra nodes restart etcd at the same time, and
 with three members etcd loses quorum until they come back. `-parallelism=1`
 makes Terraform handle them one at a time.
+
+#### Reducing control plane nodes
+
+Lowering `master_count` removes the highest numbered control plane nodes.
+Before Terraform destroys each server, it drains the node, removes it from
+etcd and deletes its Node. It refuses unless every etcd member is healthy,
+since removing a member then could leave etcd without quorum. The same
+happens when an extra control plane server is replaced.
+
+If you added control plane nodes with an older version of these manifests,
+run `terraform apply` once without changing `master_count` first. That
+records the extra nodes so they can be removed safely. Lowering
+`master_count` in the same apply destroys them without removing them from
+etcd, and etcd loses quorum.
+
+If the removal fails, the server isn't destroyed. When a node can't be
+removed this way (for example it is unreachable), remove it from etcd
+(`etcdctl member remove`) and Kubernetes (`kubectl delete node`) by hand,
+then tell Terraform to skip the removal and apply again:
+
+    terraform state rm 'module.k8s_master.terraform_data.k8s_master_mirrors_membership[0]'
+
+The index is the node's position among the extra control plane nodes,
+starting at 0 for `k8s-master-1`.
 
 ### Upgrading clusters built with older versions of these manifests
 
@@ -384,6 +408,12 @@ Because of `prevent_destroy`, remove the CA from the state before running
 `terraform destroy`:
 
     terraform state rm tls_self_signed_cert.k8s_ca tls_private_key.k8s_ca
+
+With more than one control plane node, the extra nodes are removed from the
+cluster one by one before it is destroyed. If the cluster is broken, skip
+that with:
+
+    terraform state rm 'module.k8s_master.terraform_data.k8s_master_mirrors_membership'
 
 ## Adding Workers
 You can add by changing the `worker_count` variable
