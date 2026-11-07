@@ -306,7 +306,9 @@ upgrade() {
 	retry 5 sudo systemctl restart kubelet
 
     echo "Ensuring NoSchedule taint on control plane"
-    kubectl taint nodes "$${HOSTNAME}" node-role.kubernetes.io/control-plane:NoSchedule --overwrite
+    # Use admin.conf directly: ~/.kube/config is only installed at the end
+    sudo kubectl --kubeconfig /etc/kubernetes/admin.conf \
+        taint nodes "$${HOSTNAME}" node-role.kubernetes.io/control-plane:NoSchedule --overwrite
 }
 
 %{ if tonumber(split(".", kubernetes_release)[1]) < 22 ~}
