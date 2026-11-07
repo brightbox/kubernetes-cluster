@@ -293,6 +293,19 @@ kubeadm only upgrades one minor version at a time, so to go from 1.21 to
 automatically from `kubernetes_release`. Leave them unset unless you need a
 particular version.
 
+### Clusters with multiple control plane nodes
+
+When `master_count` is more than 1, run upgrades and increases to `master_count`
+with:
+
+    terraform apply -parallelism=1
+
+The first control plane node upgrades before the others, but Terraform
+upgrades or joins the extra control plane nodes in parallel. If an upgrade
+changes the etcd version, the extra nodes restart etcd at the same time, and
+with three members etcd loses quorum until they come back. `-parallelism=1`
+makes Terraform handle them one at a time.
+
 ### Upgrading clusters built with older versions of these manifests
 
 The manifests need Terraform (or OpenTofu) 1.9 or later. After updating to a

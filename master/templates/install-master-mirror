@@ -290,7 +290,11 @@ upgrade() {
     fi
 	sudo apt-mark hold kubeadm
 	echo "Upgrading control plane mirror"
-    retry 5 sudo kubeadm upgrade apply -y ${kubernetes_release}
+    # The first control plane node has already run "kubeadm upgrade apply",
+    # which upgrades the cluster. Extra control plane nodes only upgrade
+    # their own components. Running "upgrade apply" here too would repeat the
+    # cluster-wide steps, and nodes doing it at the same time collide.
+    retry 5 sudo kubeadm upgrade node
 	echo "Upgrading kubelet"
 	retry 5 $${APT_GET} --allow-change-held-packages install \
 		kubectl=$${kube_rel} \
