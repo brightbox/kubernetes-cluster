@@ -354,10 +354,64 @@ case ${kubernetes_release} in
         exit 3
 esac
 
-if ss -lnt | grep -q :6443
-then
+# Ask the cluster whether this server is already a control plane member,
+# using the bootstrap token (kubeadm lets it read Nodes). Don't check whether
+# the local API server is listening: it may be restarting, and a member must
+# never be sent down the join path.
+control_plane_state() {
+    local ca_file
+    ca_file=$(mktemp)
+    cat >"$${ca_file}" <<CA
+${certificate_authority_pem}
+CA
+    local labels
+    local rc=0
+    labels=$(kubectl --kubeconfig /dev/null \
+        --server "https://${fqdn}:${service_port}" \
+        --certificate-authority "$${ca_file}" --token "${boot_token}" \
+        get node "$${HOSTNAME}" -o jsonpath='{.metadata.labels}' 2>&1) || rc=$?
+    rm -f "$${ca_file}"
+    if [ "$${rc}" -eq 0 ]
+    then
+        if echo "$${labels}" | grep -q '"node-role.kubernetes.io/control-plane"'
+        then
+            echo member
+        else
+            echo registered
+        fi
+    elif echo "$${labels}" | grep -q NotFound
+    then
+        echo absent
+    else
+        echo "Unable to look up this node in the cluster: $${labels}" >&2
+        echo unknown
+    fi
+}
+
+state=$(control_plane_state)
+echo "Control plane state of $${HOSTNAME}: $${state}"
+case "$${state}" in
+    member)
         upgrade
-else
+        ;;
+    absent)
+        if [ -e /etc/kubernetes/kubelet.conf ] || [ -n "$(ls -A /etc/kubernetes/manifests 2>/dev/null)" ]
+        then
+            echo "ERROR: $${HOSTNAME} isn't in the cluster but has files from an earlier"
+            echo "join attempt. Check it isn't an etcd member, then clean it up with:"
+            echo "  sudo kubeadm reset -f"
+            exit 1
+        fi
         install
-fi
+        ;;
+    registered)
+        echo "ERROR: $${HOSTNAME} is registered but isn't a control plane member, so an"
+        echo "earlier join didn't finish. Check the etcd member list, then remove it with"
+        echo "'kubectl delete node $${HOSTNAME}' and run 'sudo kubeadm reset -f' on it."
+        exit 1
+        ;;
+    *)
+        exit 1
+        ;;
+esac
 ensure_admin_config
