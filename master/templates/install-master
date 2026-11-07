@@ -356,8 +356,14 @@ upgrade() {
     ensure_ancillary_items
 }
 
-if ss -lnt | grep -q :6443
+# kubeadm init writes admin.conf, so its presence means the cluster already
+# exists. Don't check whether the API server is listening: it may be
+# restarting, and running kubeadm init on an existing control plane node
+# would fail.
+if [ -f /etc/kubernetes/admin.conf ]
 then
+        echo "Waiting for the API server"
+        retry 10 sudo kubectl --kubeconfig /etc/kubernetes/admin.conf get --raw=/readyz
         upgrade
 else
         install
