@@ -14,7 +14,8 @@ kubeadm_join_command="sudo kubeadm join --config /tmp/kubeadm.conf"
 
 v1beta3() {
     # Contains the bootstrap token and certificate key, so keep it private
-    install -m 600 /dev/null /tmp/kubeadm.conf
+    # "command" because this script defines its own install() function
+    command install -m 600 /dev/null /tmp/kubeadm.conf
     cat <<EOF >/tmp/kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: JoinConfiguration
@@ -37,7 +38,8 @@ EOF
 
 v1beta4() {
     # Contains the bootstrap token and certificate key, so keep it private
-    install -m 600 /dev/null /tmp/kubeadm.conf
+    # "command" because this script defines its own install() function
+    command install -m 600 /dev/null /tmp/kubeadm.conf
     cat <<EOF >/tmp/kubeadm.conf
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: JoinConfiguration
