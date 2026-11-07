@@ -133,9 +133,24 @@ update_cert_configs() {
 	sudo kubeadm certs renew all
 }
 
+# Join once. A failed join leaves files behind that make any retry fail its
+# preflight checks, so retrying here only hides the real error. Cleaning up
+# needs kubeadm reset, which is left to a person to run after checking the
+# node and etcd.
 install() {
     echo "Joining Cluster Control Plane"
-    retry 5 $${kubeadm_join_command}
+    if $${kubeadm_join_command}
+    then
+        return 0
+    fi
+    echo "ERROR: joining the control plane failed (see the kubeadm error above)."
+    echo "Check etcd still has quorum (kubectl get nodes from your workstation)."
+    echo "Once the cause is fixed, clean up this node before the next apply with:"
+    echo "  sudo kubeadm reset -f"
+    echo "Only run that on this node ($${HOSTNAME}), which is not yet a working"
+    echo "control plane member. It also removes this node from etcd if the join"
+    echo "got that far."
+    return 1
 }
 
 ensure_admin_config() {
