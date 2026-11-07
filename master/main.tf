@@ -338,6 +338,9 @@ locals {
     storage_system     = var.storage_system,
     manage_autoscaler  = var.manage_autoscaler,
     dual_stack         = var.dual_stack,
+    # Used by the etcd peer URL check before extra control plane nodes join
+    control_plane_count = var.master_count,
+    advertise_ip        = local.ipv4[0],
     }
   )
 

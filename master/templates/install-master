@@ -280,6 +280,52 @@ ensure_updated_apt_keys() {
     sudo rm -f /etc/apt/sources.list.d/kubernetes-old.list /etc/apt/sources.list.d/docker.list /usr/share/keyrings/kubernetes.gpg
 }
 
+%{ if control_plane_count > 1 ~}
+# Joining control plane nodes connect to every etcd member's peer URL. A
+# loopback peer URL (left over from clusters built with one control plane
+# node) makes them connect to themselves and fail after kubeadm has already
+# added them to etcd, which leaves etcd without quorum. Stop before any
+# node joins instead.
+check_etcd_peer_urls() {
+        echo "Checking etcd peer URLs"
+        # Run etcdctl in this node's etcd pod through the API server, so it
+        # works with any container runtime and matches the etcd version
+        local etcdctl="-n kube-system exec etcd-$${HOSTNAME} -- etcdctl --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/healthcheck-client.crt --key /etc/kubernetes/pki/etcd/healthcheck-client.key"
+        local members
+        # $${etcdctl} is unquoted so it splits into separate arguments
+        if ! members=$(sudo kubectl --kubeconfig /etc/kubernetes/admin.conf $${etcdctl} member list)
+        then
+                echo "ERROR: unable to list the etcd members using the etcd-$${HOSTNAME} pod."
+                echo "Check etcd is running on this node, then apply again."
+                return 1
+        fi
+        echo "$${members}"
+        # Fields: ID, status, name, peer URLs, client URLs, is learner
+        local loopback
+        loopback=$(echo "$${members}" | awk -F', ' '$4 ~ /\/\/(127\.|localhost|\[::1\])/')
+        if [ -z "$${loopback}" ]
+        then
+                return 0
+        fi
+        echo "ERROR: these etcd members have a loopback peer URL, so new control"
+        echo "plane nodes can't reach them:"
+        echo "$${loopback}"
+        echo "Fix each one before adding control plane nodes. First check etcd on"
+        echo "that node listens on its private IP (port 2380) and that"
+        echo "/etc/kubernetes/pki/etcd/peer.crt includes the IP, then run:"
+        echo "$${loopback}" | while IFS=', ' read -r id status name rest
+        do
+                local ip="<private IP of $${name}>"
+                if [ "$${name}" = "$${HOSTNAME}" ]
+                then
+                        ip="${advertise_ip}"
+                fi
+                echo "  kubectl $${etcdctl} member update $${id} --peer-urls=https://$${ip}:2380"
+        done
+        return 1
+}
+
+%{ endif ~}
 upgrade() {
         ensure_updated_apt_keys
 
@@ -347,6 +393,9 @@ upgrade() {
 		echo $${plan}
 		;;
 	esac
+%{ if control_plane_count > 1 ~}
+    check_etcd_peer_urls
+%{ endif ~}
     # New control plane nodes fetch the shared certificates from the
     # kubeadm-certs secret when they join. It is deleted after 2 hours, so
     # upload it on every run, including after an upgrade.
