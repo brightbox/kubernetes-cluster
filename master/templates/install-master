@@ -351,7 +351,13 @@ upgrade() {
         then
             cri_rel="${critools_release}"
         fi
-        if ! retry 5 $${APT_GET} --allow-change-held-packages --allow-downgrades install cri-tools=$${cri_rel}
+        # Never downgrade cri-tools: crictl works with older Kubernetes releases,
+        # and apt refuses to downgrade it while packages from the old repo are held
+        cri_installed=$(dpkg-query --showformat='$${Version}' --show cri-tools 2>/dev/null || true)
+        if [ -n "$${cri_installed}" ] && dpkg --compare-versions "$${cri_installed}" gt "$${cri_rel}"
+        then
+            echo "Keeping cri-tools $${cri_installed}, which is newer than $${cri_rel}"
+        elif ! retry 5 $${APT_GET} --allow-change-held-packages --allow-downgrades install cri-tools=$${cri_rel}
         then
                 sudo apt-mark hold cri-tools
                 echo "Failed to install cri-tools at version $${cri_rel}"
