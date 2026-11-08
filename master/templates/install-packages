@@ -16,7 +16,11 @@ sudo rm -f /etc/apt/sources.list.d/*http_orbit_brightbox_com_v1_acc-tqs4c_apt_ku
 curl -fsSL https://raw.githubusercontent.com/kubernetes/k8s.io/main/apt/doc/apt-key.gpg | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] http://orbit.brightbox.com/v1/acc-tqs4c/apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 %{ else ~}
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v$${rel%.*}/deb/Release.key | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+# Every pkgs.k8s.io repo is signed with the same key, but the repos for
+# 1.24 to 1.27 publish an expired copy of it. Fetch the renewed copy from
+# the newest release's repo, falling back to this release's repo.
+key_rel=$(curl -fsSL https://dl.k8s.io/release/stable.txt) || key_rel="v$${rel}"
+curl -fsSL "https://pkgs.k8s.io/core:/stable:/$${key_rel%.*}/deb/Release.key" | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v$${rel%.*}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 %{ endif ~}
 sudo rm -f /etc/apt/sources.list.d/kubernetes-old.list /etc/apt/sources.list.d/docker.list /usr/share/keyrings/kubernetes.gpg
