@@ -295,6 +295,15 @@ check_etcd_peer_urls() {
         # Run etcdctl in this node's etcd pod through the API server, so it
         # works with any container runtime and matches the etcd version
         local etcdctl="-n kube-system exec etcd-$${HOSTNAME} -- etcdctl --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/healthcheck-client.crt --key /etc/kubernetes/pki/etcd/healthcheck-client.key"
+        # kubectl exec goes through the kubelet, which may still be starting
+        # after an upgrade restarted it
+        echo "Waiting for the kubelet"
+        if ! retry 10 curl -sfo /dev/null http://localhost:10248/healthz
+        then
+                echo "ERROR: the kubelet on this node isn't healthy. Check it with"
+                echo "'sudo journalctl -u kubelet', then apply again."
+                return 1
+        fi
         local members
         # $${etcdctl} is unquoted so it splits into separate arguments
         if ! members=$(sudo kubectl --kubeconfig /etc/kubernetes/admin.conf $${etcdctl} member list)
